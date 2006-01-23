@@ -1,3 +1,4 @@
+/* $Id$ */
 #include "conf_bin.c"
 #include <installer.h>
 

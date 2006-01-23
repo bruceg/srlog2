@@ -1,3 +1,4 @@
+/* $Id$ */
 #include "encr.h"
 
 void decr_init(DECR_CTX* context, const char* key, unsigned keylen)
