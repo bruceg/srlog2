@@ -1,11 +1,22 @@
-- Add more counters to srlogd for error packets
+- Set up global secret in /etc/srlog/key/????
+
+- Look for server key in /etc/srlog/server/NAME
 
 - Remove all FutureQuest references in the code
   - the static key in srlog-prep
   - the default hostname in srlog
 
+- Replace nistp224 with curve25519 http://cr.yp.to/ecdh.html
+
+- Use secure hash of secret (SHA-256 or SHA-512) as encryption key
+
+- Reset CBC state before each packet
+
+- Set the IV to the encrypted sequence number
+
+- Add more counters to srlogd for error packets
+
 - Gradually migrate to protocol v2
-  - Migrate all senders to use MMSG packets exclusively
   - Make srlogd drop all packets not starting with 0xffffffff
   - Add code to srlogd to handle the new protocol ("SRL2")
   - Migrate all senders to use protocol v2
