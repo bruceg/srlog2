@@ -19,10 +19,7 @@
 #include <unix/sig.h>
 
 #include "srlog.h"
-
-const char program[] = "srlog";
-const int msg_show_pid = 0;
-int msg_debug_bits = 0;
+#include "srlog-cli.h"
 
 static str service;
 static ipv4addr ip;
@@ -390,17 +387,12 @@ static void sigfn(int s) {
   exitasap = 1;
 }
 
-static void usage(void)
-{
-  die3(1, "usage: ", program, " service [[+-]pattern ...]");
-}
-
 static void load_patterns(char** argv)
 {
   patterns = (const char**)argv;
   while (*argv) {
     if (*argv[0] != '-' && *argv[0] != '+')
-      usage();
+      usage(1, "Invalid pattern");
     ++argv;
   }
 }
@@ -423,24 +415,33 @@ static void getenvu(const char* name, unsigned long* dst)
       die5(1, "Invalid value for $", name, ": '", env, "'");
 }
 
-int main(int argc, char* argv[])
+int cli_main(int argc, char* argv[])
 {
   const char* tmp;
   char* end;
   nistp224key client_secret;
   nistp224key tmpkey;
+  const char* server_name = 0;
 
   msg_debug_init();
-  if (argc < 2) usage();
-  if (!str_copys(&service, argv[1])) die_oom(1);
-  if (argc > 2)
-    load_patterns(argv + 2);
+  if (!str_copys(&service, argv[0])) die_oom(1);
+  if (argc > 1
+      && argv[1][0] != '-'
+      && argv[1][0] != '+') {
+    server_name = argv[1];
+    ++argv;
+    --argc;
+  }
+  if (argc > 1)
+    load_patterns(argv + 1);
 
-  if ((tmp = getenv("SERVER")) == 0) tmp = "logs.futurequest.net";
-  if (!resolve_ipv4name(tmp, &ip))
-    die3(1, "Could not resolve '", tmp, "'");
+  if (server_name == 0
+      && (server_name = getenv("SERVER")) == 0)
+    die1(1, "Server address not named on command line nor in $SERVER");
+  if (!resolve_ipv4name(server_name, &ip))
+    die3(1, "Could not resolve '", server_name, "'");
 
-  load_server_key(tmp);
+  load_server_key(server_name);
   if (!load_key("secret", client_secret))
     die1sys(1, "Could not load keys");
   nistp224(tmpkey, server_public, client_secret);
