@@ -1,0 +1,90 @@
+<h1>srlog</h1>
+
+<a href="packet1.html">Packet Format</a>
+
+<h2>High-Level Goals</h2>
+
+<ul>
+
+<li>Reliable log delivery
+
+<li>Messages must be recorded in order of delivery (per service)
+
+<li>Low overhead 
+
+<li>Reliability across sender crashes 
+
+<li>Non-forgeable (authentication) 
+
+<li>Non-sniffable (encryption) 
+
+</ul>
+
+<h2>Design Issues</h2>
+
+<ol>
+
+<li><h3>Lost message / receiver outage</h3>
+
+<p>If a message is lost between the sender and the receiver, reasonable
+effort must be made to retransmit that message.
+
+<p>Solution: If the sender does not acknowledge a message within a brief
+interval, write the message and all subsequent messages to a file, and
+retry the first lost message until it is accepted. At that time, resend
+all the subsequent messages and remove the file.
+
+<li><h3>Lost ack / sender outage</h3>
+
+<li><h3>Duplicated message</h3>
+
+<p>If an ack is lost, the original message may be retransmitted. The
+duplicate must not enter the logs.
+
+<p>Solution: The sender will apply a sequence number to all
+messages. The receiver will acknowledge and drop all authenticated
+messages with a sequence number less than the one it expects to see
+next.
+
+<li><h3>Lost message during retransmit</h3>
+
+<p>If a message is lost during retransmit, all messages between the lost
+message and the current message must be retransmitted.
+
+<li><h3>Lost ACK during retransmit</h3>
+
+<li><h3>Sender crash</h3>
+
+<li><h3>Forged message</h3>
+
+<p>The system must prevent an attacker from adding a forged message to
+the logs for any system.
+
+<li><h3>Forged acknowledgement</h3>
+
+<p>The system must prevent an attacker from forging an acknowledgement
+for a message. While this may not appear to be a big deal, it may result
+in lost messages in the worst case.
+
+<li><h3>Intercepted message</h3>
+
+<p>The system must prevent an attacker from discerning the contents of a
+message.
+
+<p>Solution: Encrypt messages. Blowfish? DES? Rijndael?
+
+</ol>
+
+
+<h2>Ideas / Optimizations</h2>
+
+<ul>
+
+<li>Reduce the number of times the buffer file is created and deleted by
+temporarily storing lines into an internal linked list while waiting for
+an ACK.
+
+<li>Merge multiple messages into a single packet; merge multiple ACKs
+into a single packet.
+
+</ul>

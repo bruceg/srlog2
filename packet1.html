@@ -1,0 +1,165 @@
+<h2><a href="srlog.html">srlog</a></h2>
+
+<h1>Packet Format (Version 1)</h1>
+
+<ul>
+
+<li> The packet format is optimized for the common case -- message
+packets sent from client to server, and acknowledgements from server to
+client.</li>
+
+<li> A check code (CRC-32) is included inside the encrypted data on MSG
+packets to ensure that the encryption state is properly synchronized on
+client and server (may not be necessary).</li>
+
+<li> A 32-bit CRC takes no longer than a 16-bit CRC to calculate on
+modern (32-bit) CPUs, perhaps even shorter due to using native word
+size.  The difference in resulting packet size is negligable.</li>
+
+<li> Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC for
+encryption, with the lower 24 bytes of the nistp224 shared secret used
+for the key.</li>
+
+<li> A "timestamp" is encoded as a 4-byte unsigned number of seconds
+since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
+
+<li> Numbers are encoded in MSB format </li>
+
+</ul>
+
+<h2>INI: Initialization Packet</h2>
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Constant</td> <td>Message type INIv1 =
+0xffffffff00000000</td> </tr>
+
+<tr> <td>8</td> <td>Unsigned</td> <td>Initial Sequence number</td> </tr>
+
+<tr> <td>8</td> <td>timestamp</td> <td>Initial timestamp</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Service name</td> </tr>
+
+<tr> <td>28</td> <td>nistp224</td> <td>Client one-time public key</td>
+</tr>
+
+<tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
+
+</table>
+
+<h2>CID: Initialization Response Packet</h2>
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Constant</td> <td>Message type CIDv1 =
+0xffffffff00000001</td> </tr>
+
+
+<tr> <td>28</td> <td>nistp224</td> <td>Server one-time public key</td>
+</tr>
+
+<tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
+
+</table>
+
+<h2>MSG: Message Packet</h2>
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Unsigned</td> <td>Sequence number</td> </tr>
+
+<tr> <td>2</td> <td>Unsigned</td> <td>Line length N (in bytes)</td><td
+align="center" rowspan="5">Encrypted</td> </tr>
+
+<tr> <td>P</td> <td>Char</td> <td>Random padding</td> </tr>
+
+<tr> <td>8</td> <td>timestamp</td> <td>Timestamp</td> </tr>
+
+<tr> <td>N</td> <td>String</td> <td>Line</td> </tr>
+
+<tr> <td>4</td> <td>CRC-32</td> <td>Check code on encrypted data</td>
+</tr>
+
+<tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
+
+</table>
+
+<p>The length of padding is: P=B-(2+8+N+4)%B where B is the block size
+of the cipher algorithm. 
+
+<h2>ACK: Message Acknowledgement Packet</h2>
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Unsigned</td> <td>Sequence number</td> </tr>
+
+<tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
+
+</table>
+
+<h2>SRQ: Status Request</h2>
+
+<p>(not implemented)
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Constant</td> <td>Message type SRQv1 =
+0xffffffff00000002</td> </tr>
+
+</table>
+
+<h2>SRP: Status Response</h2>
+
+<p>(not implemented) 
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Constant</td> <td>Message type SRPv1 =
+0xffffffff00000003</td> </tr>
+
+<tr> <td>2+N</td> <td>String</td> <td>Text status report</td> </tr>
+
+</table>
+
+<h2>MMSG: Multi-Message Packet</h2>
+
+<table cellspacing="0" border="1" cellpadding="3">
+
+<tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
+
+<tr> <td>8</td> <td>Constant</td> <td>Message type MMSG =
+0xffffffff00000004</td> </tr>
+
+<tr> <td>1</td> <td>Unsigned</td> <td>Message count M</td> <td> </td>
+<td align="center" rowspan="6">Encrypted</td> </tr>
+
+<tr> <td>8</td> <td>Unsigned</td> <td>Initial sequence number</td> </tr>
+
+<tr> <td>8</td> <td>timestamp</td> <td>Timestamp</td><td align="center"
+rowspan="2">Repeated M times</td> </tr>
+
+<tr> <td>2+N</td> <td>String</td> <td>Line</td> </tr>
+
+<tr> <td>4</td> <td>CRC-32</td> <td>Check code on encrypted data</td>
+</tr>
+
+<tr> <td>?</td> <td>Char</td> <td>Padding to fill out encryption block
+size</td> </tr>
+
+<tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
+
+</table>
+
+<p>The ACK to a MMSG packet uses the sequence number of the last line in the packet. 

@@ -1,0 +1,13 @@
+- Add more counters to srlogd for error packets
+
+- Remove all FutureQuest references in the code
+  - the static key in srlog-prep
+  - the default hostname in srlog
+
+- Gradually migrate to protocol v2
+  - Migrate all senders to use MMSG packets exclusively
+  - Make srlogd drop all packets not starting with 0xffffffff
+  - Add code to srlogd to handle the new protocol ("SRL2")
+  - Migrate all senders to use protocol v2
+
+- Switch to curve25519 http://cr.yp.to/ecdh.html
