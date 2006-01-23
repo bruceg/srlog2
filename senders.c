@@ -9,7 +9,7 @@
 
 #include "srlog.h"
 
-struct ghash senders = {0,0,0};
+struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
 static uint32 sender_hash(struct sender_addr const* key)
 {
@@ -91,7 +91,7 @@ void warn_sender3(const struct senders_entry* c, const char* s,
 }
 
 /* ------------------------------------------------------------------------- */
-static ipv4addr ip;
+static ipv4addr sender_ip;
 static str line;
 static str tmp;
 
@@ -102,13 +102,13 @@ static inline int ipcmp(const ipv4addr* a, const ipv4addr* b)
 
 static int is_sender(struct senders_entry const* entry)
 {
-  return ipcmp(&entry->key.ip, &ip) == 0 &&
+  return ipcmp(&entry->key.ip, &sender_ip) == 0 &&
     str_diff(&tmp, &entry->data.service) == 0;
 }
 
 struct senders_entry* find_sender(const ipv4addr* addr, const char* service)
 {
-  ip = *addr;
+  sender_ip = *addr;
   if (!str_copys(&tmp, service)) die_oom(1);
   return senders_search(&senders, is_sender);
 }

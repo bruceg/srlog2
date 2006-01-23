@@ -3,7 +3,7 @@
 #include <crc/crc32.h>
 #include "srlog.h"
 
-struct ghash addrname = {0,0,0};
+struct ghash addrname = {0,0,0,0,0,0,0,0,0,0,0};
 
 static uint32 ipv4addr_hash(ipv4addr const* key)
 {
