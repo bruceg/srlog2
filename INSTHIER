@@ -1,0 +1,5 @@
+>bin
+c:::755::srlog
+c:::755::srlog-prep
+c:::755::srlogd
+c:::755::srlogq
