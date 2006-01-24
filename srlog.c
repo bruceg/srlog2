@@ -13,6 +13,7 @@
 #include <iobuf/iobuf.h>
 #include <misc/misc.h>
 #include <msg/msg.h>
+#include <msg/wrap.h>
 #include <net/resolve.h>
 #include <net/socket.h>
 #include <str/str.h>
@@ -399,11 +400,23 @@ static void load_patterns(char** argv)
 
 static void load_server_key(const char* hostname)
 {
-  /* Use out_packet for temporary path storage */
-  str_copy3s(&out_packet, "/etc/srlog/servers", "/", hostname);
-  if (!load_key(out_packet.s, server_public) &&
+  str path = {0,0,0};
+  wrap_str(str_copy2s(&path, "/etc/srlog/servers/", hostname));
+  if (!load_key(path.s, server_public) &&
       !load_key("server", server_public))
     die1sys(1, "Could not load server key");
+  str_free(&path);
+}
+
+static void load_host_key(void)
+{
+  nistp224key client_secret;
+  nistp224key tmpkey;
+  if (!load_key("secret", client_secret)
+      && !load_key("/etc/srlog/key/secret", client_secret))
+    die1sys(1, "Could not load sender key");
+  nistp224(tmpkey, server_public, client_secret);
+  hash_start(&ini_authenticator, tmpkey);
 }
 
 static void getenvu(const char* name, unsigned long* dst)
@@ -419,8 +432,6 @@ int cli_main(int argc, char* argv[])
 {
   const char* tmp;
   char* end;
-  nistp224key client_secret;
-  nistp224key tmpkey;
   const char* server_name = 0;
 
   msg_debug_init();
@@ -442,10 +453,7 @@ int cli_main(int argc, char* argv[])
     die3(1, "Could not resolve '", server_name, "'");
 
   load_server_key(server_name);
-  if (!load_key("secret", client_secret))
-    die1sys(1, "Could not load keys");
-  nistp224(tmpkey, server_public, client_secret);
-  hash_start(&ini_authenticator, tmpkey);
+  load_host_key();
 
   if ((tmp = getenv("PORT")) == 0) tmp = "11006";
   if ((port = strtol(tmp, &end, 10)) == 0 || *end != 0)

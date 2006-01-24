@@ -1,10 +1,7 @@
-- Set up global secret in /etc/srlog/key/????
-
-- Look for server key in /etc/srlog/server/NAME
+- Make the "/etc/srlog" path configurable.
 
 - Remove all FutureQuest references in the code
   - the static key in srlog-prep
-  - the default hostname in srlog
 
 - Replace nistp224 with curve25519 http://cr.yp.to/ecdh.html
 
