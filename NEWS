@@ -4,6 +4,8 @@ Changes in version 0.70
 - Modified srlog to transmit MMSG packets with multiple lines, and to
   retransmit a few times before falling back to disconnected state.
 - Fixed up srlogd bugs with receiving MMSG packets.
+- Modified srlog to load the client key from /etc/srlog/key/secret if
+  "secret" is not present in the current directory.
 -------------------------------------------------------------------------------
 Changes in version 0.69.2
 
