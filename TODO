@@ -1,6 +1,3 @@
-- Remove all FutureQuest references in the code
-  - the static key in srlog-prep
-
 - Replace nistp224 with curve25519 http://cr.yp.to/ecdh.html
 
 - Use secure hash of secret (SHA-256 or SHA-512) as encryption key

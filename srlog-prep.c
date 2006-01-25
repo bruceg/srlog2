@@ -60,10 +60,6 @@ int main(int argc, char* argv[])
       error3sys("Could not chdir to '", argv[i], "'");
       continue;
     }
-    if (!exists("server"))
-      if (!write_key("server", 0444,
-		     "wMinD5dxE65bcMO3f8vsaHTLecQTQL5lJSGnCg==\n"))
-	continue;
     if (exists("secret") && exists("public")) {
       error3("The key pair for '", argv[i], "' appears to exist already");
       continue;
