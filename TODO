@@ -1,5 +1,3 @@
-- Make the "/etc/srlog" path configurable.
-
 - Remove all FutureQuest references in the code
   - the static key in srlog-prep
 

@@ -1,0 +1,4 @@
+/etc/srlog
+
+This is the default directory that global configuration files are placed
+in, such as server keys and the host public key.

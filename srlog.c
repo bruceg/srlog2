@@ -19,6 +19,7 @@
 #include <str/str.h>
 #include <unix/sig.h>
 
+#include "conf_etc.c"
 #include "srlog.h"
 #include "srlog-cli.h"
 
@@ -401,7 +402,7 @@ static void load_patterns(char** argv)
 static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
-  wrap_str(str_copy2s(&path, "/etc/srlog/servers/", hostname));
+  wrap_str(str_copy3s(&path, conf_etc, "/servers/", hostname));
   if (!load_key(path.s, server_public) &&
       !load_key("server", server_public))
     die1sys(1, "Could not load server key");
@@ -412,9 +413,13 @@ static void load_host_key(void)
 {
   nistp224key client_secret;
   nistp224key tmpkey;
-  if (!load_key("secret", client_secret)
-      && !load_key("/etc/srlog/key/secret", client_secret))
-    die1sys(1, "Could not load sender key");
+  str path = {0,0,0};
+  if (!load_key("secret", client_secret)) {
+    wrap_str(str_copy2s(&path, conf_etc, "/key/secret"));
+    if (!load_key(path.s, client_secret))
+      die1sys(1, "Could not load sender key");
+    str_free(&path);
+  }
   nistp224(tmpkey, server_public, client_secret);
   hash_start(&ini_authenticator, tmpkey);
 }
