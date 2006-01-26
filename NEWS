@@ -3,10 +3,18 @@ Changes in version 0.70
 
 - Modified srlog to transmit MMSG packets with multiple lines, and to
   retransmit a few times before falling back to disconnected state.
+
 - Fixed up srlogd bugs with receiving MMSG packets.
+
 - Modified srlog to load the client key from /etc/srlog/key/secret if
   "secret" is not present in the current directory.
+
 - Renamed srlog-prep to srlog-keygen.
+
+- The first 32 bytes of the SHA-512 hash of the shared secret is used as
+  the encryption key instead of the first 24 bytes of the raw data.
+  NOTE: This breaks compatibility with previous versions!
+
 -------------------------------------------------------------------------------
 Changes in version 0.69.2
 

@@ -1,16 +1,30 @@
 /* $Id$ */
 #include "encr.h"
+#include <crypto/sha512.h>
 
-void decr_init(DECR_CTX* context, const char* key, unsigned keylen)
+#define KEYSIZE 64
+typedef uint8 keydata[KEYSIZE];
+
+static void make_key(const char* data, unsigned datalen, keydata key)
 {
-  keylen -= keylen % 8;
-  rijndael_init(context, RIJNDAEL_DECRYPT, keylen, key, RIJNDAEL_CBC, 0);
+  struct SHA512_ctx ctx;
+  SHA512_init(&ctx);
+  SHA512_update(&ctx, data, datalen);
+  SHA512_final(&ctx, key);
 }
 
-void encr_init(DECR_CTX* context, const char* key, unsigned keylen)
+void decr_init(DECR_CTX* context, const char* data, unsigned datalen)
 {
-  keylen -= keylen % 8;
-  rijndael_init(context, RIJNDAEL_ENCRYPT, keylen, key, RIJNDAEL_CBC, 0);
+  keydata key;
+  make_key(data, datalen, key);
+  rijndael_init(context, RIJNDAEL_DECRYPT, 32, key, RIJNDAEL_CBC, 0);
+}
+
+void encr_init(DECR_CTX* context, const char* data, unsigned datalen)
+{
+  keydata key;
+  make_key(data, datalen, key);
+  rijndael_init(context, RIJNDAEL_ENCRYPT, 32, key, RIJNDAEL_CBC, 0);
 }
 
 #if 0
