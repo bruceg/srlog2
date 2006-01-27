@@ -5,6 +5,9 @@
 
 #include "srlog.h"
 #include "hash.h"
+#include <uint16.h>
+#include <uint32.h>
+#include <uint64.h>
 
 static unsigned char digest[HASH_LENGTH];
 
@@ -24,32 +27,21 @@ int pkt_add_u2(str* s, unsigned u)
 {
   char b[2];
   if (u > 0xffff) return 0;
-  b[0] = (u >> 8) & 0xff;
-  b[1] = u & 0xff;
+  uint16_pack_lsb(u, b);
   return str_catb(s, b, 2);
 }
 
 int pkt_add_u4(str* s, uint32 u)
 {
   char b[4];
-  b[0] = (u >> 24) & 0xff;
-  b[1] = (u >> 16) & 0xff;
-  b[2] = (u >> 8) & 0xff;
-  b[3] = u & 0xff;
+  uint32_pack_lsb(u, b);
   return str_catb(s, b, 4);
 }
 
 int pkt_add_u8(str* s, uint64 u)
 {
   char b[8];
-  b[0] = (u >> 56) & 0xff;
-  b[1] = (u >> 48) & 0xff;
-  b[2] = (u >> 40) & 0xff;
-  b[3] = (u >> 32) & 0xff;
-  b[4] = (u >> 24) & 0xff;
-  b[5] = (u >> 16) & 0xff;
-  b[6] = (u >> 8) & 0xff;
-  b[7] = u & 0xff;
+  uint64_pack_lsb(u, b);
   return str_catb(s, b, 8);
 }
 
@@ -93,7 +85,7 @@ unsigned pkt_get_u2(const str* s, unsigned o, unsigned* u)
   const unsigned char* p = s->s + o;
   o += 2;
   if (o > s->len) return 0;
-  *u = p[0] << 8 | p[1];
+  *u = uint16_get_lsb(p);
   return o;
 }
 
@@ -102,10 +94,7 @@ unsigned pkt_get_u4(const str* s, unsigned o, uint32* u)
   const unsigned char* p = s->s + o;
   o += 4;
   if (o > s->len) return 0;
-  *u = (uint32)p[0] << 24 |
-    (uint32)p[1] << 16 |
-    (uint32)p[2] << 8 |
-    (uint32)p[3];
+  *u = uint32_get_lsb(p);
   return o;
 }
 
@@ -114,14 +103,7 @@ unsigned pkt_get_u8(const str* s, unsigned o, uint64* u)
   const unsigned char* p = s->s + o;
   o += 8;
   if (o > s->len) return 0;
-  *u = (uint64)p[0] << 56 |
-    (uint64)p[1] << 48 |
-    (uint64)p[2] << 40 |
-    (uint64)p[3] << 32 |
-    (uint64)p[4] << 24 |
-    (uint64)p[5] << 16 |
-    (uint64)p[6] << 8 |
-    (uint64)p[7];
+  *u = uint64_get_lsb(p);
   return o;
 }
 
