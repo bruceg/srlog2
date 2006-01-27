@@ -261,7 +261,7 @@ static void handle_msg(uint64 seq)
     return;
   }
   
-  decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8);
+  decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8, seq);
   if (!check_crc(&packet, 8)) {
     error_sender(c, "MSG has invalid CRC");
     return;
@@ -365,7 +365,7 @@ static void handle_mmsg(void)
     return;
   }
 
-  decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1));
+  decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1), seq);
 
   if (!check_crc(&packet, 8+8+1)) {
     error_sender(c, "MMSG has invalid CRC");

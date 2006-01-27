@@ -3,16 +3,29 @@
 
 #include "rijndael/rijndael.h"
 
-typedef rijndael_cipher ENCR_CTX;
-typedef rijndael_cipher DECR_CTX;
+struct ENCR_CTX
+{
+  rijndael_cipher encr;
+  rijndael_cipher ivencr;
+};
+typedef struct ENCR_CTX ENCR_CTX;
+
+struct DECR_CTX
+{
+  rijndael_cipher decr;
+  rijndael_cipher ivencr;
+};
+typedef struct DECR_CTX DECR_CTX;
 
 #define ENCR_BLOCK_SIZE 16
 
 #define PADLEN(BYTES) (ENCR_BLOCK_SIZE - ((BYTES) % ENCR_BLOCK_SIZE))
 
 extern void decr_init(DECR_CTX* context, const char* data, unsigned datalen);
-extern void encr_init(DECR_CTX* context, const char* data, unsigned datalen);
-extern void decr_blocks(DECR_CTX* context, char* data, unsigned len);
-extern void encr_blocks(ENCR_CTX* context, char* data, unsigned len);
+extern void encr_init(ENCR_CTX* context, const char* data, unsigned datalen);
+extern void decr_blocks(DECR_CTX* context, char* data, unsigned len,
+			uint64 sequence);
+extern void encr_blocks(ENCR_CTX* context, char* data, unsigned len,
+			uint64 sequence);
 
 #endif

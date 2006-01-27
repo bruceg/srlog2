@@ -148,6 +148,7 @@ static int poll_both(void)
 
 /* Packet generation ------------------------------------------------------- */
 static uint64 seq_last;
+static uint64 seq_first;
 
 static int add_mmsg(const struct line* l)
 {
@@ -165,6 +166,7 @@ static int add_mmsg(const struct line* l)
 
 static void start_mmsg(const struct line* l)
 {
+  seq_first = l->seq;
   out_packet.len = 0;
   pkt_add_u8(&out_packet, MMSG);
   pkt_add_u8(&out_packet, l->seq);
@@ -179,7 +181,7 @@ static void end_mmsg(void)
   for (i = 16 - (out_packet.len - 17 + 4) % 16; i > 0; --i)
     pkt_add_u1(&out_packet, 0);
   pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
-  encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17);
+  encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17, seq_first);
   pkt_add_cc(&out_packet, &msg_authenticator);
 }
 

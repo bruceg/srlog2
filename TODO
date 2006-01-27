@@ -1,4 +1,4 @@
-- Set the IV to the encrypted sequence number
+- Replace hard-coded 16 with ENCR_BLOCK_SIZE
 
 - Add more counters to srlogd for error packets
 

@@ -17,6 +17,8 @@ Changes in version 0.70
 - Encryption state is not followed between packets.  This simplifies the
   retransmit logic, preventing encryptor desynchronization.
 
+- An IV is set on each packet from the encrypted sequence number.
+
 Note: The encryption changes breaks compatibility with previous versions.
 -------------------------------------------------------------------------------
 Changes in version 0.69.2
