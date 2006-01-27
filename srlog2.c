@@ -21,7 +21,7 @@
 
 #include "conf_etc.c"
 #include "srlog.h"
-#include "srlog-cli.h"
+#include "srlog2-cli.h"
 
 static str service;
 static ipv4addr ip;

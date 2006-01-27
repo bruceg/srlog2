@@ -9,7 +9,7 @@
 #include <msg/wrap.h>
 
 #include "srlog.h"
-#include "srlog-keygen-cli.h"
+#include "srlog2-keygen-cli.h"
 
 static nistp224key public;
 static nistp224key secret;
