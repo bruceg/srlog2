@@ -1,5 +1,5 @@
 Name: @PACKAGE@
-Summary: FutureQuest log send/receive system
+Summary: Secure Remote Log transmission system
 Version: @VERSION@
 Release: 2
 Copyright: Proprietary
@@ -7,11 +7,11 @@ Group: Utilities/System
 Source: http://untroubled.org/@PACKAGE@/@PACKAGE@-@VERSION@.tar.gz
 BuildRoot: %{_tmppath}/@PACKAGE@-buildroot
 URL: http://untroubled.org/@PACKAGE@/
-Packager: Bruce Guenter <Bruce@FutureQuest.net>
-BuildRequires: bglibs >= 1.010
+Packager: Bruce Guenter <bruce@untroubled.org>
+BuildRequires: bglibs >= 1.040
 
 %description
-FutureQuest log send/receive system
+Secure Remote Log transmission system
 
 %prep
 %setup
@@ -24,13 +24,9 @@ make
 
 %install
 rm -fr %{buildroot}
-rm -f conf_bin.c insthier.o installer instcheck
-echo %{buildroot}%{_bindir} >conf-bin
-make installer instcheck
-
 mkdir -p %{buildroot}%{_bindir}
-./installer
-./instcheck
+
+make install install_prefix=$RPM_BUILD_ROOT
 
 %clean
 rm -rf %{buildroot}
