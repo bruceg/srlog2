@@ -17,7 +17,7 @@
 #include <net/socket.h>
 #include <unix/sig.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 const char program[] = "srlogd";
 const int msg_show_pid = 0;

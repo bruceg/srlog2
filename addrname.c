@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include <crc/crc32.h>
-#include "srlog.h"
+#include "srlog2.h"
 
 struct ghash addrname = {0,0,0,0,0,0,0,0,0,0,0};
 

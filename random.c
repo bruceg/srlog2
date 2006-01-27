@@ -6,7 +6,7 @@
 #include <systime.h>
 #include <msg/msg.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 static unsigned char* pool;
 static unsigned pool_size;

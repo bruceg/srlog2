@@ -20,7 +20,7 @@
 #include <unix/sig.h>
 
 #include "conf_etc.c"
-#include "srlog.h"
+#include "srlog2.h"
 #include "srlog2-cli.h"
 
 static str service;

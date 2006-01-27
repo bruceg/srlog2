@@ -10,7 +10,7 @@
 #include <msg/wrap.h>
 #include <str/str.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 static nistp224key BASEP224 = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
 

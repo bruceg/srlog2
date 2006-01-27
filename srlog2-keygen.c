@@ -8,7 +8,7 @@
 #include <msg/msg.h>
 #include <msg/wrap.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
 static nistp224key public;

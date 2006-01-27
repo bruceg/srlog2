@@ -3,7 +3,7 @@
 
 #include <str/str.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 #include "hash.h"
 #include <uint16.h>
 #include <uint32.h>

@@ -8,7 +8,7 @@
 #include <msg/msg.h>
 #include <fmt/number.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 

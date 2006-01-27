@@ -8,7 +8,7 @@
 #include <misc/misc.h>
 #include <str/str.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 static const char buffer_filename[] = "buffer";
 

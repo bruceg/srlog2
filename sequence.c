@@ -9,7 +9,7 @@
 #include <msg/msg.h>
 #include <str/str.h>
 
-#include "srlog.h"
+#include "srlog2.h"
 
 /* Sequence Number Handling ------------------------------------------------ */
 uint64 seq_next = 0; /* Next line is assigned this number */
