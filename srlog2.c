@@ -168,8 +168,8 @@ static void start_msg(const struct line* l)
 {
   seq_first = l->seq;
   out_packet.len = 0;
-  pkt_add_u4(&out_packet, PREFIX);
-  pkt_add_u4(&out_packet, MSG);
+  pkt_add_u4(&out_packet, SRL2);
+  pkt_add_u4(&out_packet, MSG1);
   pkt_add_u8(&out_packet, l->seq);
   pkt_add_u1(&out_packet, 0);
   add_msg(l);
@@ -208,8 +208,8 @@ static void make_ini(const nistp224key key, const struct line* line)
   const struct timestamp* ts;
   struct timestamp now;
   out_packet.len = 0;
-  pkt_add_u4(&out_packet, PREFIX);
-  pkt_add_u4(&out_packet, INI);
+  pkt_add_u4(&out_packet, SRL2);
+  pkt_add_u4(&out_packet, INI1);
   pkt_add_u8(&out_packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);
@@ -247,9 +247,9 @@ static int receive_ack(void)
     return 0;
   if ((ack_packet.len = i) != 4+4+8 + HASH_LENGTH) return 0;
   pkt_get_u4(&ack_packet, 0, &t);
-  if (t != PREFIX) return 0;
+  if (t != SRL2) return 0;
   pkt_get_u4(&ack_packet, 4, &t);
-  if (t != ACK) return 0;
+  if (t != ACK1) return 0;
   pkt_get_u8(&ack_packet, 8, &seq);
   if (seq != seq_last) {
     utoa2(seq, num1);
@@ -289,9 +289,9 @@ static int receive_cid(nistp224key csession_secret)
     return 0;
   if ((ack_packet.len = i) != 8 + KEY_LENGTH + HASH_LENGTH) return 0;
   pkt_get_u4(&ack_packet, 0, &t);
-  if (t != PREFIX) return 0;
+  if (t != SRL2) return 0;
   pkt_get_u4(&ack_packet, 4, &t);
-  if (t != CID) return 0;
+  if (t != CID1) return 0;
   if (!pkt_validate(&ack_packet, &cid_authenticator)) return 0;
   pkt_get_key(&ack_packet, 8, ssession_public);
   nistp224(tmpkey, ssession_public, csession_secret);

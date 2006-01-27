@@ -78,8 +78,8 @@ nistp224key server_secret;
 static void send_ack(struct senders_entry* c, uint64 seq)
 {
   packet.len = 0;
-  pkt_add_u4(&packet, PREFIX);
-  pkt_add_u4(&packet, ACK);
+  pkt_add_u4(&packet, SRL2);
+  pkt_add_u4(&packet, ACK1);
   pkt_add_u8(&packet, seq);
   pkt_add_cc(&packet, &c->data.authenticator);
   if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
@@ -91,8 +91,8 @@ static void send_ack(struct senders_entry* c, uint64 seq)
 static void send_cid(struct senders_entry* c, nistp224key sp)
 {
   packet.len = 0;
-  pkt_add_u4(&packet, PREFIX);
-  pkt_add_u4(&packet, CID);
+  pkt_add_u4(&packet, SRL2);
+  pkt_add_u4(&packet, CID1);
   pkt_add_key(&packet, sp);
   pkt_add_cc(&packet, &c->data.authenticator);
   if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
@@ -127,7 +127,8 @@ static void send_srp(void)
   str_catstat(&tmp, "MSG-Retransmits", msg_retransmits);
   str_catstat(&tmp, "MSG-Valid", msg_valid);
   packet.len = 0;
-  pkt_add_u8(&packet, SRP);
+  pkt_add_u4(&packet, SRL2);
+  pkt_add_u4(&packet, SRP1);
   pkt_add_s2(&packet, &tmp);
   if (!socket_send4(sock, packet.s, packet.len, &ip, port))
     die1sys(1, "Could not send SRP packet");
@@ -498,16 +499,16 @@ int main(void)
     }
     packet.len = i;
     if (!pkt_get_u4(&packet, 0, &type)
-	|| type != PREFIX)
+	|| type != SRL2)
       msg4(ipv4_format(&ip), "/", utoa(port),
 	   ": Warning: Packet is missing prefix");
     else {
       pkt_get_u4(&packet, 4, &type);
-      if (type == INI)
+      if (type == INI1)
 	handle_ini();
-      else if (type == MSG)
+      else if (type == MSG1)
 	handle_msg();
-      else if (type == SRQ)
+      else if (type == SRQ1)
 	handle_srq();
       else
 	msg4(ipv4_format(&ip), "/", utoa(port),

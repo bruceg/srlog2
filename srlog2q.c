@@ -42,7 +42,8 @@ int main(int argc, char* argv[])
   unsigned try;
   unsigned tries = 5;
   iopoll_fd io;
-  uint64 code;
+  uint32 code;
+  long len;
 
   if (argc < 2) usage();
   if (!resolve_ipv4name(argv[1], &ip))
@@ -61,7 +62,8 @@ int main(int argc, char* argv[])
     if ((timeout = atoi(tmp)) <= 0)
       die3(1, "Invalid timeout value: '", tmp, "'");
 
-  pkt_add_u8(&pktout, SRQ);
+  pkt_add_u4(&pktout, SRL2);
+  pkt_add_u4(&pktout, SRQ1);
   io.fd = sock;
   io.events = IOPOLL_READ;
   for (try = 0; try < tries; ++try) {
@@ -71,11 +73,14 @@ int main(int argc, char* argv[])
     case -1:
       die1sys(1, "Poll failed");
     case 1:
-      if ((pktin.len = socket_recv4(sock, pktin.s, pktin.size, &ip, &port)) == -1)
+      if ((len = socket_recv4(sock, pktin.s, pktin.size, &ip, &port)) == -1)
 	die1sys(1, "Could not receive packet");
+      pktin.len = len;
       if (pktin.len < pktout.len ||
-	  pkt_get_u8(&pktin, 0, &code) != 8 ||
-	  code != SRP ||
+	  pkt_get_u4(&pktin, 0, &code) != 4 ||
+	  code != SRL2 ||
+	  pkt_get_u4(&pktin, 4, &code) != 8 ||
+	  code != SRP1 ||
 	  pkt_get_s2(&pktin, 8, &data) <= 0)
 	die1(1, "Invalid data from server");
       write(1, data.s, data.len);
