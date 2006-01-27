@@ -1,4 +1,4 @@
-srlog.a
+srlog2.a
 buffer.o
 -lnistp224
 rijndael/rijndael.a
