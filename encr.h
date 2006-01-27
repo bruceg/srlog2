@@ -12,8 +12,7 @@ typedef rijndael_cipher DECR_CTX;
 
 extern void decr_init(DECR_CTX* context, const char* data, unsigned datalen);
 extern void encr_init(DECR_CTX* context, const char* data, unsigned datalen);
-
-#define decr_blocks(C,D,L) rijndael_decrypt_blocks(C,D,L,D)
-#define encr_blocks(C,D,L) rijndael_encrypt_blocks(C,D,L,D)
+extern void decr_blocks(DECR_CTX* context, char* data, unsigned len);
+extern void encr_blocks(ENCR_CTX* context, char* data, unsigned len);
 
 #endif

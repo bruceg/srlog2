@@ -338,7 +338,6 @@ static void handle_mmsg(void)
   uint64 seq;
   unsigned count;
   unsigned i;
-  DECR_CTX context;
 
   if ((c = senders_get(&senders, &key)) == 0) {
     msg4(ipv4_format(&ip), "/", utoa(port),
@@ -358,8 +357,7 @@ static void handle_mmsg(void)
     return;
   }
   
-  context = c->data.decryptor;
-  decr_blocks(&context, packet.s+8, packet.len-8);
+  decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8);
 
   if (!check_crc(&packet)) {
     error_sender(c, "MMSG has invalid CRC");
@@ -407,7 +405,6 @@ static void handle_mmsg(void)
 	write_line(c, &ts, &line);
     }
     
-    c->data.decryptor = context;
     c->data.next_seq = seq;
     c->data.last_timestamp = ts;
     c->data.last_count = count;
@@ -419,7 +416,6 @@ static void handle_mmsg(void)
 	   count == c->data.last_count) {
     /* Ignore the contents of the message, just ACK it
      * since we've already seen it */
-    c->data.decryptor = context;
     send_ack(c, seq+count-1);
     ++mmsg_retransmits;
   }
@@ -527,8 +523,8 @@ static void handle_srq(void)
 static int exitasap;
 static int reload;
 
-static void sigfn(int ignored) { exitasap = 1; }
-static void sighup(int ignored) { reload = 1; }
+static void sigfn(int ignored) { exitasap = 1; (void)ignored; }
+static void sighup(int ignored) { reload = 1; (void)ignored; }
 
 int main(void)
 {

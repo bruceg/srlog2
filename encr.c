@@ -27,14 +27,14 @@ void encr_init(DECR_CTX* context, const char* data, unsigned datalen)
   rijndael_init(context, RIJNDAEL_ENCRYPT, 32, key, RIJNDAEL_CBC, 0);
 }
 
-#if 0
 void decr_blocks(DECR_CTX* context, char* data, unsigned len)
 {
-  rijndael_decrypt_blocks(context, data, len, data);
+  DECR_CTX copy = *context;
+  rijndael_decrypt_blocks(&copy, data, len, data);
 }
 
 void encr_blocks(ENCR_CTX* context, char* data, unsigned len)
 {
-  rijndael_encrypt_blocks(context, data, len, data);
+  DECR_CTX copy = *context;
+  rijndael_encrypt_blocks(&copy, data, len, data);
 }
-#endif

@@ -1,5 +1,3 @@
-- Reset CBC state before each packet
-
 - Set the IV to the encrypted sequence number
 
 - Add more counters to srlogd for error packets
