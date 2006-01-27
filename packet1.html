@@ -142,13 +142,13 @@ of the cipher algorithm.
 <tr> <td>8</td> <td>Constant</td> <td>Message type MMSG =
 0xffffffff00000004</td> </tr>
 
-<tr> <td>1</td> <td>Unsigned</td> <td>Message count M</td> <td> </td>
-<td align="center" rowspan="6">Encrypted</td> </tr>
-
 <tr> <td>8</td> <td>Unsigned</td> <td>Initial sequence number</td> </tr>
 
+<tr> <td>1</td> <td>Unsigned</td> <td>Message count M</td> </tr>
+
 <tr> <td>8</td> <td>timestamp</td> <td>Timestamp</td><td align="center"
-rowspan="2">Repeated M times</td> </tr>
+rowspan="2">Repeated M times</td> <td align="center"
+rowspan="4">Encrypted</td> </tr>
 
 <tr> <td>2+N</td> <td>String</td> <td>Line</td> </tr>
 

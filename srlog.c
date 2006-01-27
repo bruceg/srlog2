@@ -156,7 +156,7 @@ static int add_mmsg(const struct line* l)
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
   debug2(DEBUG_MSG, "Adding line #", utoa(l->seq));
-  ++out_packet.s[8];
+  ++out_packet.s[8+8];
   pkt_add_ts(&out_packet, &l->timestamp);
   pkt_add_s2(&out_packet, &l->line);
   seq_last = l->seq;
@@ -167,18 +167,19 @@ static void start_mmsg(const struct line* l)
 {
   out_packet.len = 0;
   pkt_add_u8(&out_packet, MMSG);
-  pkt_add_u1(&out_packet, 0);
   pkt_add_u8(&out_packet, l->seq);
+  pkt_add_u1(&out_packet, 0);
   add_mmsg(l);
 }
 
 static void end_mmsg(void)
 {
   // FIXME: pad with random data
-  while ((out_packet.len - 8 + 4) % 16 != 0)
+  int i;
+  for (i = 16 - (out_packet.len - 17 + 4) % 16; i > 0; --i)
     pkt_add_u1(&out_packet, 0);
-  pkt_add_u4(&out_packet, crc32_block(out_packet.s+8, out_packet.len-8));
-  encr_blocks(&encryptor, out_packet.s+8, out_packet.len-8);
+  pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
+  encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17);
   pkt_add_cc(&out_packet, &msg_authenticator);
 }
 

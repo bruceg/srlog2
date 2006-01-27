@@ -228,11 +228,11 @@ static int tslt(const struct timestamp* a, const struct timestamp* b)
     (a->sec == b->sec && a->nsec < b->nsec);
 }
 
-static int check_crc(const str* s)
+static int check_crc(const str* s, unsigned offset)
 {
   uint32 crc;
   return pkt_get_u4(s, s->len-4, &crc) > 0 &&
-    crc32_block(s->s+8, s->len-8-4) == crc;
+    crc32_block(s->s+offset, s->len-offset-4) == crc;
 }
 
 static void handle_msg(uint64 seq)
@@ -262,7 +262,7 @@ static void handle_msg(uint64 seq)
   }
   
   decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8);
-  if (!check_crc(&packet)) {
+  if (!check_crc(&packet, 8)) {
     error_sender(c, "MSG has invalid CRC");
     return;
   }
@@ -348,37 +348,38 @@ static void handle_mmsg(void)
     error_sender(c, "MMSG failed authentication");
     return;
   }
-  if ((packet.len - 8) % ENCR_BLOCK_SIZE != 0) {
+  if ((packet.len - (8+8+1)) % ENCR_BLOCK_SIZE != 0) {
     error_sender(c, "MMSG has invalid padding");
     return;
   }
-  if (packet.len < 8 + 1 + 8 + 8 + 2+1 + 4) {
+  if (packet.len < 8 + 8 + 1 + 8 + 2+1 + 4) {
     error_sender(c, "MMSG is too short");
     return;
   }
   
-  decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8);
-
-  if (!check_crc(&packet)) {
-    error_sender(c, "MMSG has invalid CRC");
-    //dump_packet(c, &packet);
-    return;
-  }
-
-  pkt_get_u1(&packet, 8, &count);
-  pkt_get_u8(&packet, 9, &seq);
+  pkt_get_u8(&packet, 8, &seq);
+  pkt_get_u1(&packet, 8+8, &count);
   if (seq > c->data.next_seq) {
     error_sender3(c, "MMSG has sequence number in future: ",
 		  seq, c->data.next_seq);
     return;
   }
+
+  decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1));
+
+  if (!check_crc(&packet, 8+8+1)) {
+    error_sender(c, "MMSG has invalid CRC");
+    //dump_packet(c, &packet);
+    return;
+  }
+
   ++mmsg_valid;
 
   if (seq == c->data.next_seq ||
       (seq == c->data.last_seq && count > c->data.last_count)) {
     /* Pass 1 -- validate the offsets and timestamps before writing anything */
     last_ts = c->data.last_timestamp;
-    for (offset = 8+1+8, i = 0; i < count; ++i) {
+    for (offset = 8+8+1, i = 0; i < count; ++i) {
       if ((offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
 	  (offset = pkt_get_s2(&packet, offset, &line)) == 0) {
 	error_sender(c, "MMSG has invalid format");
@@ -397,7 +398,7 @@ static void handle_mmsg(void)
     }
     /* Pass 2 -- write out the lines */
     c->data.last_seq = seq;
-    for (offset = 8+1+8, i = 0; i < count; ++i, ++seq) {
+    for (offset = 8+8+1, i = 0; i < count; ++i, ++seq) {
       offset = pkt_get_ts(&packet, offset, &ts);
       offset = pkt_get_s2(&packet, offset, &line);
       /* Only write out lines we haven't already acknowledged yet. */
