@@ -1,5 +1,3 @@
-- Replace hard-coded 16 with ENCR_BLOCK_SIZE
-
 - Add more counters to srlogd for error packets
 
 - Gradually migrate to protocol v2

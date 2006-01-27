@@ -153,7 +153,7 @@ static uint64 seq_first;
 static int add_msg(const struct line* l)
 {
   if ((unsigned char)out_packet.s[8] == 0xff
-      || out_packet.len + 8 + 2 + l->line.len + 4 + 16 >= MAX_PACKET
+      || out_packet.len + 8 + 2 + l->line.len + 4 + HASH_LENGTH >= MAX_PACKET
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
   debug2(DEBUG_MSG, "Adding line #", utoa(l->seq));
@@ -179,7 +179,9 @@ static void end_msg(void)
 {
   // FIXME: pad with random data
   int i;
-  for (i = 16 - (out_packet.len - 17 + 4) % 16; i > 0; --i)
+  for (i = ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE;
+       i > 0;
+       --i)
     pkt_add_u1(&out_packet, 0);
   pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
   encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17, seq_first);
