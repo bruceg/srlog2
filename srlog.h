@@ -11,11 +11,13 @@
 #include "hash.h"
 #include "encr.h"
 
-#define INI  0xffffffff00000000ULL
-#define CID  0xffffffff00000001ULL
-#define SRQ  0xffffffff00000002ULL
-#define SRP  0xffffffff00000003ULL
-#define MMSG 0xffffffff00000004ULL
+#define PREFIX 0xffffffffUL
+#define INI  0x00000000UL
+#define CID  0x00000001UL
+#define SRQ  0x00000002UL
+#define SRP  0x00000003UL
+#define MSG  0x00000004UL
+#define ACK  0x00000005UL
 #define MAX_PACKET 8192
 
 #define DEBUG_STATE 1

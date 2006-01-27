@@ -4,10 +4,10 @@ Changes in version 0.70
 - Renamed the package (and all the programs) to srlog2, as it is now
   completely incompatible with the existing srlog system.
 
-- Modified srlog2 to transmit MMSG packets with multiple lines, and to
-  retransmit a few times before falling back to disconnected state.
+- Modified the packet protocol to transmit multiple lines per packet.
 
-- Fixed up srlog2d bugs with receiving MMSG packets.
+- Modified srlog2 to retransmit a few times before falling back to
+  disconnected state, thus avoiding expensive reconnections.
 
 - Modified srlog2 to load the client key from /etc/srlog/key/secret if
   "secret" is not present in the current directory.

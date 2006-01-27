@@ -150,7 +150,7 @@ static int poll_both(void)
 static uint64 seq_last;
 static uint64 seq_first;
 
-static int add_mmsg(const struct line* l)
+static int add_msg(const struct line* l)
 {
   if ((unsigned char)out_packet.s[8] == 0xff
       || out_packet.len + 8 + 2 + l->line.len + 4 + 16 >= MAX_PACKET
@@ -164,17 +164,18 @@ static int add_mmsg(const struct line* l)
   return 1;
 }
 
-static void start_mmsg(const struct line* l)
+static void start_msg(const struct line* l)
 {
   seq_first = l->seq;
   out_packet.len = 0;
-  pkt_add_u8(&out_packet, MMSG);
+  pkt_add_u4(&out_packet, PREFIX);
+  pkt_add_u4(&out_packet, MSG);
   pkt_add_u8(&out_packet, l->seq);
   pkt_add_u1(&out_packet, 0);
-  add_mmsg(l);
+  add_msg(l);
 }
 
-static void end_mmsg(void)
+static void end_msg(void)
 {
   // FIXME: pad with random data
   int i;
@@ -185,18 +186,18 @@ static void end_mmsg(void)
   pkt_add_cc(&out_packet, &msg_authenticator);
 }
 
-static int make_mmsg(void)
+static int make_msg(void)
 {
   const struct line* line;
   if ((line = buffer_read()) == 0)
     return 0;
-  start_mmsg(line);
+  start_msg(line);
   while ((line = buffer_peek()) != 0) {
-    if (!add_mmsg(line))
+    if (!add_msg(line))
       break;
     buffer_read();
   }
-  end_mmsg();
+  end_msg();
   return 1;
 }
 
@@ -205,7 +206,8 @@ static void make_ini(const nistp224key key, const struct line* line)
   const struct timestamp* ts;
   struct timestamp now;
   out_packet.len = 0;
-  pkt_add_u8(&out_packet, INI);
+  pkt_add_u4(&out_packet, PREFIX);
+  pkt_add_u4(&out_packet, INI);
   pkt_add_u8(&out_packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);
@@ -229,7 +231,7 @@ static void send_msg(unsigned scale)
   else {
     utoa2(seq_send, num1);
     utoa2(seq_last, num2);
-    debug4(DEBUG_PACKET, "Sent MMSG packet ", num1, "-", num2);
+    debug4(DEBUG_PACKET, "Sent MSG packet ", num1, "-", num2);
     poll_reset(ack_timeout*scale);
   }
 }
@@ -238,10 +240,15 @@ static int receive_ack(void)
 {
   int i;
   uint64 seq;
+  uint32 t;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
-  if ((ack_packet.len = i) != 8 + HASH_LENGTH) return 0;
-  pkt_get_u8(&ack_packet, 0, &seq);
+  if ((ack_packet.len = i) != 4+4+8 + HASH_LENGTH) return 0;
+  pkt_get_u4(&ack_packet, 0, &t);
+  if (t != PREFIX) return 0;
+  pkt_get_u4(&ack_packet, 4, &t);
+  if (t != ACK) return 0;
+  pkt_get_u8(&ack_packet, 8, &seq);
   if (seq != seq_last) {
     utoa2(seq, num1);
     utoa2(seq_last, num2);
@@ -273,13 +280,15 @@ static void send_ini(void)
 static int receive_cid(nistp224key csession_secret)
 {
   int i;
-  uint64 t;
+  uint32 t;
   nistp224key ssession_public;
   nistp224key tmpkey;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
   if ((ack_packet.len = i) != 8 + KEY_LENGTH + HASH_LENGTH) return 0;
-  pkt_get_u8(&ack_packet, 0, &t);
+  pkt_get_u4(&ack_packet, 0, &t);
+  if (t != PREFIX) return 0;
+  pkt_get_u4(&ack_packet, 4, &t);
   if (t != CID) return 0;
   if (!pkt_validate(&ack_packet, &cid_authenticator)) return 0;
   pkt_get_key(&ack_packet, 8, ssession_public);
@@ -328,7 +337,7 @@ static int do_disconnected(void)
 static int do_sending(void)
 {
   unsigned i;
-  if (!make_mmsg())
+  if (!make_msg())
     return STATE_CONNECTED;
   /* Try to send the message packet multiple times. */
   for (i = 1; !exitasap && i <= retransmits; ++i) {

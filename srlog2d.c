@@ -49,10 +49,8 @@ static uint64 packets_received;
 static uint64 packets_sent;
 static uint64 bytes_received;
 static uint64 bytes_sent;
-static uint64 msg_valid;
 static uint64 msg_retransmits;
-static uint64 mmsg_retransmits;
-static uint64 mmsg_valid;
+static uint64 msg_valid;
 static uint64 ini_queued;
 static uint64 ini_too_many;
 static uint64 ini_invalid;
@@ -68,7 +66,6 @@ static void show_stats(void)
   str_cats(&tmp, " S:"); str_catull(&tmp, packets_sent);
   str_cats(&tmp, " I:"); str_catull(&tmp, ini_valid);
   str_cats(&tmp, " M:"); str_catull(&tmp, msg_valid);
-  str_cats(&tmp, " MM:"); str_catull(&tmp, mmsg_valid);
   str_cats(&tmp, " L:"); str_catull(&tmp, lines_written);
   msg2("stats: ", tmp.s);
 }
@@ -81,6 +78,8 @@ nistp224key server_secret;
 static void send_ack(struct senders_entry* c, uint64 seq)
 {
   packet.len = 0;
+  pkt_add_u4(&packet, PREFIX);
+  pkt_add_u4(&packet, ACK);
   pkt_add_u8(&packet, seq);
   pkt_add_cc(&packet, &c->data.authenticator);
   if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
@@ -92,7 +91,8 @@ static void send_ack(struct senders_entry* c, uint64 seq)
 static void send_cid(struct senders_entry* c, nistp224key sp)
 {
   packet.len = 0;
-  pkt_add_u8(&packet, CID);
+  pkt_add_u4(&packet, PREFIX);
+  pkt_add_u4(&packet, CID);
   pkt_add_key(&packet, sp);
   pkt_add_cc(&packet, &c->data.authenticator);
   if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
@@ -126,8 +126,6 @@ static void send_srp(void)
   str_catstat(&tmp, "INI-Valid", ini_valid);
   str_catstat(&tmp, "MSG-Retransmits", msg_retransmits);
   str_catstat(&tmp, "MSG-Valid", msg_valid);
-  str_catstat(&tmp, "MMSG-Retransmits", mmsg_retransmits);
-  str_catstat(&tmp, "MMSG-Valid", mmsg_valid);
   packet.len = 0;
   pkt_add_u8(&packet, SRP);
   pkt_add_s2(&packet, &tmp);
@@ -235,75 +233,6 @@ static int check_crc(const str* s, unsigned offset)
     crc32_block(s->s+offset, s->len-offset-4) == crc;
 }
 
-static void handle_msg(uint64 seq)
-{
-  unsigned offset;
-  struct timestamp ts;
-  struct senders_entry* c;
-  unsigned linelen;
-  const struct sender_addr key = { port, ip };
-
-  if ((c = senders_get(&senders, &key)) == 0) {
-    msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": MSG from unknown sender");
-    return;
-  }
-  if (!pkt_validate(&packet, &c->data.authenticator)) {
-    error_sender(c, "MSG failed authentication");
-    return;
-  }
-  if (seq > c->data.next_seq) {
-    error_sender(c, "MSG has sequence number in future");
-    return;
-  }
-  if ((packet.len - 8) % ENCR_BLOCK_SIZE != 0) {
-    error_sender(c, "MSG has invalid padding");
-    return;
-  }
-  
-  decr_blocks(&c->data.decryptor, packet.s+8, packet.len-8, seq);
-  if (!check_crc(&packet, 8)) {
-    error_sender(c, "MSG has invalid CRC");
-    return;
-  }
-  ++msg_valid;
-
-  if (seq == c->data.next_seq) {
-    if ((offset = pkt_get_u2(&packet, 8, &linelen)) == 0 ||
-	(offset += PADLEN(2+4+4+linelen+4)) + linelen+4+4+4 != packet.len) {
-      error_sender(c, "MSG has invalid length");
-      return;
-    }
-    if ((offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
-	(offset = pkt_get_b(&packet, offset, &line, linelen)) == 0 ||
-	offset + 4 != packet.len) {
-      error_sender(c, "MSG has invalid format");
-      return;
-    }
-    if (tslt(&ts, &c->data.last_timestamp)) {
-      error_sender(c, "MSG has timestamp in past");
-      return;
-    }
-    
-    write_line(c, &ts, &line);
-    c->data.last_timestamp = ts;
-    c->data.last_seq = seq;
-    c->data.last_count = 1;
-    send_ack(c, seq);
-    c->data.next_seq = seq + 1;
-  }
-  /* Since the sender waits for an ACK before sending the next MSG,
-   * it will never resend anything except for the previous packet. */
-  else if (seq == c->data.last_seq) {
-    /* Ignore the contents of the message, just ACK it
-     * since we've already seen it */
-    send_ack(c, seq);
-    ++msg_retransmits;
-  }
-  else
-    error_sender(c, "MSG has sequence number in past");
-}
-
 #if 0
 static void dump_packet(struct senders_entry* c, const str* s)
 {
@@ -328,7 +257,7 @@ static void dump_packet(struct senders_entry* c, const str* s)
 }
 #endif
 
-static void handle_mmsg(void)
+static void handle_msg(void)
 {
   unsigned offset;
   struct timestamp ts;
@@ -341,26 +270,26 @@ static void handle_mmsg(void)
 
   if ((c = senders_get(&senders, &key)) == 0) {
     msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": MMSG from unknown sender");
+	 ": MSG from unknown sender");
     return;
   }
   if (!pkt_validate(&packet, &c->data.authenticator)) {
-    error_sender(c, "MMSG failed authentication");
+    error_sender(c, "MSG failed authentication");
     return;
   }
   if ((packet.len - (8+8+1)) % ENCR_BLOCK_SIZE != 0) {
-    error_sender(c, "MMSG has invalid padding");
+    error_sender(c, "MSG has invalid padding");
     return;
   }
   if (packet.len < 8 + 8 + 1 + 8 + 2+1 + 4) {
-    error_sender(c, "MMSG is too short");
+    error_sender(c, "MSG is too short");
     return;
   }
   
   pkt_get_u8(&packet, 8, &seq);
   pkt_get_u1(&packet, 8+8, &count);
   if (seq > c->data.next_seq) {
-    error_sender3(c, "MMSG has sequence number in future: ",
+    error_sender3(c, "MSG has sequence number in future: ",
 		  seq, c->data.next_seq);
     return;
   }
@@ -368,12 +297,12 @@ static void handle_mmsg(void)
   decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1), seq);
 
   if (!check_crc(&packet, 8+8+1)) {
-    error_sender(c, "MMSG has invalid CRC");
+    error_sender(c, "MSG has invalid CRC");
     //dump_packet(c, &packet);
     return;
   }
 
-  ++mmsg_valid;
+  ++msg_valid;
 
   if (seq == c->data.next_seq ||
       (seq == c->data.last_seq && count > c->data.last_count)) {
@@ -382,19 +311,19 @@ static void handle_mmsg(void)
     for (offset = 8+8+1, i = 0; i < count; ++i) {
       if ((offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
 	  (offset = pkt_get_s2(&packet, offset, &line)) == 0) {
-	error_sender(c, "MMSG has invalid format");
+	error_sender(c, "MSG has invalid format");
 	return;
       }
       if (tslt(&ts, &last_ts) &&
 	  (i > 0 || seq == c->data.next_seq)) {
-	error_sender(c, "MMSG has timestamp going backwards");
+	error_sender(c, "MSG has timestamp going backwards");
 	return;
       }
       last_ts = ts;
     }
     if (seq == c->data.last_seq) {
-      warn_sender3(c, "MMSG has retransmitted lines: ", seq, count);
-      ++mmsg_retransmits;
+      warn_sender3(c, "MSG has retransmitted lines: ", seq, count);
+      ++msg_retransmits;
     }
     /* Pass 2 -- write out the lines */
     c->data.last_seq = seq;
@@ -411,17 +340,17 @@ static void handle_mmsg(void)
     c->data.last_count = count;
     send_ack(c, seq - 1);
   }
-  /* Since the sender waits for an ACK before sending the next MMSG,
+  /* Since the sender waits for an ACK before sending the next MSG,
    * it will never resend anything except for the previous packet. */
   else if (seq == c->data.last_seq &&
 	   count == c->data.last_count) {
     /* Ignore the contents of the message, just ACK it
      * since we've already seen it */
     send_ack(c, seq+count-1);
-    ++mmsg_retransmits;
+    ++msg_retransmits;
   }
   else
-    error_sender(c, "MMSG has invalid sequence number");
+    error_sender(c, "MSG has invalid sequence number");
 }
 
 static struct timeval last_ini;
@@ -530,7 +459,7 @@ static void sighup(int ignored) { reload = 1; (void)ignored; }
 int main(void)
 {
   int i;
-  uint64 type;
+  uint32 type;
   const char* env;
 
   msg_debug_init();
@@ -567,19 +496,22 @@ int main(void)
       if (errno == EINTR) continue;
       die1sys(1, "Socket receive failed");
     }
-    if ((packet.len = i) > 8 + HASH_LENGTH) {
-      pkt_get_u8(&packet, 0, &type);
+    packet.len = i;
+    if (!pkt_get_u4(&packet, 0, &type)
+	|| type != PREFIX)
+      msg4(ipv4_format(&ip), "/", utoa(port),
+	   ": Warning: Packet is missing prefix");
+    else {
+      pkt_get_u4(&packet, 4, &type);
       if (type == INI)
 	handle_ini();
-      else if (type == MMSG)
-	handle_mmsg();
-      else
-	handle_msg(type);
-    }
-    else if (packet.len == 8) {
-      pkt_get_u8(&packet, 0, &type);
-      if (type == SRQ)
+      else if (type == MSG)
+	handle_msg();
+      else if (type == SRQ)
 	handle_srq();
+      else
+	msg4(ipv4_format(&ip), "/", utoa(port),
+	     ": Warning: Unknown packet type");
     }
     packets_received++;
     bytes_received += i;
