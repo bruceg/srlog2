@@ -4,26 +4,26 @@
 
 <ul>
 
-<li> The packet format is optimized for the common case -- message
+<li>The packet format is optimized for the common case -- message
 packets sent from client to server, and acknowledgements from server to
 client.</li>
 
-<li> A check code (CRC-32) is included inside the encrypted data on MSG
+<li>A check code (CRC-32) is included inside the encrypted data on MSG
 packets to ensure that the encryption state is properly synchronized on
 client and server (may not be necessary).</li>
 
-<li> A 32-bit CRC takes no longer than a 16-bit CRC to calculate on
+<li>A 32-bit CRC takes no longer than a 16-bit CRC to calculate on
 modern (32-bit) CPUs, perhaps even shorter due to using native word
 size.  The difference in resulting packet size is negligable.</li>
 
-<li> Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC for
-encryption, with the lower 24 bytes of the nistp224 shared secret used
-for the key.</li>
+<li>Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC for
+encryption, with the first 32 bytes of the SHA-512 hash of the nistp224
+shared secret used for the key.</li>
 
-<li> A "timestamp" is encoded as a 4-byte unsigned number of seconds
+<li>A "timestamp" is encoded as a 4-byte unsigned number of seconds
 since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
 
-<li> Numbers are encoded in MSB format </li>
+<li>Numbers are encoded in MSB format.</li>
 
 </ul>
 

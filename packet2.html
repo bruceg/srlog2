@@ -74,18 +74,17 @@ secret * Server session public)</td> </tr>
 
 <tr> <td>8</td> <td>Timestamp</td> <td>Initial timestamp</td> </tr>
 
-<tr> <td>1+N</td> <td>String</td> <td>Sender name</td> </tr>
-
-<tr> <td>1+N</td> <td>String</td> <td>Service name</td> </tr>
-
-<tr> <td>1+N</td> <td>String</td> <td>Authenticator hash type
+<tr> <td>1+N</td> <td>String</td> <td>Authenticator preference list
 ("MD5")</td> </tr>
 
-<tr> <td>1+N</td> <td>String</td> <td>Public key type ("nistp224")</td>
-</tr>
+<tr> <td>1+N</td> <td>String</td> <td>Public key preference list
+("nistp224")</td> </tr>
 
-<tr> <td>1+N</td> <td>String</td> <td>Encryption type ("AES-CBC" or
-"Rijndael64-CBC")</td> </tr>
+<tr> <td>1+N</td> <td>String</td> <td>Encryptor preference list
+("AES-CBC")</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Compressor preference list
+("null")</td> </tr>
 
 <tr> <td>28</td> <td>nistp224</td> <td>Client session public key</td> </tr>
 
@@ -101,7 +100,17 @@ secret * Server session public)</td> </tr>
 
 <tr> <td>4</td> <td>Constant</td> <td>Packet type "SRL2"</td> </tr>
 
-<tr> <td>4</td> <td>Constant</td> <td>Message type "CnID"</td> </tr>
+<tr> <td>4</td> <td>Constant</td> <td>Message type "CID1"</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Authenticator choice</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Public key choice</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Encryptor choice</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Compressor choice</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Extra parameters</td> </tr>
 
 <tr> <td>28</td> <td>nistp224</td> <td>Server session public key</td> </tr>
 
