@@ -47,6 +47,7 @@ extern int pkt_add_u4(str* s, uint32 u);
 extern int pkt_add_u8(str* s, uint64 u);
 extern int pkt_add_ts(str* s, const struct timestamp*);
 extern int pkt_add_s1(str* s, const str* l);
+extern int pkt_add_s1c(str* s, const char* l);
 extern int pkt_add_s2(str* s, const str* l);
 extern int pkt_add_key(str* s, const nistp224key k);
 extern int pkt_add_cc(str* s, const HASH_CTX* ctx);

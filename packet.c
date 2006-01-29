@@ -56,6 +56,13 @@ int pkt_add_s1(str* s, const str* l)
     str_catb(s, l->s, l->len);
 }
 
+int pkt_add_s1c(str* s, const char* l)
+{
+  unsigned long len = strlen(l);
+  return pkt_add_u1(s, len) &&
+    str_catb(s, l, len);
+}
+
 int pkt_add_s2(str* s, const str* l)
 {
   return pkt_add_u2(s, l->len) &&
