@@ -19,23 +19,16 @@
 #include <unix/sig.h>
 
 #include "srlog2.h"
-
-const char program[] = "srlogq";
-const int msg_show_pid = 0;
-
-static void usage(void)
-{
-  die3(1, "usage: ", program, " server [port]");
-}
+#include "srlog2q-cli.h"
 
 static str pktin;
 static str pktout;
 static str data;
 
-int main(int argc, char* argv[])
+int cli_main(int argc, char* argv[])
 {
   ipv4addr ip;
-  ipv4port port = 11006;
+  ipv4port port = opt_port;
   int sock;
   unsigned timeout = 1000;
   const char* tmp;
@@ -45,11 +38,8 @@ int main(int argc, char* argv[])
   uint32 code;
   long len;
 
-  if (argc < 2) usage();
-  if (!resolve_ipv4name(argv[1], &ip))
-    die3(1, "Could not resolve '", argv[1], "'");
-  if (argc > 2)
-    port = strtoul(argv[2], 0, 10);
+  if (!resolve_ipv4name(argv[0], &ip))
+    die3(1, "Could not resolve '", argv[0], "'");
 
   if ((sock = socket_udp()) == -1)
     die1sys(1, "Could not create UDP socket");
@@ -89,4 +79,5 @@ int main(int argc, char* argv[])
   }
   die1(1, "Timed out");
   return 1;
+  (void)argc;
 }

@@ -465,8 +465,6 @@ static void prep_sender(void)
 
 int cli_main(int argc, char* argv[])
 {
-  const char* tmp;
-  char* end;
   const char* server_name = 0;
 
   msg_debug_init();
@@ -491,10 +489,7 @@ int cli_main(int argc, char* argv[])
   load_server_key(server_name);
   load_host_key();
 
-  if ((tmp = getenv("PORT")) == 0) tmp = "11006";
-  if ((port = strtol(tmp, &end, 10)) == 0 || *end != 0)
-    die3(1, "Could not parse port '", tmp, "'");
-
+  port = opt_port;
   if ((sock = socket_udp()) == -1)
     die1sys(1, "Could not create UDP socket");
   if (!socket_connect4(sock, &ip, port))

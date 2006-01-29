@@ -18,10 +18,7 @@
 #include <unix/sig.h>
 
 #include "srlog2.h"
-
-const char program[] = "srlogd";
-const int msg_show_pid = 0;
-int msg_debug_bits = 0;
+#include "srlog2d-cli.h"
 
 /* Time in seconds to pause between accepting INIs */
 static double ini_throttle = 1.0 / 64;
@@ -459,7 +456,7 @@ static int reload;
 static void sigfn(int ignored) { exitasap = 1; (void)ignored; }
 static void sighup(int ignored) { reload = 1; (void)ignored; }
 
-int main(void)
+int cli_main(int argc, char* argv[])
 {
   int i;
   uint32 type;
@@ -476,7 +473,8 @@ int main(void)
 
   if ((sock = socket_udp()) == -1)
     die1sys(1, "Could not create UDP socket");
-  if (!socket_bind4(sock, &ip, 11006))
+  port = opt_port;
+  if (!socket_bind4(sock, &ip, port))
     die1sys(1, "Could not bind UDP socket");
   if (!str_ready(&packet, 65536) ||
       !str_ready(&line, 65536) ||
@@ -528,4 +526,6 @@ int main(void)
 
   msg1("Exiting");
   return 0;
+  (void)argc;
+  (void)argv;
 }
