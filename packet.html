@@ -25,6 +25,9 @@ since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
 
 <li>Numbers are encoded in LSB format.</li>
 
+<li>Strings are represented with a 1 or 2 byte length number (encoded as
+above) followed by the raw data.  No trailing NUL byte is used.</li>
+
 </ul>
 
 <h2>INI: Initialization Packet</h2>
@@ -37,11 +40,13 @@ since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
 
 <tr> <td>4</td> <td>Constant</td> <td>Message type "INI1"</td> </tr>
 
+<tr> <td>1+N</td> <td>String</td> <td>Sender name</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Service name</td> </tr>
+
 <tr> <td>8</td> <td>Unsigned</td> <td>Initial Sequence number</td> </tr>
 
 <tr> <td>8</td> <td>timestamp</td> <td>Initial timestamp</td> </tr>
-
-<tr> <td>1+N</td> <td>String</td> <td>Service name</td> </tr>
 
 <tr> <td>28</td> <td>nistp224</td> <td>Client one-time public key</td>
 </tr>

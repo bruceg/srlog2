@@ -5,3 +5,7 @@ Usage: SERVICE [SERVER] [[+-]PATTERN ...]
 [prefix]
 If the SERVER command-line parameter is not present, srlog looks for the
 server address in the $SERVER environment variable.
+
+[options]
+-s --sender STRING opt_sender
+The sender name to give to the server.

@@ -1,8 +1,6 @@
 - Add more counters to srlogd for error packets
 
 - Gradually migrate to protocol v2
-  - Make srlogd drop all packets not starting with 0xffffffff
-  - Add code to srlogd to handle the new protocol ("SRL2")
-  - Migrate all senders to use protocol v2
+  - Add all the features to the INI1/CID1 packets
 
 - Switch to curve25519 http://cr.yp.to/ecdh.html

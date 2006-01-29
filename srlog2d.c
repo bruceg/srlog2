@@ -41,6 +41,7 @@ static ipv4addr ip;
 static ipv4port port;
 static str packet;
 static str line;
+static str sender;
 static str tmp;
 static str path;
 
@@ -385,9 +386,10 @@ static void handle_ini()
     return;
   }
 
-  if ((offset = pkt_get_u8(&packet, 8, &seq)) == 0 ||
-      (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
+  if ((offset = pkt_get_s1(&packet, 8, &sender)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &line)) == 0 ||
+      (offset = pkt_get_u8(&packet, offset, &seq)) == 0 ||
+      (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
       (offset = pkt_get_key(&packet, offset, csession_public)) == 0 ||
       offset + HASH_LENGTH != packet.len) {
     msg4(ipv4_format(&ip), "/", utoa(port),

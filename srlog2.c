@@ -210,6 +210,8 @@ static void make_ini(const nistp224key key, const struct line* line)
   out_packet.len = 0;
   pkt_add_u4(&out_packet, SRL2);
   pkt_add_u4(&out_packet, INI1);
+  pkt_add_s1c(&out_packet, opt_sender);
+  pkt_add_s1(&out_packet, &service);
   pkt_add_u8(&out_packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);
@@ -218,7 +220,6 @@ static void make_ini(const nistp224key key, const struct line* line)
   else
     ts = &line->timestamp;
   pkt_add_ts(&out_packet, ts);
-  pkt_add_s1(&out_packet, &service);
   pkt_add_key(&out_packet, key);
   pkt_add_cc(&out_packet, &ini_authenticator);
 }
@@ -447,6 +448,21 @@ static void getenvu(const char* name, unsigned long* dst)
       die5(1, "Invalid value for $", name, ": '", env, "'");
 }
 
+static void prep_sender(void)
+{
+  static char hostname[256];
+  char* p;
+  
+  if (opt_sender == 0) {
+    if (gethostname(hostname, sizeof hostname) != 0)
+      die1sys(1, "gethostname failed");
+    hostname[sizeof hostname - 1] = 0;
+    if ((p = strchr(hostname, '.')) != 0)
+      *p = 0;
+    opt_sender = hostname;
+  }
+}
+
 int cli_main(int argc, char* argv[])
 {
   const char* tmp;
@@ -454,6 +470,7 @@ int cli_main(int argc, char* argv[])
   const char* server_name = 0;
 
   msg_debug_init();
+  prep_sender();
   if (!str_copys(&service, argv[0])) die_oom(1);
   if (argc > 1
       && argv[1][0] != '-'
