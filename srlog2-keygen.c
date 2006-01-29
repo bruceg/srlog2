@@ -8,6 +8,7 @@
 #include <msg/msg.h>
 #include <msg/wrap.h>
 
+#include "conf_etc.c"
 #include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
@@ -46,16 +47,23 @@ int exists(const char* path)
 
 int cli_main(int argc, char* argv[])
 {
-  wrap_chdir(argv[0]);
-  if (exists("secret") && exists("public"))
-    die3(1, "The key pair for '", argv[0], "' appears to exist already");
+  str secret_path = {0,0,0};
+  str public_path = {0,0,0};
+  if (argc > 0)
+    wrap_str(str_copys(&secret_path, argv[0]));
+  else
+    wrap_str(str_copy2s(&secret_path, conf_etc, "/nistp224"));
+  wrap_str(str_copy(&public_path, &secret_path));
+  wrap_str(str_cats(&public_path, ".pub"));
+  if (exists(secret_path.s) && exists(public_path.s))
+    die3(1, "The key pair for '", secret_path.s, "' appears to exist already");
   brandom_init(28, 1);
   brandom_key(secret, public);
   encode_key(&line, secret);
-  if (!write_key("secret", 0400, line.s)) return 1;
+  if (!write_key(secret_path.s, 0400, line.s)) return 1;
   encode_key(&line, public);
-  if (!write_key("public", 0444, line.s)) return 1;
-  msg4("Public key for '", argv[0], "' is ", line.s);
+  if (!write_key(public_path.s, 0444, line.s)) return 1;
+  msg4("Public key for '", secret_path.s, "' is ", line.s);
   return 0;
   (void)argc;
 }

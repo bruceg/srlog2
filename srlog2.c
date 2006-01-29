@@ -429,8 +429,8 @@ static void load_host_key(void)
   nistp224key client_secret;
   nistp224key tmpkey;
   str path = {0,0,0};
-  if (!load_key("secret", client_secret)) {
-    wrap_str(str_copy2s(&path, conf_etc, "/key/secret"));
+  if (!load_key("nistp224", client_secret)) {
+    wrap_str(str_copy2s(&path, conf_etc, "/nistp224"));
     if (!load_key(path.s, client_secret))
       die1sys(1, "Could not load sender key");
     str_free(&path);

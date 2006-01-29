@@ -465,8 +465,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!load_key("secret", server_secret) ||
-      !load_key("public", server_public))
+  if (!load_key("nistp224", server_secret) ||
+      !load_key("nistp224.pub", server_public))
     die1(1, "Could not load keys");
   load_senders(0);
   brandom_init(28*senders.count, 1);

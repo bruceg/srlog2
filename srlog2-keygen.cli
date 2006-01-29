@@ -1,3 +1,7 @@
-Min: 1
+Min: -1
 Max: 1
-Usage: DIRECTORY
+Usage: [DIRECTORY]
+
+[prefix]
+If DIRECTORY is not specified, the key is written to
+@CONF-ETC@/srlog2/nistp224
