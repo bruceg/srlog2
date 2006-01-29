@@ -1,0 +1,47 @@
+\input texinfo @c -*-texinfo-*-
+@c %**start of header
+@setfilename srlog2.info
+@settitle srlog2 documentation
+@setchapternewpage off
+@paragraphindent 5
+@footnotestyle end
+@c %**end of header
+
+@ifinfo
+Copyright @copyright{} 2006 Bruce Guenter
+@end ifinfo
+
+@titlepage
+@title srlog2 documentation
+@author Bruce Guenter
+@subtitle @today{}
+@end titlepage
+
+@ifinfo
+This document explains ...
+@end ifinfo
+
+@node Top, Introduction, (dir), (dir)
+
+@menu
+* Introduction::                
+* Design Notes::                
+* Configuration::               
+@end menu
+
+@c ****************************************************************************
+@node Introduction, Design Notes, Top, Top
+@chapter Introduction
+
+@c ****************************************************************************
+@node Design Notes, Configuration, Introduction, Top
+@chapter Design Notes
+
+@c ****************************************************************************
+@node Configuration,  , Design Notes, Top
+@chapter Configuration
+
+@c ****************************************************************************
+@contents
+
+@bye
