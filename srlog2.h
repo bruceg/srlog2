@@ -103,6 +103,7 @@ struct sender_data
   HASH_CTX ini_authenticator;
   HASH_CTX authenticator;
   DECR_CTX decryptor;
+  str sender;
   str service;
   str dir;
   uint64 last_seq;
@@ -119,6 +120,6 @@ void warn_sender(const struct senders_entry* c, const char* s);
 void warn_sender3(const struct senders_entry* c, const char* s,
 		  uint64 u1, uint64 u2);
 void load_senders(int reload);
-struct senders_entry* find_sender(const ipv4addr* addr,	const char* service);
+struct senders_entry* find_sender(const char* sender, const char* service);
 
 #endif

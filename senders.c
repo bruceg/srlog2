@@ -6,6 +6,7 @@
 #include <crc/crc32.h>
 #include <iobuf/iobuf.h>
 #include <msg/msg.h>
+#include <msg/wrap.h>
 #include <fmt/number.h>
 
 #include "srlog2.h"
@@ -92,8 +93,9 @@ void warn_sender3(const struct senders_entry* c, const char* s,
 }
 
 /* ------------------------------------------------------------------------- */
-static ipv4addr sender_ip;
 static str line;
+static str tmp_sender;
+static str tmp_service;
 static str tmp;
 
 static inline int ipcmp(const ipv4addr* a, const ipv4addr* b)
@@ -103,31 +105,31 @@ static inline int ipcmp(const ipv4addr* a, const ipv4addr* b)
 
 static int is_sender(struct senders_entry const* entry)
 {
-  return ipcmp(&entry->key.ip, &sender_ip) == 0 &&
-    str_diff(&tmp, &entry->data.service) == 0;
+  return str_diff(&tmp_sender, &entry->data.sender) == 0
+    && str_diff(&tmp_service, &entry->data.service) == 0;
 }
 
-struct senders_entry* find_sender(const ipv4addr* addr, const char* service)
+struct senders_entry* find_sender(const char* sender, const char* service)
 {
-  sender_ip = *addr;
-  if (!str_copys(&tmp, service)) die_oom(1);
+  wrap_str(str_copys(&tmp_sender, sender));
+  wrap_str(str_copys(&tmp_service, service));
   return senders_search(&senders, is_sender);
 }
 
 /* ------------------------------------------------------------------------- */
 extern nistp224key server_secret;
 
-static void add_sender(const ipv4addr* ip, const char* service, 
+static void add_sender(const char* sender, const char* service, 
 		       nistp224key key, const char* dir)
 {
   struct sender_addr a;
   struct sender_data d;
 
-  a.port = 0;
-  a.ip = *ip;
-
-  memset(&d, 0, sizeof(d));
-  if (!str_copys(&d.service, service) || !str_copys(&d.dir, dir)) die_oom(1);
+  memset(&a, 0, sizeof a);
+  memset(&d, 0, sizeof d);
+  wrap_str(str_copys(&d.sender, sender));
+  wrap_str(str_copys(&d.service, service));
+  wrap_str(str_copys(&d.dir, dir));
   hash_start(&d.ini_authenticator, key);
   d.fd = -1;
   if (!senders_add(&senders, &a, &d)) die_oom(1);
@@ -139,9 +141,7 @@ static void parse_sender_line(void)
   int i;
   int j;
   int k;
-  ipv4addr ip;
   nistp224key tmpkey;
-  const char* end;
   if ((i = str_findfirst(&line, ':')) == -1 ||
       (j = str_findnext(&line, ':', i+1)) == -1 ||
       (k = str_findnext(&line, ':', j+1)) == -1 ||
@@ -151,11 +151,7 @@ static void parse_sender_line(void)
     line.s[i++] = 0;
     line.s[j++] = 0;
     line.s[k++] = 0;
-    if (!ipv4_parse(line.s, &ip, &end) || *end != 0) {
-      warn3("Could not parse IP '", line.s, "', ignoring line");
-      return;
-    }
-    if (find_sender(&ip, line.s+i))
+    if (find_sender(line.s, line.s+i))
       return;
     if (!str_truncate(&tmp, 0) ||
         !base64_decode_line(line.s+j, &tmp) ||
@@ -164,7 +160,7 @@ static void parse_sender_line(void)
       return;
     }
     nistp224(tmpkey, tmp.s, server_secret);
-    add_sender(&ip, line.s+i, tmpkey, line.s+k);
+    add_sender(line.s, line.s+i, tmpkey, line.s+k);
   }
 }
 

@@ -396,7 +396,7 @@ static void handle_ini()
   }
 
   /* Only allow connections to services listed in our config */
-  if ((c = find_sender(&ip, line.s)) == 0) {
+  if ((c = find_sender(sender.s, line.s)) == 0) {
     msg6(ipv4_format(&ip), "/", utoa(port), "/", line.s,
 	 ": Warning: INI from unknown sender");
     ++ini_unknown_sender;
@@ -411,6 +411,7 @@ static void handle_ini()
   }
   ++ini_valid;
   c->key.port = port;
+  c->key.ip = ip;
   senders_rehash(&senders);
   if (c->data.next_seq == 0) {
     msg_sender(c, "New connection", 0);

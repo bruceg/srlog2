@@ -1,3 +1,7 @@
+- Replace senders.c:find_sender with another hash table
+  - keyed on sender,service
+  - keeps only the data necessary to produce a connected sender
+
 - Add more counters to srlogd for error packets
 
 - Gradually migrate to protocol v2
