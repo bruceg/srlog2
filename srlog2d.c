@@ -73,7 +73,7 @@ nistp224key server_public;
 nistp224key server_secret;
 
 /* ------------------------------------------------------------------------- */
-static void send_ack(struct senders_entry* c, uint64 seq)
+static void send_ack(struct connections_entry* c, uint64 seq)
 {
   packet.len = 0;
   pkt_add_u4(&packet, SRL2);
@@ -86,7 +86,7 @@ static void send_ack(struct senders_entry* c, uint64 seq)
   bytes_sent += packet.len;
 }
 
-static void send_cid(struct senders_entry* c, nistp224key sp)
+static void send_cid(struct connections_entry* c, nistp224key sp)
 {
   packet.len = 0;
   pkt_add_u4(&packet, SRL2);
@@ -135,7 +135,7 @@ static void send_srp(void)
 }
 
 /* ------------------------------------------------------------------------- */
-static void reopen(struct senders_entry* c, const struct timestamp* ts)
+static void reopen(struct connections_entry* c, const struct timestamp* ts)
 {
   time_t t;
   struct tm* lt;
@@ -162,14 +162,14 @@ static void reopen(struct senders_entry* c, const struct timestamp* ts)
     close(c->data.fd);
   }
 
-  str_copy(&path, &c->data.dir);
+  str_copy(&path, &c->data.sender->data.dir);
   str_catc(&path, '/');
   str_cat(&path, &tmp);
-  msg_sender(c, "Opening ", path.s);
+  msg_connection(c, "Opening ", path.s);
   if ((c->data.fd = open(path.s, O_WRONLY|O_CREAT|O_APPEND, 0644)) == -1)
     die3sys(1, "Could not open '", path.s, "'"); /* FIXME: should not die */
 
-  str_copy(&path, &c->data.dir);
+  str_copy(&path, &c->data.sender->data.dir);
   str_cats(&path, "/current");
   unlink(path.s);
   symlink(tmp.s, path.s);
@@ -199,7 +199,7 @@ static int str_catuhex(str* s, uint32 u)
   return str_catb(s, hex, 8);
 }
 
-static void write_line(struct senders_entry* c,
+static void write_line(struct connections_entry* c,
 		       const struct timestamp* ts, const str* l)
 {
   /* Assumption: the timestamp is monotonically increasing */
@@ -233,7 +233,7 @@ static int check_crc(const str* s, unsigned offset)
 }
 
 #if 0
-static void dump_packet(struct senders_entry* c, const str* s)
+static void dump_packet(struct connections_entry* c, const str* s)
 {
   const unsigned char* p;
   unsigned i;
@@ -261,42 +261,42 @@ static void handle_msg(void)
   unsigned offset;
   struct timestamp ts;
   struct timestamp last_ts;
-  struct senders_entry* c;
-  const struct sender_addr key = { port, ip };
+  struct connections_entry* c;
+  const struct connection_key key = { port, ip };
   uint64 seq;
   unsigned count;
   unsigned i;
 
-  if ((c = senders_get(&senders, &key)) == 0) {
+  if ((c = connections_get(&connections, &key)) == 0) {
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": MSG from unknown sender");
     return;
   }
   if (!pkt_validate(&packet, &c->data.authenticator)) {
-    error_sender(c, "MSG failed authentication");
+    error_connection(c, "MSG failed authentication");
     return;
   }
   if ((packet.len - (8+8+1)) % ENCR_BLOCK_SIZE != 0) {
-    error_sender(c, "MSG has invalid padding");
+    error_connection(c, "MSG has invalid padding");
     return;
   }
   if (packet.len < 8 + 8 + 1 + 8 + 2+1 + 4) {
-    error_sender(c, "MSG is too short");
+    error_connection(c, "MSG is too short");
     return;
   }
   
   pkt_get_u8(&packet, 8, &seq);
   pkt_get_u1(&packet, 8+8, &count);
   if (seq > c->data.next_seq) {
-    error_sender3(c, "MSG has sequence number in future: ",
-		  seq, c->data.next_seq);
+    error_connection3(c, "MSG has sequence number in future: ",
+		      seq, c->data.next_seq);
     return;
   }
 
   decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1), seq);
 
   if (!check_crc(&packet, 8+8+1)) {
-    error_sender(c, "MSG has invalid CRC");
+    error_connection(c, "MSG has invalid CRC");
     //dump_packet(c, &packet);
     return;
   }
@@ -310,18 +310,18 @@ static void handle_msg(void)
     for (offset = 8+8+1, i = 0; i < count; ++i) {
       if ((offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
 	  (offset = pkt_get_s2(&packet, offset, &line)) == 0) {
-	error_sender(c, "MSG has invalid format");
+	error_connection(c, "MSG has invalid format");
 	return;
       }
       if (tslt(&ts, &last_ts) &&
 	  (i > 0 || seq == c->data.next_seq)) {
-	error_sender(c, "MSG has timestamp going backwards");
+	error_connection(c, "MSG has timestamp going backwards");
 	return;
       }
       last_ts = ts;
     }
     if (seq == c->data.last_seq) {
-      warn_sender3(c, "MSG has retransmitted lines: ", seq, count);
+      warn_connection3(c, "MSG has retransmitted lines: ", seq, count);
       ++msg_retransmits;
     }
     /* Pass 2 -- write out the lines */
@@ -349,7 +349,7 @@ static void handle_msg(void)
     ++msg_retransmits;
   }
   else
-    error_sender(c, "MSG has invalid sequence number");
+    error_connection(c, "MSG has invalid sequence number");
 }
 
 static struct timeval last_ini;
@@ -360,7 +360,9 @@ static void handle_ini()
   unsigned offset;
   uint64 seq;
   struct timestamp ts;
-  struct senders_entry* c;
+  struct senders_entry* s;
+  struct connection_key* c;
+  struct connections_entry* ce;
   nistp224key csession_public;
   nistp224key ssession_public;
   nistp224key ssession_secret;
@@ -396,7 +398,7 @@ static void handle_ini()
   }
 
   /* Only allow connections to services listed in our config */
-  if ((c = find_sender(sender.s, line.s)) == 0) {
+  if ((s = find_sender(sender.s, line.s)) == 0) {
     msg6(ipv4_format(&ip), "/", utoa(port), "/", line.s,
 	 ": Warning: INI from unknown sender");
     ++ini_unknown_sender;
@@ -404,45 +406,57 @@ static void handle_ini()
   }
   last_ini = now;
   
-  if (!pkt_validate(&packet, &c->data.ini_authenticator)) {
-    error_sender(c, "INI failed authentication");
+  if (!pkt_validate(&packet, &s->data.ini_authenticator)) {
+    error_sender(s, "INI failed authentication");
     ++ini_failed_auth;
     return;
   }
   ++ini_valid;
-  c->key.port = port;
-  c->key.ip = ip;
-  senders_rehash(&senders);
-  if (c->data.next_seq == 0) {
-    msg_sender(c, "New connection", 0);
-    c->data.next_seq = seq;
+
+  if ((c = s->data.connection) == 0) {
+    msg_sender(s, "New connection", 0);
+
+    struct connection_key ck = { port, ip };
+    struct connection_data cd;
+    memset(&cd, 0, sizeof cd);
+
+    if (!connections_add(&connections, &ck, &cd)) die_oom(1);
+    ce = connections_get(&connections, &ck);
+    s->data.connection = &ce->key;
+    ce->data.sender = s;
   }
   else {
-    msg_sender(c, "Reconnected", 0);
-    if (seq > c->data.next_seq)
-      warn_sender(c, "Reset sequence number forwards");
+    msg_sender(s, "Reconnected", 0);
+
+    c->port = port;
+    c->ip = ip;
+    connections_rehash(&connections);
+    ce = connections_get(&connections, c);
+
+    if (seq > ce->data.next_seq)
+      warn_connection(ce, "Reset sequence number forwards");
     /* Special case: if the sent sequence number is the immediate
      * previous number (the just-received packet), accept the
      * sequence number but skip writing the next line.
      */
-    else if (seq == c->data.last_seq) 
-      seq = c->data.next_seq, ts = c->data.last_timestamp;
-    else if (seq < c->data.next_seq)
-      warn_sender(c, "Reset sequence number backwards");
-    if (tslt(&ts, &c->data.last_timestamp))
-      warn_sender(c, "Reset timestamp backwards");
-    c->data.next_seq = seq;
-    c->data.last_timestamp = ts;
-    c->data.last_count = 0;
+    else if (seq == ce->data.last_seq) 
+      seq = ce->data.next_seq, ts = ce->data.last_timestamp;
+    else if (seq < ce->data.next_seq)
+      warn_connection(ce, "Reset sequence number backwards");
+    if (tslt(&ts, &ce->data.last_timestamp))
+      warn_connection(ce, "Reset timestamp backwards");
   }
+  ce->data.next_seq = seq;
+  ce->data.last_timestamp = ts;
+  ce->data.last_count = 0;
   brandom_key(ssession_secret, ssession_public);
   nistp224(tmpkey, csession_public, server_secret);
-  hash_start(&c->data.authenticator, tmpkey);
-  reopen(c, &ts);
-  send_cid(c, ssession_public);
+  hash_start(&ce->data.authenticator, tmpkey);
+  reopen(ce, &ts);
+  send_cid(ce, ssession_public);
   nistp224(tmpkey, csession_public, ssession_secret);
-  hash_start(&c->data.authenticator, tmpkey);
-  decr_init(&c->data.decryptor, tmpkey, 28);
+  hash_start(&ce->data.authenticator, tmpkey);
+  decr_init(&ce->data.decryptor, tmpkey, 28);
 }
 
 static void handle_srq(void)

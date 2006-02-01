@@ -1,4 +1,5 @@
 addrname.o
+connections.o
 encr.o
 hash.o
 key.o

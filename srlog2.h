@@ -39,6 +39,44 @@ struct line
   str line;
 };
 
+struct sender_key
+{
+  str sender;
+  str service;
+};
+
+struct connection_key
+{
+  ipv4port port;
+  ipv4addr ip;
+};
+
+struct sender_data
+{
+  int fd;
+  HASH_CTX ini_authenticator;
+  DECR_CTX decryptor;
+  str dir;
+  struct connection_key* connection;
+};
+
+GHASH_DECL(senders,struct sender_key,struct sender_data);
+
+struct connection_data
+{
+  time_t rotate_at;
+  uint64 next_seq;
+  uint64 last_seq;
+  struct timestamp last_timestamp;
+  int fd;
+  HASH_CTX authenticator;
+  DECR_CTX decryptor;
+  unsigned long last_count;
+  const struct senders_entry* sender;
+};
+
+GHASH_DECL(connections,struct connection_key,struct connection_data);
+
 /* packet.c */
 extern void hash_start(HASH_CTX* ctx, const nistp224key key);
 extern int pkt_add_u1(str* s, unsigned u);
@@ -88,29 +126,6 @@ GHASH_DECL(addrname,ipv4addr,const char*);
 extern struct ghash addrname;
 
 /* senders.c */
-struct sender_addr
-{
-  ipv4port port;
-  ipv4addr ip;
-};
-
-struct sender_data
-{
-  time_t rotate_at;
-  uint64 next_seq;
-  struct timestamp last_timestamp;
-  int fd;
-  HASH_CTX ini_authenticator;
-  HASH_CTX authenticator;
-  DECR_CTX decryptor;
-  str sender;
-  str service;
-  str dir;
-  uint64 last_seq;
-  unsigned long last_count;
-};
-
-GHASH_DECL(senders,struct sender_addr,struct sender_data);
 extern struct ghash senders;
 void msg_sender(const struct senders_entry* c, const char* a, const char* b);
 void error_sender(const struct senders_entry* c, const char* s);
@@ -121,5 +136,15 @@ void warn_sender3(const struct senders_entry* c, const char* s,
 		  uint64 u1, uint64 u2);
 void load_senders(int reload);
 struct senders_entry* find_sender(const char* sender, const char* service);
+
+/* connections.c */
+extern struct ghash connections;
+void msg_connection(const struct connections_entry* c, const char* a, const char* b);
+void error_connection(const struct connections_entry* c, const char* s);
+void error_connection3(const struct connections_entry* c, const char* s,
+		   uint64 u1, uint64 u2);
+void warn_connection(const struct connections_entry* c, const char* s);
+void warn_connection3(const struct connections_entry* c, const char* s,
+		  uint64 u1, uint64 u2);
 
 #endif

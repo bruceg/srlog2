@@ -13,17 +13,21 @@
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
-static uint32 sender_hash(struct sender_addr const* key)
+static uint32 sender_hash(struct sender_key const* key)
 {
-  return crc32_block((const unsigned char*)key, sizeof *key);
+  uint32 crc = crc32_update(CRC32INIT, key->sender.s, key->sender.len);
+  return crc32_update(crc, key->service.s, key->service.len) & CRC32POST;
 }
 
-static int sender_cmp(struct sender_addr const* a, struct sender_addr const* b)
+static int sender_cmp(struct sender_key const* a, struct sender_key const* b)
 { 
-  return memcmp(a, b, sizeof *a);
+  int i;
+  if ((i = str_diff(&a->sender, &b->sender)) == 0)
+    i = str_diff(&a->service, &b->service);
+  return i;
 }
 
-static int sender_keycopy(struct sender_addr* a, struct sender_addr const* b)
+static int sender_keycopy(struct sender_key* a, struct sender_key const* b)
 {
   *a = *b;
   return 1;
@@ -35,25 +39,28 @@ static int sender_datacopy(struct sender_data* a, struct sender_data const* b)
   return 1;
 }
 
+static void sender_keyfree(struct sender_key* addr)
+{
+  str_free(&addr->sender);
+  str_free(&addr->service);
+}
+
 static void sender_datafree(struct sender_data* data)
 {
-  str_free(&data->service);
   str_free(&data->dir);
 }
 
-GHASH_DEFN(senders, struct sender_addr, struct sender_data,
+GHASH_DEFN(senders, struct sender_key, struct sender_data,
 	   sender_hash, sender_cmp,
-	   sender_keycopy, sender_datacopy, 0, sender_datafree);
+	   sender_keycopy, sender_datacopy, sender_keyfree, sender_datafree);
 
 /* ------------------------------------------------------------------------- */
 static const char* format_sender(const struct senders_entry* c)
 {
   static str s;
-  if (!str_copys(&s, ipv4_format(&c->key.ip))) return 0;
+  if (!str_copy(&s, &c->key.sender)) return 0;
   if (!str_catc(&s, '/')) return 0;
-  if (!str_catu(&s, c->key.port)) return 0;
-  if (!str_catc(&s, '/')) return 0;
-  if (!str_cat(&s, &c->data.service)) return 0;
+  if (!str_cat(&s, &c->key.service)) return 0;
   return s.s;
 }
 
@@ -93,42 +100,29 @@ void warn_sender3(const struct senders_entry* c, const char* s,
 }
 
 /* ------------------------------------------------------------------------- */
-static str line;
-static str tmp_sender;
-static str tmp_service;
-static str tmp;
-
-static inline int ipcmp(const ipv4addr* a, const ipv4addr* b)
-{
-  return *(uint32*)b - *(uint32*)a;
-}
-
-static int is_sender(struct senders_entry const* entry)
-{
-  return str_diff(&tmp_sender, &entry->data.sender) == 0
-    && str_diff(&tmp_service, &entry->data.service) == 0;
-}
-
 struct senders_entry* find_sender(const char* sender, const char* service)
 {
-  wrap_str(str_copys(&tmp_sender, sender));
-  wrap_str(str_copys(&tmp_service, service));
-  return senders_search(&senders, is_sender);
+  static struct sender_key key;
+  wrap_str(str_copys(&key.sender, sender));
+  wrap_str(str_copys(&key.service, service));
+  return senders_get(&senders, &key);
 }
 
 /* ------------------------------------------------------------------------- */
+static str line;
+static str tmp;
 extern nistp224key server_secret;
 
 static void add_sender(const char* sender, const char* service, 
 		       nistp224key key, const char* dir)
 {
-  struct sender_addr a;
+  struct sender_key a;
   struct sender_data d;
 
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
-  wrap_str(str_copys(&d.sender, sender));
-  wrap_str(str_copys(&d.service, service));
+  wrap_str(str_copys(&a.sender, sender));
+  wrap_str(str_copys(&a.service, service));
   wrap_str(str_copys(&d.dir, dir));
   hash_start(&d.ini_authenticator, key);
   d.fd = -1;
@@ -182,6 +176,7 @@ void load_senders(int reload)
   if (reload)
     msg1("Reloading new senders");
   else {
+    connections_init(&connections);
     senders_init(&senders);
     msg1("Loading senders");
   }
