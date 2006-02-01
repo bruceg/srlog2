@@ -7,3 +7,4 @@ packet.o
 random.o
 senders.o
 sequence.o
+surfrand.o
