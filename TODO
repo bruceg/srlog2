@@ -19,19 +19,16 @@
 
   - Look up senders and services in directories:
 
+    - Don't preload/reload senders
+
+    - Look up key on INI
+
     - Store host key in SENDER/.TYPE.pub
 
     - Store per-service key in SENDER/SERVICE/.TYPE.pub
 
-    - Look up key on INI
-
-    - Don't preload/reload senders
-
   - Add more counters for error packets
 
 - Add "type" name and "public" flag to load_key function
-
-- Gradually migrate to protocol v2
-  - Add all the features to the INI1/CID1 packets
 
 - Switch to curve25519 http://cr.yp.to/ecdh.html
