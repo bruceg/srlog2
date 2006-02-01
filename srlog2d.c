@@ -145,10 +145,10 @@ static void send_prf(const char nonce[8])
   pkt_add_u4(&packet, SRL2);
   pkt_add_u4(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
-  pkt_add_s1c(&packet, "MD5");
-  pkt_add_s1c(&packet, "nistp224");
-  pkt_add_s1c(&packet, "SHA-512");
-  pkt_add_s1c(&packet, "AES256-CBC-ESSID");
+  pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
+  pkt_add_s1c(&packet, KEYEXCHANGE_NAME);
+  pkt_add_s1c(&packet, KEYHASH_NAME);
+  pkt_add_s1c(&packet, ENCRYPTOR_NAME);
   pkt_add_s1c(&packet, "null");
   if (!socket_send4(sock, packet.s, packet.len, &ip, port))
     die1sys(1, "Could not send PRF packet");
