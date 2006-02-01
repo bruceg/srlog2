@@ -41,16 +41,31 @@ struct line
   str line;
 };
 
-struct sender_key
-{
-  str sender;
-  str service;
-};
-
 struct connection_key
 {
   ipv4port port;
   ipv4addr ip;
+};
+
+struct connection_data
+{
+  time_t rotate_at;
+  uint64 next_seq;
+  uint64 last_seq;
+  struct timestamp last_timestamp;
+  int fd;
+  HASH_CTX authenticator;
+  DECR_CTX decryptor;
+  unsigned long last_count;
+  str dir;
+};
+
+GHASH_DECL(connections,struct connection_key,struct connection_data);
+
+struct sender_key
+{
+  str sender;
+  str service;
 };
 
 struct sender_data
@@ -63,21 +78,6 @@ struct sender_data
 };
 
 GHASH_DECL(senders,struct sender_key,struct sender_data);
-
-struct connection_data
-{
-  time_t rotate_at;
-  uint64 next_seq;
-  uint64 last_seq;
-  struct timestamp last_timestamp;
-  int fd;
-  HASH_CTX authenticator;
-  DECR_CTX decryptor;
-  unsigned long last_count;
-  const struct senders_entry* sender;
-};
-
-GHASH_DECL(connections,struct connection_key,struct connection_data);
 
 /* packet.c */
 extern void hash_start(HASH_CTX* ctx, const nistp224key key);

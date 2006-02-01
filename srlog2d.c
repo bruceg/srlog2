@@ -178,14 +178,14 @@ static void reopen(struct connections_entry* c, const struct timestamp* ts)
     close(c->data.fd);
   }
 
-  str_copy(&path, &c->data.sender->data.dir);
+  str_copy(&path, &c->data.dir);
   str_catc(&path, '/');
   str_cat(&path, &tmp);
   msg_connection(c, "Opening ", path.s);
   if ((c->data.fd = open(path.s, O_WRONLY|O_CREAT|O_APPEND, 0644)) == -1)
     die3sys(1, "Could not open '", path.s, "'"); /* FIXME: should not die */
 
-  str_copy(&path, &c->data.sender->data.dir);
+  str_copy(&path, &c->data.dir);
   str_cats(&path, "/current");
   unlink(path.s);
   symlink(tmp.s, path.s);
@@ -435,11 +435,11 @@ static void handle_ini()
     struct connection_key ck = { port, ip };
     struct connection_data cd;
     memset(&cd, 0, sizeof cd);
+    str_copy(&cd.dir, &s->data.dir);
 
     if (!connections_add(&connections, &ck, &cd)) die_oom(1);
     ce = connections_get(&connections, &ck);
     s->data.connection = &ce->key;
-    ce->data.sender = s;
   }
   else {
     msg_sender(s, "Reconnected", 0);
