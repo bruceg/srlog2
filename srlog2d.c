@@ -135,6 +135,21 @@ static void send_srp(const char nonce[8])
   bytes_sent += packet.len;
 }
 
+static void send_prf(const char nonce[8])
+{
+  pkt_add_u4(&packet, SRL2);
+  pkt_add_u4(&packet, PRF1);
+  pkt_add_b(&packet, nonce, 8);
+  pkt_add_s1c(&packet, "MD5");
+  pkt_add_s1c(&packet, "nistp224");
+  pkt_add_s1c(&packet, "AES-CBC-ESSID");
+  pkt_add_s1c(&packet, "null");
+  if (!socket_send4(sock, packet.s, packet.len, &ip, port))
+    die1sys(1, "Could not send PRF packet");
+  packets_sent++;
+  bytes_sent += packet.len;
+}
+
 /* ------------------------------------------------------------------------- */
 static void reopen(struct connections_entry* c, const struct timestamp* ts)
 {
@@ -469,6 +484,20 @@ static void handle_srq(void)
     send_srp(line.s);
 }
 
+static void handle_prq(void)
+{
+  unsigned offset;
+  if (pkt_get_b(&packet, 8, &line, 8) == 0
+      || (offset = pkt_get_s1(&packet, 16, &line)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &line)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &line)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &line)) == 0)
+    msg4(ipv4_format(&ip), "/", utoa(port),
+	 ": Warning: PRQ packet is missing elements");
+  else
+    send_prf(line.s);
+}
+
 /* ------------------------------------------------------------------------- */
 static int exitasap;
 static int reload;
@@ -530,6 +559,8 @@ int cli_main(int argc, char* argv[])
 	handle_msg();
       else if (type == SRQ1)
 	handle_srq();
+      else if (type == PRQ1)
+	handle_prq();
       else
 	msg4(ipv4_format(&ip), "/", utoa(port),
 	     ": Warning: Unknown packet type");
