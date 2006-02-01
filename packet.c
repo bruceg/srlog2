@@ -69,6 +69,11 @@ int pkt_add_s2(str* s, const str* l)
     str_catb(s, l->s, l->len);
 }
 
+int pkt_add_b(str* s, const char* data, unsigned len)
+{
+  return str_catb(s, data, len);
+}
+
 int pkt_add_key(str* s, const nistp224key k)
 {
   return str_catb(s, k, KEY_LENGTH);
