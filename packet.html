@@ -131,8 +131,6 @@ block size of the cipher algorithm.</li>
 
 <h2>SRQ: Status Request</h2>
 
-<p>(not implemented)
-
 <table cellspacing="0" border="1" cellpadding="3">
 
 <tr> <th>Size</th> <th>Type</th> <th>Description</th> </tr>
@@ -141,11 +139,11 @@ block size of the cipher algorithm.</li>
 
 <tr> <td>4</td> <td>Constant</td> <td>Message type "SRQ1"</td> </tr>
 
+<tr> <td>1+N</td> <td>String</td> <td>Nonce</td> </tr>
+
 </table>
 
 <h2>SRP: Status Response</h2>
-
-<p>(not implemented) 
 
 <table cellspacing="0" border="1" cellpadding="3">
 
@@ -154,6 +152,8 @@ block size of the cipher algorithm.</li>
 <tr> <td>4</td> <td>Constant</td> <td>Packet type "SRL2"</td> </tr>
 
 <tr> <td>4</td> <td>Constant</td> <td>Message type "SRP1"</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Copy of nonce</td> </tr>
 
 <tr> <td>2+N</td> <td>String</td> <td>Text status report</td> </tr>
 

@@ -107,7 +107,7 @@ static int str_catstat(str* s, const char* prefix, uint64 u)
     str_catc(s, '\n');
 }
 
-static void send_srp(void)
+static void send_srp(const char nonce[8])
 {
   tmp.len = 0;
   str_catstat(&tmp, "Packets-Received", packets_received);
@@ -127,6 +127,7 @@ static void send_srp(void)
   packet.len = 0;
   pkt_add_u4(&packet, SRL2);
   pkt_add_u4(&packet, SRP1);
+  pkt_add_b(&packet, nonce, 8);
   pkt_add_s2(&packet, &tmp);
   if (!socket_send4(sock, packet.s, packet.len, &ip, port))
     die1sys(1, "Could not send SRP packet");
@@ -461,7 +462,11 @@ static void handle_ini()
 
 static void handle_srq(void)
 {
-  send_srp();
+  if (pkt_get_b(&packet, 8, &line, 8) == 0)
+    msg4(ipv4_format(&ip), "/", utoa(port),
+	 ": Warning: SRQ packet is missing nonce");
+  else
+    send_srp(line.s);
 }
 
 /* ------------------------------------------------------------------------- */

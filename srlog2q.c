@@ -37,6 +37,8 @@ int cli_main(int argc, char* argv[])
   iopoll_fd io;
   uint32 code;
   long len;
+  char nonce[8];
+  str noncecopy = {0,0,0};
 
   if (!resolve_ipv4name(argv[0], &ip))
     die3(1, "Could not resolve '", argv[0], "'");
@@ -52,8 +54,12 @@ int cli_main(int argc, char* argv[])
     if ((timeout = atoi(tmp)) <= 0)
       die3(1, "Invalid timeout value: '", tmp, "'");
 
+  brandom_init(sizeof nonce, 1);
+  brandom_fill(nonce, sizeof nonce);
   pkt_add_u4(&pktout, SRL2);
   pkt_add_u4(&pktout, SRQ1);
+  pkt_add_b(&pktout, nonce, sizeof nonce);
+
   io.fd = sock;
   io.events = IOPOLL_READ;
   for (try = 0; try < tries; ++try) {
@@ -71,7 +77,9 @@ int cli_main(int argc, char* argv[])
 	  code != SRL2 ||
 	  pkt_get_u4(&pktin, 4, &code) != 8 ||
 	  code != SRP1 ||
-	  pkt_get_s2(&pktin, 8, &data) <= 0)
+	  pkt_get_b(&pktin, 8, &noncecopy, 8) != 16 ||
+	  memcmp(noncecopy.s, nonce, 8) != 0 ||
+	  pkt_get_s2(&pktin, 16, &data) <= 0)
 	die1(1, "Invalid data from server");
       write(1, data.s, data.len);
       return 0;
