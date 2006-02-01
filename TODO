@@ -1,8 +1,35 @@
-- Replace senders.c:find_sender with another hash table
-  - keyed on sender,service
-  - keeps only the data necessary to produce a connected sender
+- Protocol:
 
-- Add more counters to srlogd for error packets
+  - The authenticator is still computed directly from the shared secret.
+    Better would be to hash first or use HMAC methods.
+
+- srlog2:
+
+  - Add option to set path to host key
+
+  - Add backoff on INI timing
+
+- srlog2d:
+
+  - Break pointer from sender to connection
+
+  - Periodically garbage collect inactive connections
+
+  - sender & service names may not contain '/' or start with '.'
+
+  - Look up senders and services in directories:
+
+    - Store host key in SENDER/.TYPE.pub
+
+    - Store per-service key in SENDER/SERVICE/.TYPE.pub
+
+    - Look up key on INI
+
+    - Don't preload/reload senders
+
+  - Add more counters for error packets
+
+- Add "type" name and "public" flag to load_key function
 
 - Gradually migrate to protocol v2
   - Add all the features to the INI1/CID1 packets

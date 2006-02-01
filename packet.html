@@ -2,33 +2,61 @@
 
 <h1>Packet Format (Version 1)</h1>
 
-<ul>
+<h2>General Notes</h2>
 
-<li>The packet format is optimized for the common case -- message
-packets sent from client to server, and acknowledgements from server to
-client.</li>
+<ul>
 
 <li>A check code (CRC-32) is included inside the encrypted data on MSG
 packets to ensure that the encryption state is properly synchronized on
-client and server (may not be necessary).</li>
+client and server.</li>
 
 <li>A 32-bit CRC takes no longer than a 16-bit CRC to calculate on
 modern (32-bit) CPUs, perhaps even shorter due to using native word
 size.  The difference in resulting packet size is negligable.</li>
 
-<li>Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC for
-encryption, with the first 32 bytes of the SHA-512 hash of the nistp224
-shared secret used for the key.</li>
+<li>Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC with a
+256-bit key for encryption, with the first 32 bytes of the SHA-512 hash
+of the nistp224 shared secret used for the key.  Additionally, the first
+32 bytes of the SHA-512 hash of the previous SHA-512 hash is used as the
+ESSIV encryptor.</li>
 
 <li>A "timestamp" is encoded as a 4-byte unsigned number of seconds
 since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
+
+<li>All integers are unsigned.</li>
 
 <li>Numbers are encoded in LSB format.</li>
 
 <li>Strings are represented with a 1 or 2 byte length number (encoded as
 above) followed by the raw data.  No trailing NUL byte is used.</li>
 
+<li>Timestamps are composed of a 4-byte integer counting seconds since
+the UNIX epoch, followed by a 4-byte integer counting the number of
+nanoseconds since the last whole second.  Using unsigned integers, this
+will be adequate until the year 2106.</li>
+
 </ul>
+
+<h2>Key Exchange</h2>
+
+<p>The shared secret for the various packets is computed as follows:</p>
+
+<table border=1 cellspacing=0 cellpadding=3>
+
+<tr> <th>Packet</th> <th>Client Computes</th> <th>Server Computes</th>
+</tr>
+
+<tr> <td>INI</td> <td>Client secret * Server public</td>
+<td>Server secret * Client public</td> </tr>
+
+<tr> <td>CID</td> <td>Client session secret * Server public</td>
+<td>Server secret * Client session public</td> </tr>
+
+<tr> <td>ACK<br>or<br>MSG</td> <td>Client session secret * Server
+session public</td> <td>Server session secret * Client session
+public</td> </tr>
+
+</table>
 
 <h2>INI: Initialization Packet</h2>
 
@@ -115,11 +143,16 @@ size</td> </tr>
 
 <ul>
 
+<li>The sequence number and message count are explicitly <i>not</i> in
+the encrypted section, since an attacker can trivially determine them
+from the returning ACK packets.
+
 <li>The ACK to a MSG packet uses the sequence number of the last line
 in the packet.</li>
 
-<li>The length of padding is: P=B-(2+8+N+4)%B where B is the
-block size of the cipher algorithm.</li>
+<li>The length of padding is: P=B-(2+8+N+4)%B where B is the block size
+of the cipher algorithm.  It will be at least one byte, and at most the
+encryption block size.</li>
 
 </ul>
 
