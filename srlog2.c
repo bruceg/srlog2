@@ -416,7 +416,7 @@ static void load_server_key(const char* hostname)
   str path = {0,0,0};
   wrap_str(str_copy3s(&path, conf_etc, "/servers/", hostname));
   if (!load_key(path.s, server_public) &&
-      !load_key("server", server_public))
+      !load_key("server.nistp224", server_public))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
