@@ -48,7 +48,17 @@ above) followed by the raw data.  No trailing NUL byte is used.</li>
 
 <tr> <td>8</td> <td>timestamp</td> <td>Initial timestamp</td> </tr>
 
-<tr> <td>28</td> <td>nistp224</td> <td>Client one-time public key</td>
+<tr> <td>1+N</td> <td>String</td> <td>Authenticator name</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Key exchange name</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Key hash name</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Encryptor name</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Compressor name</td> </tr>
+
+<tr> <td>28</td> <td>nistp224</td> <td>Client session public key</td>
 </tr>
 
 <tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
@@ -66,7 +76,7 @@ above) followed by the raw data.  No trailing NUL byte is used.</li>
 <tr> <td>4</td> <td>Constant</td> <td>Message type "CID1"</td> </tr>
 
 
-<tr> <td>28</td> <td>nistp224</td> <td>Server one-time public key</td>
+<tr> <td>28</td> <td>nistp224</td> <td>Server session public key</td>
 </tr>
 
 <tr> <td>16</td> <td>MD5</td> <td>Authenticator</td> </tr>
@@ -177,6 +187,9 @@ block size of the cipher algorithm.</li>
 <tr> <td>1+N</td> <td>String</td> <td>Key exchange list
 ("nistp224")</td> </tr>
 
+<tr> <td>1+N</td> <td>String</td> <td>Key hash list ("SHA-512")</td>
+</tr>
+
 <tr> <td>1+N</td> <td>String</td> <td>Encryptor list ("AES-CBC-ESSID")</td>
 </tr>
 
@@ -206,6 +219,8 @@ block size of the cipher algorithm.</li>
 <tr> <td>1+N</td> <td>String</td> <td>Authenticator choice</td> </tr>
 
 <tr> <td>1+N</td> <td>String</td> <td>Key exchange choice</td> </tr>
+
+<tr> <td>1+N</td> <td>String</td> <td>Key hash choice</td> </tr>
 
 <tr> <td>1+N</td> <td>String</td> <td>Encryptor choice</td> </tr>
 

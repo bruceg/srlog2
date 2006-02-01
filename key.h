@@ -3,6 +3,8 @@
 
 #include <nistp224.h>
 
+#define KEYEXCHANGE_NAME "nistp224"
+
 #define KEY_LENGTH 28
 typedef unsigned char nistp224key[KEY_LENGTH];
 

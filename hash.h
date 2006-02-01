@@ -7,6 +7,8 @@ typedef struct md5_ctx HASH_CTX;
 
 #include "key.h"
 
+#define AUTHENTICATOR_NAME "MD5"
+
 extern void hash_start(HASH_CTX* ctx, const nistp224key key);
 extern void hash_finish(const HASH_CTX* ctx, const void* data, long len,
 			unsigned char digest[HASH_LENGTH]);

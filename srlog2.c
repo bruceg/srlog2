@@ -217,6 +217,11 @@ static void make_ini(const nistp224key key, const struct line* line)
   else
     ts = &line->timestamp;
   pkt_add_ts(&out_packet, ts);
+  pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
+  pkt_add_s1c(&out_packet, KEYEXCHANGE_NAME);
+  pkt_add_s1c(&out_packet, KEYHASH_NAME);
+  pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
+  pkt_add_s1c(&out_packet, "null");
   pkt_add_key(&out_packet, key);
   pkt_add_cc(&out_packet, &ini_authenticator);
 }
@@ -414,7 +419,7 @@ static void load_patterns(char** argv)
 static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
-  wrap_str(str_copy3s(&path, conf_etc, "/servers/", hostname));
+  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, ".nistp224"));
   if (!load_key(path.s, server_public) &&
       !load_key("server.nistp224", server_public))
     die1sys(1, "Could not load server key");

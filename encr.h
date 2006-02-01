@@ -3,6 +3,9 @@
 
 #include "rijndael/rijndael.h"
 
+#define KEYHASH_NAME "SHA-512"
+#define ENCRYPTOR_NAME "AES256-CBC-ESSIV"
+
 struct ENCR_CTX
 {
   rijndael_cipher encr;

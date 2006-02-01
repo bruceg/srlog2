@@ -41,6 +41,11 @@ static str line;
 static str sender;
 static str tmp;
 static str path;
+static str authenticator;
+static str keyexchange;
+static str keyhash;
+static str encryptor;
+static str compressor;
 
 /* Stats Gathering --------------------------------------------------------- */
 static uint64 packets_received;
@@ -142,7 +147,8 @@ static void send_prf(const char nonce[8])
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s1c(&packet, "MD5");
   pkt_add_s1c(&packet, "nistp224");
-  pkt_add_s1c(&packet, "AES-CBC-ESSID");
+  pkt_add_s1c(&packet, "SHA-512");
+  pkt_add_s1c(&packet, "AES256-CBC-ESSID");
   pkt_add_s1c(&packet, "null");
   if (!socket_send4(sock, packet.s, packet.len, &ip, port))
     die1sys(1, "Could not send PRF packet");
@@ -405,8 +411,18 @@ static void handle_ini()
       (offset = pkt_get_s1(&packet, offset, &line)) == 0 ||
       (offset = pkt_get_u8(&packet, offset, &seq)) == 0 ||
       (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &authenticator)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &keyexchange)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &compressor)) == 0 ||
       (offset = pkt_get_key(&packet, offset, csession_public)) == 0 ||
-      offset + HASH_LENGTH != packet.len) {
+      offset + HASH_LENGTH != packet.len ||
+      str_diffs(&authenticator, AUTHENTICATOR_NAME) != 0 ||
+      str_diffs(&keyexchange, KEYEXCHANGE_NAME) != 0 ||
+      str_diffs(&keyhash, KEYHASH_NAME) != 0 ||
+      str_diffs(&encryptor, ENCRYPTOR_NAME) != 0 ||
+      str_diffs(&compressor, "null") != 0) {
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": Error: INI has invalid format");
     ++ini_invalid;
@@ -488,10 +504,11 @@ static void handle_prq(void)
 {
   unsigned offset;
   if (pkt_get_b(&packet, 8, &line, 8) == 0
-      || (offset = pkt_get_s1(&packet, 16, &line)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &line)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &line)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &line)) == 0)
+      || (offset = pkt_get_s1(&packet, 16, &authenticator)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &keyexchange)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &compressor)) == 0)
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": Warning: PRQ packet is missing elements");
   else
