@@ -177,12 +177,9 @@ static void start_msg(const struct line* l)
 
 static void end_msg(void)
 {
-  // FIXME: pad with random data
-  int i;
-  for (i = ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE;
-       i > 0;
-       --i)
-    pkt_add_u1(&out_packet, 0);
+  unsigned char nonce[ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE];
+  brandom_fill(nonce, sizeof nonce);
+  pkt_add_b(&out_packet, nonce, sizeof nonce);
   pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
   encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17, seq_first);
   pkt_add_cc(&out_packet, &msg_authenticator);
