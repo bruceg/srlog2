@@ -314,7 +314,7 @@ static int do_disconnected(void)
 
   buffer_rewind();
   buffer_sync();
-  brandom_init(32, 0);
+  brandom_init();
   brandom_key(csession_secret, csession_public);
   make_ini(csession_public, buffer_peek());
   nistp224(tmpkey, server_public, csession_secret);

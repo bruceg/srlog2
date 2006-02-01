@@ -11,12 +11,10 @@
 
 static struct surfrand pool;
 
-void brandom_init(unsigned size, unsigned maxuses)
+void brandom_init(void)
 {
   if (surfrand_initfile(&pool, "/dev/urandom") != 0)
     die1sys(1, "Error initializing random generator");
-  (void)size;
-  (void)maxuses;
 }
 
 void brandom_fill(char* buf, unsigned len)
@@ -33,10 +31,8 @@ void msg_die(int x, const char* a, const char* b, const char* c, const char* d,
 
 int main(int argc, char* argv[])
 {
-  int size = 32;
   char buf[4096];
-  if (argc > 1) size = atoi(argv[1]);
-  brandom_init(size, 0);
+  brandom_init();
   for (;;) {
     brandom_fill(buf, sizeof buf);
     write(1, buf, sizeof buf);

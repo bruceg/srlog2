@@ -104,7 +104,7 @@ extern unsigned pkt_get_key(const str* s, unsigned o, nistp224key k);
 extern int pkt_validate(str* s, const HASH_CTX* ctx);
 
 /* random.c */
-extern void brandom_init(unsigned size, unsigned maxuses);
+extern void brandom_init(void);
 extern void brandom_fill(char* buf, unsigned len);
 
 /* sequence.c */

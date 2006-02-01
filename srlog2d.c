@@ -518,7 +518,7 @@ int cli_main(int argc, char* argv[])
       !load_key("nistp224.pub", server_public))
     die1(1, "Could not load keys");
   load_senders(0);
-  brandom_init(28*senders.count, 1);
+  brandom_init();
 
   if ((sock = socket_udp()) == -1)
     die1sys(1, "Could not create UDP socket");

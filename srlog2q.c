@@ -54,7 +54,7 @@ int cli_main(int argc, char* argv[])
     if ((timeout = atoi(tmp)) <= 0)
       die3(1, "Invalid timeout value: '", tmp, "'");
 
-  brandom_init(sizeof nonce, 1);
+  brandom_init();
   brandom_fill(nonce, sizeof nonce);
   pkt_add_u4(&pktout, SRL2);
   pkt_add_u4(&pktout, SRQ1);
