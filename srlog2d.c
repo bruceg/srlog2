@@ -407,10 +407,10 @@ static void handle_ini()
     return;
   }
 
-  if ((offset = pkt_get_s1(&packet, 8, &sender)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &line)) == 0 ||
-      (offset = pkt_get_u8(&packet, offset, &seq)) == 0 ||
+  if ((offset = pkt_get_u8(&packet, 8, &seq)) == 0 ||
       (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &sender)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &line)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &authenticator)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &keyexchange)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0 ||

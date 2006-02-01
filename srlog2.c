@@ -207,8 +207,6 @@ static void make_ini(const nistp224key key, const struct line* line)
   out_packet.len = 0;
   pkt_add_u4(&out_packet, SRL2);
   pkt_add_u4(&out_packet, INI1);
-  pkt_add_s1c(&out_packet, opt_sender);
-  pkt_add_s1(&out_packet, &service);
   pkt_add_u8(&out_packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);
@@ -217,6 +215,8 @@ static void make_ini(const nistp224key key, const struct line* line)
   else
     ts = &line->timestamp;
   pkt_add_ts(&out_packet, ts);
+  pkt_add_s1c(&out_packet, opt_sender);
+  pkt_add_s1(&out_packet, &service);
   pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
   pkt_add_s1c(&out_packet, KEYEXCHANGE_NAME);
   pkt_add_s1c(&out_packet, KEYHASH_NAME);
