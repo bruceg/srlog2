@@ -14,11 +14,11 @@ client and server.</li>
 modern (32-bit) CPUs, perhaps even shorter due to using native word
 size.  The difference in resulting packet size is negligable.</li>
 
-<li>Hard coded to use MD5 hashing, nistp224 keys, and AES-CBC with a
-256-bit key for encryption, with the first 32 bytes of the SHA512 hash
-of the nistp224 shared secret used for the key.  Additionally, the first
-32 bytes of the SHA512 hash of the previous SHA512 hash is used as the
-ESSIV encryptor.</li>
+<li>Hard coded to use HMAC-MD5, nistp224 keys, and AES-CBC with a
+256-bit key for encryption and ESSIV, with the first 32 bytes of the
+SHA512 hash of the nistp224 shared secret used for the key.
+Additionally, the first 32 bytes of the SHA512 hash of the previous
+SHA512 hash is used as the ESSIV encryptor.</li>
 
 <li>A "timestamp" is encoded as a 4-byte unsigned number of seconds
 since the UNIX epoch, and a 4-byte unsigned nanosecond offset.</li>
@@ -214,8 +214,8 @@ encryption block size.</li>
 
 <tr> <td>8</td> <td>String</td> <td>Nonce</td> </tr>
 
-<tr> <td>1+N</td> <td>String</td> <td>Authenticator list ("MD5")</td>
-</tr>
+<tr> <td>1+N</td> <td>String</td> <td>Authenticator list
+("HMAC-MD5")</td> </tr>
 
 <tr> <td>1+N</td> <td>String</td> <td>Key exchange list
 ("nistp224")</td> </tr>

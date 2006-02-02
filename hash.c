@@ -1,18 +1,19 @@
 /* $Id$ */
 #include <string.h>
+#include <crypto/hmac.h>
+#include <crypto/md5.h>
+#include <str/str.h>
 #include "hash.h"
 
-void hash_start(struct md5_ctx* ctx, const nistp224key key)
+void hash_start(HASH_CTX* ctx, const nistp224key key)
 {
-  md5_init_ctx(ctx);
-  md5_process_bytes(key, KEY_LENGTH, ctx);
+  memcpy(ctx->secret, key, sizeof key);
 }
 
-void hash_finish(const struct md5_ctx* ctx, const void* data, long len,
+void hash_finish(const HASH_CTX* ctx, const void* data, long len,
 		 unsigned char digest[HASH_LENGTH])
 {
-  static struct md5_ctx copy;
-  memcpy(&copy, ctx, sizeof copy);
-  md5_process_bytes(data, len, &copy);
-  md5_finish_ctx(&copy, digest);
+  const str secret = { (char*)ctx->secret, sizeof *ctx, 0 };
+  const str nonce = { (char*)data, len, 0 };
+  hmac(&hmac_md5, &secret, &nonce, digest);
 }
