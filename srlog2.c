@@ -320,7 +320,7 @@ static int do_disconnected(void)
   buffer_rewind();
   buffer_sync();
   brandom_init();
-  brandom_key(&csession_secret, &csession_public);
+  key_generate(&csession_secret, &csession_public);
   make_ini(&csession_public, buffer_peek());
   key_exchange(&tmpkey, &server_public, &csession_secret);
   auth_start(&cid_authenticator, &tmpkey);
@@ -421,8 +421,8 @@ static void load_server_key(const char* hostname)
   str path = {0,0,0};
   wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname,
 		      "." KEYEXCHANGE_NAME));
-  if (!load_key(path.s, &server_public) &&
-      !load_key("server." KEYEXCHANGE_NAME, &server_public))
+  if (!key_load(&server_public, path.s) &&
+      !key_load(&server_public, "server." KEYEXCHANGE_NAME))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
@@ -432,9 +432,9 @@ static void load_host_key(void)
   struct key client_secret;
   struct key tmpkey;
   str path = {0,0,0};
-  if (!load_key(KEYEXCHANGE_NAME, &client_secret)) {
+  if (!key_load(&client_secret, KEYEXCHANGE_NAME)) {
     wrap_str(str_copy2s(&path, conf_etc, "/" KEYEXCHANGE_NAME));
-    if (!load_key(path.s, &client_secret))
+    if (!key_load(&client_secret, path.s))
       die1sys(1, "Could not load sender key");
     str_free(&path);
   }

@@ -481,7 +481,7 @@ static void handle_ini()
   ce->data.next_seq = seq;
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
-  brandom_key(&ssession_secret, &ssession_public);
+  key_generate(&ssession_secret, &ssession_public);
   key_exchange(&tmpkey, &csession_public, &server_secret);
   auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
@@ -531,8 +531,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!load_key(KEYEXCHANGE_NAME, &server_secret) ||
-      !load_key(KEYEXCHANGE_NAME ".pub", &server_public))
+  if (!key_load(&server_secret, KEYEXCHANGE_NAME) ||
+      !key_load(&server_public, KEYEXCHANGE_NAME ".pub"))
     die1(1, "Could not load keys");
   load_senders(0);
   brandom_init();

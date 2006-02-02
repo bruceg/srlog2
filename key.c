@@ -26,7 +26,7 @@ static int load_key_line(ibuf* in, struct key* key)
   return 1;
 }
 
-int load_key(const char* filename, struct key* key)
+int key_load(struct key* key, const char* filename)
 {
   ibuf in;
   int result;
@@ -36,7 +36,7 @@ int load_key(const char* filename, struct key* key)
   return result;
 }
 
-void brandom_key(struct key* secret, struct key* public)
+void key_generate(struct key* secret, struct key* public)
 {
   do {
     brandom_fill(secret->data, KEY_LENGTH);

@@ -58,7 +58,7 @@ int cli_main(int argc, char* argv[])
   if (exists(secret_path.s) && exists(public_path.s))
     die3(1, "The key pair for '", secret_path.s, "' appears to exist already");
   brandom_init();
-  brandom_key(secret, public);
+  key_generate(secret, public);
   encode_key(&line, secret);
   if (!write_key(secret_path.s, 0400, line.s)) return 1;
   encode_key(&line, public);
