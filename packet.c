@@ -4,12 +4,11 @@
 #include <str/str.h>
 
 #include "srlog2.h"
-#include "hash.h"
 #include <uint16.h>
 #include <uint32.h>
 #include <uint64.h>
 
-static unsigned char digest[HASH_LENGTH];
+static unsigned char digest[AUTH_LENGTH];
 
 int pkt_start(str* s, const char type[4])
 {
@@ -79,10 +78,10 @@ int pkt_add_key(str* s, const nistp224key k)
   return str_catb(s, k, KEY_LENGTH);
 }
 
-int pkt_add_cc(str* s, const HASH_CTX* ctx)
+int pkt_add_cc(str* s, const AUTH_CTX* ctx)
 {
-  hash_finish(ctx, s->s, s->len, digest);
-  return str_catb(s, digest, HASH_LENGTH);
+  auth_finish(ctx, s->s, s->len, digest);
+  return str_catb(s, digest, AUTH_LENGTH);
 }
 
 unsigned pkt_get_u1(const str* s, unsigned o, unsigned* u)
@@ -157,12 +156,12 @@ unsigned pkt_get_key(const str* s, unsigned o, nistp224key k)
   return o;
 }
 
-int pkt_validate(str* s, const HASH_CTX* ctx)
+int pkt_validate(str* s, const AUTH_CTX* ctx)
 {
-  long slen = s->len - HASH_LENGTH;
+  long slen = s->len - AUTH_LENGTH;
   if (slen > 0) {
-    hash_finish(ctx, s->s, slen, digest);
-    if (memcmp(digest, s->s+slen, HASH_LENGTH) == 0) {
+    auth_finish(ctx, s->s, slen, digest);
+    if (memcmp(digest, s->s+slen, AUTH_LENGTH) == 0) {
       s->len = slen;
       return 1;
     }

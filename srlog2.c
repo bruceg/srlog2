@@ -43,9 +43,9 @@ static char num2[40];
 
 /* Key/Encryption Handling ------------------------------------------------- */
 static nistp224key server_public;
-static HASH_CTX ini_authenticator;
-static HASH_CTX msg_authenticator;
-static HASH_CTX cid_authenticator;
+static AUTH_CTX ini_authenticator;
+static AUTH_CTX msg_authenticator;
+static AUTH_CTX cid_authenticator;
 static ENCR_CTX encryptor;
 
 /* ------------------------------------------------------------------------- */
@@ -153,7 +153,7 @@ static uint64 seq_first;
 static int add_msg(const struct line* l)
 {
   if ((unsigned char)out_packet.s[8] == 0xff
-      || out_packet.len + 8 + 2 + l->line.len + 4 + HASH_LENGTH >= MAX_PACKET
+      || out_packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
   debug2(DEBUG_MSG, "Adding line #", utoa(l->seq));
@@ -248,7 +248,7 @@ static int receive_ack(void)
   uint32 t;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
-  if ((ack_packet.len = i) != 4+4+8 + HASH_LENGTH) return 0;
+  if ((ack_packet.len = i) != 4+4+8 + AUTH_LENGTH) return 0;
   pkt_get_u4(&ack_packet, 0, &t);
   if (t != SRL2) return 0;
   pkt_get_u4(&ack_packet, 4, &t);
@@ -290,7 +290,7 @@ static int receive_cid(nistp224key csession_secret)
   nistp224key tmpkey;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
-  if ((ack_packet.len = i) != 8 + KEY_LENGTH + HASH_LENGTH) return 0;
+  if ((ack_packet.len = i) != 8 + KEY_LENGTH + AUTH_LENGTH) return 0;
   pkt_get_u4(&ack_packet, 0, &t);
   if (t != SRL2) return 0;
   pkt_get_u4(&ack_packet, 4, &t);
@@ -298,7 +298,7 @@ static int receive_cid(nistp224key csession_secret)
   if (!pkt_validate(&ack_packet, &cid_authenticator)) return 0;
   pkt_get_key(&ack_packet, 8, ssession_public);
   nistp224(tmpkey, ssession_public, csession_secret);
-  hash_start(&msg_authenticator, tmpkey);
+  auth_start(&msg_authenticator, tmpkey);
   encr_init(&encryptor, tmpkey, 28);
   debug1(DEBUG_PACKET, "Received CID packet");
   seq_last = 0;
@@ -323,7 +323,7 @@ static int do_disconnected(void)
   brandom_key(csession_secret, csession_public);
   make_ini(csession_public, buffer_peek());
   nistp224(tmpkey, server_public, csession_secret);
-  hash_start(&cid_authenticator, tmpkey);
+  auth_start(&cid_authenticator, tmpkey);
 
   while (!exitasap) {
     send_ini();
@@ -438,7 +438,7 @@ static void load_host_key(void)
     str_free(&path);
   }
   nistp224(tmpkey, server_public, client_secret);
-  hash_start(&ini_authenticator, tmpkey);
+  auth_start(&ini_authenticator, tmpkey);
 }
 
 static void getenvu(const char* name, unsigned long* dst)

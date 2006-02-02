@@ -8,7 +8,7 @@
 #include <str/str.h>
 
 #include "key.h"
-#include "hash.h"
+#include "authenticator.h"
 #include "encr.h"
 
 #define SRL2 0x324c5253UL	/* "SRL2" in LSB format */
@@ -54,7 +54,7 @@ struct connection_data
   uint64 last_seq;
   struct timestamp last_timestamp;
   int fd;
-  HASH_CTX authenticator;
+  AUTH_CTX authenticator;
   DECR_CTX decryptor;
   unsigned long last_count;
   str dir;
@@ -71,7 +71,7 @@ struct sender_key
 struct sender_data
 {
   int fd;
-  HASH_CTX ini_authenticator;
+  AUTH_CTX ini_authenticator;
   DECR_CTX decryptor;
   str dir;
   struct connection_key* connection;
@@ -80,7 +80,7 @@ struct sender_data
 GHASH_DECL(senders,struct sender_key,struct sender_data);
 
 /* packet.c */
-extern void hash_start(HASH_CTX* ctx, const nistp224key key);
+extern void auth_start(AUTH_CTX* ctx, const nistp224key key);
 extern int pkt_add_u1(str* s, unsigned u);
 extern int pkt_add_u2(str* s, unsigned u);
 extern int pkt_add_u4(str* s, uint32 u);
@@ -91,7 +91,7 @@ extern int pkt_add_s1c(str* s, const char* l);
 extern int pkt_add_s2(str* s, const str* l);
 extern int pkt_add_b(str* s, const char* data, unsigned len);
 extern int pkt_add_key(str* s, const nistp224key k);
-extern int pkt_add_cc(str* s, const HASH_CTX* ctx);
+extern int pkt_add_cc(str* s, const AUTH_CTX* ctx);
 extern unsigned pkt_get_u1(const str* s, unsigned o, unsigned* u);
 extern unsigned pkt_get_u2(const str* s, unsigned o, unsigned* u);
 extern unsigned pkt_get_u4(const str* s, unsigned o, uint32* u);
@@ -101,7 +101,7 @@ extern unsigned pkt_get_b(const str* s, unsigned o, str* l, unsigned len);
 extern unsigned pkt_get_s1(const str* s, unsigned o, str* l);
 extern unsigned pkt_get_s2(const str* s, unsigned o, str* l);
 extern unsigned pkt_get_key(const str* s, unsigned o, nistp224key k);
-extern int pkt_validate(str* s, const HASH_CTX* ctx);
+extern int pkt_validate(str* s, const AUTH_CTX* ctx);
 
 /* random.c */
 extern void brandom_init(void);

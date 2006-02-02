@@ -1,7 +1,7 @@
 addrname.o
+authenticator.o
 connections.o
 encr.o
-hash.o
 key.o
 packet.o
 random.o

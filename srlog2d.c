@@ -417,7 +417,7 @@ static void handle_ini()
       (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &compressor)) == 0 ||
       (offset = pkt_get_key(&packet, offset, csession_public)) == 0 ||
-      offset + HASH_LENGTH != packet.len ||
+      offset + AUTH_LENGTH != packet.len ||
       str_diffs(&authenticator, AUTHENTICATOR_NAME) != 0 ||
       str_diffs(&keyexchange, KEYEXCHANGE_NAME) != 0 ||
       str_diffs(&keyhash, KEYHASH_NAME) != 0 ||
@@ -483,11 +483,11 @@ static void handle_ini()
   ce->data.last_count = 0;
   brandom_key(ssession_secret, ssession_public);
   nistp224(tmpkey, csession_public, server_secret);
-  hash_start(&ce->data.authenticator, tmpkey);
+  auth_start(&ce->data.authenticator, tmpkey);
   reopen(ce, &ts);
   send_cid(ce, ssession_public);
   nistp224(tmpkey, csession_public, ssession_secret);
-  hash_start(&ce->data.authenticator, tmpkey);
+  auth_start(&ce->data.authenticator, tmpkey);
   decr_init(&ce->data.decryptor, tmpkey, 28);
 }
 
