@@ -73,9 +73,9 @@ int pkt_add_b(str* s, const char* data, unsigned len)
   return str_catb(s, data, len);
 }
 
-int pkt_add_key(str* s, const nistp224key k)
+int pkt_add_key(str* s, const struct key* k)
 {
-  return str_catb(s, k, KEY_LENGTH);
+  return str_catb(s, k->data, KEY_LENGTH);
 }
 
 int pkt_add_cc(str* s, const AUTH_CTX* ctx)
@@ -147,7 +147,7 @@ unsigned pkt_get_s2(const str* s, unsigned o, str* l)
   return pkt_get_b(s, o, l, len);
 }
 
-unsigned pkt_get_key(const str* s, unsigned o, nistp224key k)
+unsigned pkt_get_key(const str* s, unsigned o, struct key* k)
 {
   const char* p = s->s + o;
   o += KEY_LENGTH;

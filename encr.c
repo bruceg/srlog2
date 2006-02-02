@@ -1,8 +1,10 @@
 /* $Id$ */
-#include "encr.h"
 #include <crypto/sha512.h>
 #include <uint64.h>
 #include <string.h>
+
+#include "encr.h"
+#include "key.h"
 
 #define KEYSIZE 64
 typedef uint8 keydata[KEYSIZE];
@@ -15,22 +17,22 @@ static void make_key(const char* data, unsigned datalen, keydata key)
   SHA512_final(&ctx, key);
 }
 
-void decr_init(DECR_CTX* context, const char* data, unsigned datalen)
+void decr_init(DECR_CTX* context, struct key* key)
 {
-  keydata key;
-  make_key(data, datalen, key);
-  rijndael_init(&context->decr, RIJNDAEL_DECRYPT, 32, key, RIJNDAEL_CBC, 0);
-  make_key(key, sizeof key, key);
-  rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, key, RIJNDAEL_ECB, 0);
+  keydata dkey;
+  make_key(key->data, KEY_LENGTH, dkey);
+  rijndael_init(&context->decr, RIJNDAEL_DECRYPT, 32, dkey, RIJNDAEL_CBC, 0);
+  make_key(dkey, sizeof dkey, dkey);
+  rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, dkey, RIJNDAEL_ECB, 0);
 }
 
-void encr_init(ENCR_CTX* context, const char* data, unsigned datalen)
+void encr_init(ENCR_CTX* context, struct key* key)
 {
-  keydata key;
-  make_key(data, datalen, key);
-  rijndael_init(&context->encr, RIJNDAEL_ENCRYPT, 32, key, RIJNDAEL_CBC, 0);
-  make_key(key, sizeof key, key);
-  rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, key, RIJNDAEL_ECB, 0);
+  keydata ekey;
+  make_key(key->data, KEY_LENGTH, ekey);
+  rijndael_init(&context->encr, RIJNDAEL_ENCRYPT, 32, ekey, RIJNDAEL_CBC, 0);
+  make_key(ekey, sizeof ekey, ekey);
+  rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, ekey, RIJNDAEL_ECB, 0);
 }
 
 static void setiv(uint8 IV[MAX_IV_SIZE], rijndael_cipher* encryptor,

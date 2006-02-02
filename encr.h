@@ -6,6 +6,8 @@
 #define KEYHASH_NAME "SHA512"
 #define ENCRYPTOR_NAME "AES256-CBC-ESSIV"
 
+struct key;
+
 struct ENCR_CTX
 {
   rijndael_cipher encr;
@@ -24,8 +26,8 @@ typedef struct DECR_CTX DECR_CTX;
 
 #define PADLEN(BYTES) (ENCR_BLOCK_SIZE - ((BYTES) % ENCR_BLOCK_SIZE))
 
-extern void decr_init(DECR_CTX* context, const char* data, unsigned datalen);
-extern void encr_init(ENCR_CTX* context, const char* data, unsigned datalen);
+extern void decr_init(DECR_CTX* context, struct key* key);
+extern void encr_init(ENCR_CTX* context, struct key* key);
 extern void decr_blocks(DECR_CTX* context, char* data, unsigned len,
 			uint64 sequence);
 extern void encr_blocks(ENCR_CTX* context, char* data, unsigned len,

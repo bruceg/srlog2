@@ -74,8 +74,8 @@ static void show_stats(void)
 }
 
 /* Key Handling ------------------------------------------------------------ */
-nistp224key server_public;
-nistp224key server_secret;
+struct key server_public;
+struct key server_secret;
 
 /* ------------------------------------------------------------------------- */
 static void send_ack(struct connections_entry* c, uint64 seq)
@@ -91,7 +91,7 @@ static void send_ack(struct connections_entry* c, uint64 seq)
   bytes_sent += packet.len;
 }
 
-static void send_cid(struct connections_entry* c, nistp224key sp)
+static void send_cid(struct connections_entry* c, struct key* sp)
 {
   packet.len = 0;
   pkt_add_u4(&packet, SRL2);
@@ -385,10 +385,10 @@ static void handle_ini()
   struct senders_entry* s;
   struct connection_key* c;
   struct connections_entry* ce;
-  nistp224key csession_public;
-  nistp224key ssession_public;
-  nistp224key ssession_secret;
-  nistp224key tmpkey;
+  struct key csession_public;
+  struct key ssession_public;
+  struct key ssession_secret;
+  struct key tmpkey;
   unsigned i;
 
   if (recv(sock, &i, 4, MSG_PEEK|MSG_DONTWAIT) != -1 &&
@@ -416,7 +416,7 @@ static void handle_ini()
       (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &compressor)) == 0 ||
-      (offset = pkt_get_key(&packet, offset, csession_public)) == 0 ||
+      (offset = pkt_get_key(&packet, offset, &csession_public)) == 0 ||
       offset + AUTH_LENGTH != packet.len ||
       str_diffs(&authenticator, AUTHENTICATOR_NAME) != 0 ||
       str_diffs(&keyexchange, KEYEXCHANGE_NAME) != 0 ||
@@ -481,14 +481,14 @@ static void handle_ini()
   ce->data.next_seq = seq;
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
-  brandom_key(ssession_secret, ssession_public);
-  nistp224(tmpkey, csession_public, server_secret);
-  auth_start(&ce->data.authenticator, tmpkey);
+  brandom_key(&ssession_secret, &ssession_public);
+  key_exchange(&tmpkey, &csession_public, &server_secret);
+  auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
-  send_cid(ce, ssession_public);
-  nistp224(tmpkey, csession_public, ssession_secret);
-  auth_start(&ce->data.authenticator, tmpkey);
-  decr_init(&ce->data.decryptor, tmpkey, 28);
+  send_cid(ce, &ssession_public);
+  key_exchange(&tmpkey, &csession_public, &ssession_secret);
+  auth_start(&ce->data.authenticator, &tmpkey);
+  decr_init(&ce->data.decryptor, &tmpkey);
 }
 
 static void handle_srq(void)
@@ -531,8 +531,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!load_key("nistp224", server_secret) ||
-      !load_key("nistp224.pub", server_public))
+  if (!load_key(KEYEXCHANGE_NAME, &server_secret) ||
+      !load_key(KEYEXCHANGE_NAME ".pub", &server_public))
     die1(1, "Could not load keys");
   load_senders(0);
   brandom_init();

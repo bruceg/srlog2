@@ -111,10 +111,10 @@ struct senders_entry* find_sender(const char* sender, const char* service)
 /* ------------------------------------------------------------------------- */
 static str line;
 static str tmp;
-extern nistp224key server_secret;
+extern struct key server_secret;
 
 static void add_sender(const char* sender, const char* service, 
-		       nistp224key key, const char* dir)
+		       struct key* key, const char* dir)
 {
   struct sender_key a;
   struct sender_data d;
@@ -135,7 +135,7 @@ static void parse_sender_line(void)
   int i;
   int j;
   int k;
-  nistp224key tmpkey;
+  struct key tmpkey;
   if ((i = str_findfirst(&line, ':')) == -1 ||
       (j = str_findnext(&line, ':', i+1)) == -1 ||
       (k = str_findnext(&line, ':', j+1)) == -1 ||
@@ -153,8 +153,9 @@ static void parse_sender_line(void)
       warn3("Invalid client key '", line.s+j, "', ignoring line");
       return;
     }
-    nistp224(tmpkey, tmp.s, server_secret);
-    add_sender(line.s, line.s+i, tmpkey, line.s+k);
+    memcpy(tmpkey.data, tmp.s, KEY_LENGTH);
+    key_exchange(&tmpkey, &tmpkey, &server_secret);
+    add_sender(line.s, line.s+i, &tmpkey, line.s+k);
   }
 }
 

@@ -42,7 +42,7 @@ static char num1[40];
 static char num2[40];
 
 /* Key/Encryption Handling ------------------------------------------------- */
-static nistp224key server_public;
+static struct key server_public;
 static AUTH_CTX ini_authenticator;
 static AUTH_CTX msg_authenticator;
 static AUTH_CTX cid_authenticator;
@@ -200,7 +200,7 @@ static int make_msg(void)
   return 1;
 }
 
-static void make_ini(const nistp224key key, const struct line* line)
+static void make_ini(const struct key* key, const struct line* line)
 {
   const struct timestamp* ts;
   struct timestamp now;
@@ -282,12 +282,12 @@ static void send_ini(void)
   }
 }
 
-static int receive_cid(nistp224key csession_secret)
+static int receive_cid(struct key* csession_secret)
 {
   int i;
   uint32 t;
-  nistp224key ssession_public;
-  nistp224key tmpkey;
+  struct key ssession_public;
+  struct key tmpkey;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
   if ((ack_packet.len = i) != 8 + KEY_LENGTH + AUTH_LENGTH) return 0;
@@ -296,10 +296,10 @@ static int receive_cid(nistp224key csession_secret)
   pkt_get_u4(&ack_packet, 4, &t);
   if (t != CID1) return 0;
   if (!pkt_validate(&ack_packet, &cid_authenticator)) return 0;
-  pkt_get_key(&ack_packet, 8, ssession_public);
-  nistp224(tmpkey, ssession_public, csession_secret);
-  auth_start(&msg_authenticator, tmpkey);
-  encr_init(&encryptor, tmpkey, 28);
+  pkt_get_key(&ack_packet, 8, &ssession_public);
+  key_exchange(&tmpkey, &ssession_public, csession_secret);
+  auth_start(&msg_authenticator, &tmpkey);
+  encr_init(&encryptor, &tmpkey);
   debug1(DEBUG_PACKET, "Received CID packet");
   seq_last = 0;
   return 1;
@@ -313,17 +313,17 @@ static int receive_cid(nistp224key csession_secret)
 
 static int do_disconnected(void)
 {
-  nistp224key csession_secret;
-  nistp224key csession_public;
-  nistp224key tmpkey;
+  struct key csession_secret;
+  struct key csession_public;
+  struct key tmpkey;
 
   buffer_rewind();
   buffer_sync();
   brandom_init();
-  brandom_key(csession_secret, csession_public);
-  make_ini(csession_public, buffer_peek());
-  nistp224(tmpkey, server_public, csession_secret);
-  auth_start(&cid_authenticator, tmpkey);
+  brandom_key(&csession_secret, &csession_public);
+  make_ini(&csession_public, buffer_peek());
+  key_exchange(&tmpkey, &server_public, &csession_secret);
+  auth_start(&cid_authenticator, &tmpkey);
 
   while (!exitasap) {
     send_ini();
@@ -332,7 +332,7 @@ static int do_disconnected(void)
 	break;
       if (stdin_ready)
 	read_lines();
-      if (sock_ready && receive_cid(csession_secret))
+      if (sock_ready && receive_cid(&csession_secret))
 	return STATE_SENDING;
     }
   }
@@ -419,26 +419,27 @@ static void load_patterns(char** argv)
 static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
-  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, ".nistp224"));
-  if (!load_key(path.s, server_public) &&
-      !load_key("server.nistp224", server_public))
+  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname,
+		      "." KEYEXCHANGE_NAME));
+  if (!load_key(path.s, &server_public) &&
+      !load_key("server." KEYEXCHANGE_NAME, &server_public))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
 
 static void load_host_key(void)
 {
-  nistp224key client_secret;
-  nistp224key tmpkey;
+  struct key client_secret;
+  struct key tmpkey;
   str path = {0,0,0};
-  if (!load_key("nistp224", client_secret)) {
-    wrap_str(str_copy2s(&path, conf_etc, "/nistp224"));
-    if (!load_key(path.s, client_secret))
+  if (!load_key(KEYEXCHANGE_NAME, &client_secret)) {
+    wrap_str(str_copy2s(&path, conf_etc, "/" KEYEXCHANGE_NAME));
+    if (!load_key(path.s, &client_secret))
       die1sys(1, "Could not load sender key");
     str_free(&path);
   }
-  nistp224(tmpkey, server_public, client_secret);
-  auth_start(&ini_authenticator, tmpkey);
+  key_exchange(&tmpkey, &server_public, &client_secret);
+  auth_start(&ini_authenticator, &tmpkey);
 }
 
 static void getenvu(const char* name, unsigned long* dst)

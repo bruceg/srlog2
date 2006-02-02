@@ -12,8 +12,8 @@
 #include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
-static nistp224key public;
-static nistp224key secret;
+static struct key* public;
+static struct key* secret;
 static str line;
 
 int write_key(const char* filename, int mode, const char* keyline)
@@ -33,10 +33,10 @@ int write_key(const char* filename, int mode, const char* keyline)
   return 1;
 }
 
-void encode_key(str* s, const nistp224key key)
+void encode_key(str* s, const struct key* key)
 {
   wrap_str(str_truncate(s, 0));
-  wrap_str(base64_encode_line(key, KEY_LENGTH, s));
+  wrap_str(base64_encode_line(key->data, KEY_LENGTH, s));
 }
 
 int exists(const char* path)
@@ -52,7 +52,7 @@ int cli_main(int argc, char* argv[])
   if (argc > 0)
     wrap_str(str_copys(&secret_path, argv[0]));
   else
-    wrap_str(str_copy2s(&secret_path, conf_etc, "/nistp224"));
+    wrap_str(str_copy2s(&secret_path, conf_etc, "/" KEYEXCHANGE_NAME));
   wrap_str(str_copy(&public_path, &secret_path));
   wrap_str(str_cats(&public_path, ".pub"));
   if (exists(secret_path.s) && exists(public_path.s))
