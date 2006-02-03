@@ -11,7 +11,7 @@ struct key
   unsigned char data[KEY_LENGTH];
 };
 
-extern int key_load(struct key* key, const char* filename);
+extern int key_load(struct key* key, const char* prefix, const char* type, int public);
 extern void key_generate(struct key* secret, struct key* public);
 #define key_exchange(SHARED,PUBLIC,SECRET) \
 	nistp224((SHARED)->data, (PUBLIC)->data, (SECRET)->data)

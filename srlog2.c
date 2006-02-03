@@ -419,10 +419,9 @@ static void load_patterns(char** argv)
 static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
-  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname,
-		      "." KEYEXCHANGE_NAME));
-  if (!key_load(&server_public, path.s) &&
-      !key_load(&server_public, "server." KEYEXCHANGE_NAME))
+  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, "."));
+  if (!key_load(&server_public, path.s, KEYEXCHANGE_NAME, 0) &&
+      !key_load(&server_public, "server.", KEYEXCHANGE_NAME, 0))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
@@ -432,9 +431,9 @@ static void load_host_key(void)
   struct key client_secret;
   struct key tmpkey;
   str path = {0,0,0};
-  if (!key_load(&client_secret, KEYEXCHANGE_NAME)) {
-    wrap_str(str_copy2s(&path, conf_etc, "/" KEYEXCHANGE_NAME));
-    if (!key_load(&client_secret, path.s))
+  if (!key_load(&client_secret, "", KEYEXCHANGE_NAME, 0)) {
+    wrap_str(str_copy2s(&path, conf_etc, "/"));
+    if (!key_load(&client_secret, path.s, KEYEXCHANGE_NAME, 0))
       die1sys(1, "Could not load sender key");
     str_free(&path);
   }

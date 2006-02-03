@@ -26,11 +26,12 @@ static int load_key_line(ibuf* in, struct key* key)
   return 1;
 }
 
-int key_load(struct key* key, const char* filename)
+int key_load(struct key* key, const char* prefix, const char* type, int public)
 {
   ibuf in;
   int result;
-  if (!ibuf_open(&in, filename, 0)) return 0;
+  wrap_str(str_copy3s(&keybuf, prefix, type, public ? ".pub" : ""));
+  if (!ibuf_open(&in, keybuf.s, 0)) return 0;
   result = load_key_line(&in, key);
   ibuf_close(&in);
   return result;

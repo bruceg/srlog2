@@ -531,8 +531,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!key_load(&server_secret, KEYEXCHANGE_NAME) ||
-      !key_load(&server_public, KEYEXCHANGE_NAME ".pub"))
+  if (!key_load(&server_secret, "", KEYEXCHANGE_NAME, 0) ||
+      !key_load(&server_public, "", KEYEXCHANGE_NAME, 1))
     die1(1, "Could not load keys");
   load_senders(0);
   brandom_init();
