@@ -74,7 +74,6 @@ static void show_stats(void)
 }
 
 /* Key Handling ------------------------------------------------------------ */
-struct key server_public;
 struct key server_secret;
 
 /* ------------------------------------------------------------------------- */
@@ -533,9 +532,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!key_load(&server_secret, "", &nistp224_cb, 0) ||
-      !key_load(&server_public, "", &nistp224_cb, 1))
-    die1(1, "Could not load keys");
+  if (!key_load(&server_secret, "", &nistp224_cb))
+    die1(1, "Could not load server key");
   load_senders(0);
   brandom_init();
 

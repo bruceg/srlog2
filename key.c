@@ -25,12 +25,11 @@ static int load_key_line(ibuf* in, struct key* key, const struct key_cb* cb)
   return 1;
 }
 
-int key_load(struct key* key, const char* prefix,
-	     const struct key_cb* cb, int public)
+int key_load(struct key* key, const char* prefix, const struct key_cb* cb)
 {
   ibuf in;
   int result;
-  wrap_str(str_copy3s(&keybuf, prefix, cb->name, public ? ".pub" : ""));
+  wrap_str(str_copy2s(&keybuf, prefix, cb->name));
   if (!ibuf_open(&in, keybuf.s, 0)) return 0;
   result = load_key_line(&in, key, cb);
   ibuf_close(&in);

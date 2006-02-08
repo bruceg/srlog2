@@ -29,7 +29,7 @@ struct key_cb
 extern const struct key_cb nistp224_cb;
 
 extern int key_load(struct key* key, const char* prefix,
-		    const struct key_cb* cb, int public);
+		    const struct key_cb* cb);
 extern void key_generate(struct key* secret, struct key* public,
 			 const struct key_cb* cb);
 extern int key_export(const struct key* key, struct str* s);

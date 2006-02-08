@@ -1,5 +1,3 @@
-- Eliminate the public parameter to key_load
-
 - srlog2:
 
   - Add option to set path to host key
@@ -25,7 +23,5 @@
     - Store per-service key in SENDER/SERVICE/.TYPE.pub
 
   - Add more counters for error packets
-
-- Add "type" name and "public" flag to load_key function
 
 - Switch to curve25519 http://cr.yp.to/ecdh.html

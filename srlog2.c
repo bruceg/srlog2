@@ -432,8 +432,8 @@ static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
   wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, "."));
-  if (!key_load(&server_public, path.s, &nistp224_cb, 0) &&
-      !key_load(&server_public, "server.", &nistp224_cb, 0))
+  if (!key_load(&server_public, path.s, &nistp224_cb) &&
+      !key_load(&server_public, "server.", &nistp224_cb))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
@@ -443,9 +443,9 @@ static void load_host_key(void)
   struct key client_secret;
   struct key tmpkey;
   str path = {0,0,0};
-  if (!key_load(&client_secret, "", &nistp224_cb, 0)) {
+  if (!key_load(&client_secret, "", &nistp224_cb)) {
     wrap_str(str_copy2s(&path, conf_etc, "/"));
-    if (!key_load(&client_secret, path.s, &nistp224_cb, 0))
+    if (!key_load(&client_secret, path.s, &nistp224_cb))
       die1sys(1, "Could not load sender key");
     str_free(&path);
   }
