@@ -25,7 +25,7 @@ static int generate(struct key* secret)
 
 const struct key_cb curve25519_cb = {
   .name = "curve25519",
-  .size = 28,
+  .size = 32,
   .public = { &curve25519_cb, {9,0} },
   .generate = generate,
   .exchange = exchange,
