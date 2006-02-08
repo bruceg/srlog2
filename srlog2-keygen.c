@@ -12,8 +12,8 @@
 #include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
-static struct key* public;
-static struct key* secret;
+static struct key public;
+static struct key secret;
 static str line;
 
 int write_key(const char* filename, int mode, const char* keyline)
@@ -36,7 +36,7 @@ int write_key(const char* filename, int mode, const char* keyline)
 void encode_key(str* s, const struct key* key)
 {
   wrap_str(str_truncate(s, 0));
-  wrap_str(base64_encode_line(key->data, KEY_LENGTH, s));
+  wrap_str(base64_encode_line(key->data, key->cb->size, s));
 }
 
 int exists(const char* path)
@@ -49,19 +49,23 @@ int cli_main(int argc, char* argv[])
 {
   str secret_path = {0,0,0};
   str public_path = {0,0,0};
+
+  brandom_init();
+  key_generate(&secret, &public, &nistp224_cb);
+
   if (argc > 0)
     wrap_str(str_copys(&secret_path, argv[0]));
   else
-    wrap_str(str_copy2s(&secret_path, conf_etc, "/" KEYEXCHANGE_NAME));
+    wrap_str(str_copy3s(&secret_path, conf_etc, "/", secret.cb->name));
   wrap_str(str_copy(&public_path, &secret_path));
   wrap_str(str_cats(&public_path, ".pub"));
+
   if (exists(secret_path.s) && exists(public_path.s))
     die3(1, "The key pair for '", secret_path.s, "' appears to exist already");
-  brandom_init();
-  key_generate(secret, public);
-  encode_key(&line, secret);
+  wrap_str(key_export(&secret, &line));
   if (!write_key(secret_path.s, 0400, line.s)) return 1;
-  encode_key(&line, public);
+  line.len = 0;
+  wrap_str(key_export(&public, &line));
   if (!write_key(public_path.s, 0444, line.s)) return 1;
   msg4("Public key for '", secret_path.s, "' is ", line.s);
   return 0;

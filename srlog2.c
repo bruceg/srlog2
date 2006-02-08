@@ -218,7 +218,7 @@ static void make_ini(const struct key* key, const struct line* line)
   pkt_add_s1c(&out_packet, opt_sender);
   pkt_add_s1(&out_packet, &service);
   pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
-  pkt_add_s1c(&out_packet, KEYEXCHANGE_NAME);
+  pkt_add_s1c(&out_packet, nistp224_cb.name);
   pkt_add_s1c(&out_packet, KEYHASH_NAME);
   pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
   pkt_add_s1c(&out_packet, "null");
@@ -290,13 +290,25 @@ static int receive_cid(struct key* csession_secret)
   struct key tmpkey;
   if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
     return 0;
-  if ((ack_packet.len = i) != 8 + KEY_LENGTH + AUTH_LENGTH) return 0;
+  if ((ack_packet.len = i) != 8 + csession_secret->cb->size + AUTH_LENGTH) {
+    debug1(DEBUG_PACKET, "Received packet has wrong length");
+    return 0;
+  }
   pkt_get_u4(&ack_packet, 0, &t);
-  if (t != SRL2) return 0;
+  if (t != SRL2) {
+    debug1(DEBUG_PACKET, "Received packet is not a srlog2 packet");
+    return 0;
+  }
   pkt_get_u4(&ack_packet, 4, &t);
-  if (t != CID1) return 0;
-  if (!pkt_validate(&ack_packet, &cid_authenticator)) return 0;
-  pkt_get_key(&ack_packet, 8, &ssession_public);
+  if (t != CID1) {
+    debug1(DEBUG_PACKET, "Received packet is not a CID packet");
+    return 0;
+  }
+  if (!pkt_validate(&ack_packet, &cid_authenticator)) {
+    debug1(DEBUG_PACKET, "Received CID failed validation");
+    return 0;
+  }
+  pkt_get_key(&ack_packet, 8, &ssession_public, &nistp224_cb);
   key_exchange(&tmpkey, &ssession_public, csession_secret);
   auth_start(&msg_authenticator, &tmpkey);
   encr_init(&encryptor, &tmpkey);
@@ -320,7 +332,7 @@ static int do_disconnected(void)
   buffer_rewind();
   buffer_sync();
   brandom_init();
-  key_generate(&csession_secret, &csession_public);
+  key_generate(&csession_secret, &csession_public, &nistp224_cb);
   make_ini(&csession_public, buffer_peek());
   key_exchange(&tmpkey, &server_public, &csession_secret);
   auth_start(&cid_authenticator, &tmpkey);
@@ -420,8 +432,8 @@ static void load_server_key(const char* hostname)
 {
   str path = {0,0,0};
   wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, "."));
-  if (!key_load(&server_public, path.s, KEYEXCHANGE_NAME, 0) &&
-      !key_load(&server_public, "server.", KEYEXCHANGE_NAME, 0))
+  if (!key_load(&server_public, path.s, &nistp224_cb, 0) &&
+      !key_load(&server_public, "server.", &nistp224_cb, 0))
     die1sys(1, "Could not load server key");
   str_free(&path);
 }
@@ -431,9 +443,9 @@ static void load_host_key(void)
   struct key client_secret;
   struct key tmpkey;
   str path = {0,0,0};
-  if (!key_load(&client_secret, "", KEYEXCHANGE_NAME, 0)) {
+  if (!key_load(&client_secret, "", &nistp224_cb, 0)) {
     wrap_str(str_copy2s(&path, conf_etc, "/"));
-    if (!key_load(&client_secret, path.s, KEYEXCHANGE_NAME, 0))
+    if (!key_load(&client_secret, path.s, &nistp224_cb, 0))
       die1sys(1, "Could not load sender key");
     str_free(&path);
   }

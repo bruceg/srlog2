@@ -75,7 +75,7 @@ int pkt_add_b(str* s, const char* data, unsigned len)
 
 int pkt_add_key(str* s, const struct key* k)
 {
-  return str_catb(s, k->data, KEY_LENGTH);
+  return str_catb(s, k->data, k->cb->size);
 }
 
 int pkt_add_cc(str* s, const AUTH_CTX* ctx)
@@ -147,12 +147,15 @@ unsigned pkt_get_s2(const str* s, unsigned o, str* l)
   return pkt_get_b(s, o, l, len);
 }
 
-unsigned pkt_get_key(const str* s, unsigned o, struct key* k)
+unsigned pkt_get_key(const str* s, unsigned o, struct key* k,
+		     const struct key_cb* cb)
 {
+  const unsigned int size = cb->size;
   const char* p = s->s + o;
-  o += KEY_LENGTH;
+  o += size;
   if (o > s->len) return 0;
-  memcpy(k, p, KEY_LENGTH);
+  memcpy(k->data, p, size);
+  k->cb = cb;
   return o;
 }
 

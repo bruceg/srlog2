@@ -7,13 +7,13 @@
 
 void auth_start(AUTH_CTX* ctx, const struct key* key)
 {
-  memcpy(ctx->secret.data, key->data, KEY_LENGTH);
+  memcpy(&ctx->secret, key, sizeof *key);
 }
 
 void auth_finish(const AUTH_CTX* ctx, const void* data, long len,
 		 unsigned char digest[AUTH_LENGTH])
 {
-  const str secret = { (char*)ctx->secret.data, sizeof *ctx, 0 };
+  const str secret = { (char*)ctx->secret.data, ctx->secret.cb->size, 0 };
   const str nonce = { (char*)data, len, 0 };
   hmac(&hmac_md5, &secret, &nonce, digest);
 }

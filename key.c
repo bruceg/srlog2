@@ -12,37 +12,63 @@
 
 #include "srlog2.h"
 
-static struct key BASEP224 = { "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" };
-
 static str keybuf;
-static int load_key_line(ibuf* in, struct key* key)
+static int load_key_line(ibuf* in, struct key* key, const struct key_cb* cb)
 {
   char buf[40];
   if (!ibuf_gets(in, buf, sizeof buf, '\n')) return 0;
   if (!str_truncate(&keybuf, 0)) die1(1, "Out of memory");
   if (!base64_decode_line(buf, &keybuf)) return 0;
-  if (keybuf.len != KEY_LENGTH) return 0;
+  if (keybuf.len != cb->size) return 0;
   memcpy(key->data, keybuf.s, keybuf.len);
+  key->cb = cb;
   return 1;
 }
 
-int key_load(struct key* key, const char* prefix, const char* type, int public)
+int key_load(struct key* key, const char* prefix,
+	     const struct key_cb* cb, int public)
 {
   ibuf in;
   int result;
-  wrap_str(str_copy3s(&keybuf, prefix, type, public ? ".pub" : ""));
+  wrap_str(str_copy3s(&keybuf, prefix, cb->name, public ? ".pub" : ""));
   if (!ibuf_open(&in, keybuf.s, 0)) return 0;
-  result = load_key_line(&in, key);
+  result = load_key_line(&in, key, cb);
   ibuf_close(&in);
   return result;
 }
 
-void key_generate(struct key* secret, struct key* public)
+void key_generate(struct key* secret, struct key* public,
+		  const struct key_cb* type)
 {
   do {
-    brandom_fill(secret->data, KEY_LENGTH);
-    /* Constrain the first byte of the secret key to 8-135 inclusive,
-       according to http://cr.yp.to/nistp224/library.html */
-    secret->data[0] = (secret->data[0] % 128) + 8;
-  } while (!key_exchange(public, &BASEP224, secret));
+    if (!type->generate(secret))
+      continue;
+  } while (!type->exchange(public, &type->public, secret));
 }
+
+int key_export(const struct key* key, str* s)
+{
+  return base64_encode_line(key->data, key->cb->size, s);
+}
+
+int key_import(struct key* key, const char* s, const struct key_cb* cb)
+{
+  str tmp = {0,0,0};
+  if (!base64_decode_line(s, &tmp)
+      || tmp.len != cb->size) {
+    str_free(&tmp);
+    return 0;
+  }
+  key->cb = cb;
+  memcpy(key->data, tmp.s, cb->size);
+  return 1;
+}
+
+int key_exchange(struct key* shared,
+		 const struct key* public,
+		 const struct key* secret)
+{
+  // FIXME: make sure public and secret cbs match
+  return public->cb->exchange(shared, public, secret);
+}
+

@@ -20,7 +20,7 @@ static void make_key(const char* data, unsigned datalen, keydata key)
 void decr_init(DECR_CTX* context, struct key* key)
 {
   keydata dkey;
-  make_key(key->data, KEY_LENGTH, dkey);
+  make_key(key->data, key->cb->size, dkey);
   rijndael_init(&context->decr, RIJNDAEL_DECRYPT, 32, dkey, RIJNDAEL_CBC, 0);
   make_key(dkey, sizeof dkey, dkey);
   rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, dkey, RIJNDAEL_ECB, 0);
@@ -29,7 +29,7 @@ void decr_init(DECR_CTX* context, struct key* key)
 void encr_init(ENCR_CTX* context, struct key* key)
 {
   keydata ekey;
-  make_key(key->data, KEY_LENGTH, ekey);
+  make_key(key->data, key->cb->size, ekey);
   rijndael_init(&context->encr, RIJNDAEL_ENCRYPT, 32, ekey, RIJNDAEL_CBC, 0);
   make_key(ekey, sizeof ekey, ekey);
   rijndael_init(&context->ivencr, RIJNDAEL_ENCRYPT, 32, ekey, RIJNDAEL_ECB, 0);

@@ -148,12 +148,10 @@ static void parse_sender_line(void)
     if (find_sender(line.s, line.s+i))
       return;
     if (!str_truncate(&tmp, 0) ||
-        !base64_decode_line(line.s+j, &tmp) ||
-        tmp.len != KEY_LENGTH) {
+        !key_import(&tmpkey, line.s+j, &nistp224_cb)) {
       warn3("Invalid client key '", line.s+j, "', ignoring line");
       return;
     }
-    memcpy(tmpkey.data, tmp.s, KEY_LENGTH);
     key_exchange(&tmpkey, &tmpkey, &server_secret);
     add_sender(line.s, line.s+i, &tmpkey, line.s+k);
   }

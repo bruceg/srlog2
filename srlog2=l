@@ -3,6 +3,7 @@ authenticator.o
 connections.o
 encr.o
 key.o
+nistp224.o
 packet.o
 random.o
 senders.o

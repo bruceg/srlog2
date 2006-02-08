@@ -1,19 +1,42 @@
 #ifndef SRLOG__KEY__H__
 #define SRLOG__KEY__H__
 
-#include <nistp224.h>
+struct key_cb;
+struct str;
 
-#define KEYEXCHANGE_NAME "nistp224"
+#define MAX_KEY_LENGTH 28
 
-#define KEY_LENGTH 28
 struct key
 {
-  unsigned char data[KEY_LENGTH];
+  const struct key_cb* cb;
+  unsigned char data[MAX_KEY_LENGTH];
 };
 
-extern int key_load(struct key* key, const char* prefix, const char* type, int public);
-extern void key_generate(struct key* secret, struct key* public);
-#define key_exchange(SHARED,PUBLIC,SECRET) \
-	nistp224((SHARED)->data, (PUBLIC)->data, (SECRET)->data)
+typedef int (*key_exchange_fn)(struct key* shared,
+			       const struct key* public,
+			       const struct key* secret);
+typedef int (*key_generate_fn)(struct key* secret);
+
+struct key_cb
+{
+  const char* name;
+  unsigned int size;
+  const struct key public;
+  key_generate_fn generate;
+  key_exchange_fn exchange;
+};
+
+extern const struct key_cb nistp224_cb;
+
+extern int key_load(struct key* key, const char* prefix,
+		    const struct key_cb* cb, int public);
+extern void key_generate(struct key* secret, struct key* public,
+			 const struct key_cb* cb);
+extern int key_export(const struct key* key, struct str* s);
+extern int key_import(struct key* key, const char* s,
+		      const struct key_cb* cb);
+extern int key_exchange(struct key* shared,
+			const struct key* public,
+			const struct key* secret);
 
 #endif

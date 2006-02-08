@@ -100,7 +100,8 @@ extern unsigned pkt_get_ts(const str* s, unsigned o, struct timestamp*);
 extern unsigned pkt_get_b(const str* s, unsigned o, str* l, unsigned len);
 extern unsigned pkt_get_s1(const str* s, unsigned o, str* l);
 extern unsigned pkt_get_s2(const str* s, unsigned o, str* l);
-extern unsigned pkt_get_key(const str* s, unsigned o, struct key* k);
+extern unsigned pkt_get_key(const str* s, unsigned o, struct key* k,
+			    const struct key_cb* cb);
 extern int pkt_validate(str* s, const AUTH_CTX* ctx);
 
 /* random.c */

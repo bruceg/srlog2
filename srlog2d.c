@@ -146,7 +146,7 @@ static void send_prf(const char nonce[8])
   pkt_add_u4(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
-  pkt_add_s1c(&packet, KEYEXCHANGE_NAME);
+  pkt_add_s1c(&packet, nistp224_cb.name);
   pkt_add_s1c(&packet, KEYHASH_NAME);
   pkt_add_s1c(&packet, ENCRYPTOR_NAME);
   pkt_add_s1c(&packet, "null");
@@ -416,10 +416,11 @@ static void handle_ini()
       (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &compressor)) == 0 ||
-      (offset = pkt_get_key(&packet, offset, &csession_public)) == 0 ||
+      (offset = pkt_get_key(&packet, offset,
+			    &csession_public, &nistp224_cb)) == 0 ||
       offset + AUTH_LENGTH != packet.len ||
       str_diffs(&authenticator, AUTHENTICATOR_NAME) != 0 ||
-      str_diffs(&keyexchange, KEYEXCHANGE_NAME) != 0 ||
+      str_diffs(&keyexchange, nistp224_cb.name) != 0 ||
       str_diffs(&keyhash, KEYHASH_NAME) != 0 ||
       str_diffs(&encryptor, ENCRYPTOR_NAME) != 0 ||
       str_diffs(&compressor, "null") != 0) {
@@ -481,7 +482,8 @@ static void handle_ini()
   ce->data.next_seq = seq;
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
-  key_generate(&ssession_secret, &ssession_public);
+  key_generate(&ssession_secret, &ssession_public, &nistp224_cb);
+  csession_public.cb = &nistp224_cb;
   key_exchange(&tmpkey, &csession_public, &server_secret);
   auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
@@ -531,8 +533,8 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!key_load(&server_secret, "", KEYEXCHANGE_NAME, 0) ||
-      !key_load(&server_public, "", KEYEXCHANGE_NAME, 1))
+  if (!key_load(&server_secret, "", &nistp224_cb, 0) ||
+      !key_load(&server_public, "", &nistp224_cb, 1))
     die1(1, "Could not load keys");
   load_senders(0);
   brandom_init();
