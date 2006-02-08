@@ -1,4 +1,5 @@
 /* $Id$ */
+#include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -12,62 +13,59 @@
 #include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
-static struct key public;
-static struct key secret;
-static str line;
-
-int write_key(const char* filename, int mode, const char* keyline)
+static void write_key(const char* filename, int mode, const char* keyline)
 {
   obuf out;
   if (!obuf_open(&out, filename,
-		 OBUF_CREATE|OBUF_TRUNCATE|OBUF_EXCLUSIVE, mode, 0)) {
-    error3sys("Could not open '", filename, "' for writing");
-    return 0;
-  }
+		 OBUF_CREATE|OBUF_TRUNCATE|OBUF_EXCLUSIVE, mode, 0))
+    die3sys(1, "Could not open '", filename, "' for writing");
   if (!obuf_puts(&out, keyline) ||
       !obuf_putc(&out, LF) ||
-      !obuf_close(&out)){
-    error3sys("Could not write to '", filename, "'");
-    return 0;
-  }
-  return 1;
-}
-
-void encode_key(str* s, const struct key* key)
-{
-  wrap_str(str_truncate(s, 0));
-  wrap_str(base64_encode_line(key->data, key->cb->size, s));
-}
-
-int exists(const char* path)
-{
-  struct stat st;
-  return stat(path, &st) == 0;
+      !obuf_close(&out))
+    die3sys(1, "Could not write to '", filename, "'");
 }
 
 int cli_main(int argc, char* argv[])
 {
-  str secret_path = {0,0,0};
-  str public_path = {0,0,0};
+  str path = {0,0,0};
+  struct stat st;
+  const struct key_cb* type;
+  struct key public;
+  struct key secret;
+  str line = {0,0,0};
 
-  brandom_init();
-  key_generate(&secret, &public, &nistp224_cb);
-
-  if (argc > 0)
-    wrap_str(str_copys(&secret_path, argv[0]));
+  if (strcmp(opt_type, nistp224_cb.name) == 0)
+    type = &nistp224_cb;
+#ifdef HASCURVE25519
+  else if (strcmp(opt_type, curve25519_cb.name) == 0)
+    type = &curve25519_cb;
+#endif
   else
-    wrap_str(str_copy3s(&secret_path, conf_etc, "/", secret.cb->name));
-  wrap_str(str_copy(&public_path, &secret_path));
-  wrap_str(str_cats(&public_path, ".pub"));
+    dief(1, "{Unknown key type: }s", opt_type);
+  brandom_init();
+  key_generate(&secret, &public, type);
+  
+  wrap_str(str_copys(&path, argv[0]));
+  if (stat(path.s, &st) == 0) {
+    if (S_ISDIR(st.st_mode)) {
+      wrap_str(str_catc(&path, '/'));
+      wrap_str(str_cats(&path, type->name));
+    }
+    else
+      dief(1, "{The file '}s{' already exists}", path.s);
+  }
+  else if (errno != ENOENT)
+    die1sys(1, "stat failed");
 
-  if (exists(secret_path.s) && exists(public_path.s))
-    die3(1, "The key pair for '", secret_path.s, "' appears to exist already");
   wrap_str(key_export(&secret, &line));
-  if (!write_key(secret_path.s, 0400, line.s)) return 1;
+  write_key(path.s, 0400, line.s);
+
   line.len = 0;
   wrap_str(key_export(&public, &line));
-  if (!write_key(public_path.s, 0444, line.s)) return 1;
-  msg4("Public key for '", secret_path.s, "' is ", line.s);
+  msg4("Public key for '", path.s, "' is ", line.s);
+  wrap_str(str_cats(&path, ".pub"));
+  write_key(path.s, 0444, line.s);
+
   return 0;
   (void)argc;
 }
