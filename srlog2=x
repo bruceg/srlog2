@@ -1,4 +1,5 @@
 srlog2.a
+curve25519.a
 buffer.o
 -lnistp224
 rijndael/rijndael.a

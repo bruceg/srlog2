@@ -1,10 +1,12 @@
 #ifndef SRLOG__KEY__H__
 #define SRLOG__KEY__H__
 
+#include "curve25519.h"
+
 struct key_cb;
 struct str;
 
-#define MAX_KEY_LENGTH 28
+#define MAX_KEY_LENGTH 32
 
 struct key
 {
@@ -27,6 +29,9 @@ struct key_cb
 };
 
 extern const struct key_cb nistp224_cb;
+#ifdef HASCURVE25519
+extern const struct key_cb curve25519_cb;
+#endif
 
 extern int key_load(struct key* key, const char* prefix,
 		    const struct key_cb* cb);
