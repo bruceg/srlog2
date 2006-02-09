@@ -13,7 +13,8 @@
 #include "srlog2.h"
 
 static str keybuf;
-static int load_key_line(ibuf* in, struct key* key, const struct key_cb* cb)
+
+int key_load_line(struct key* key, ibuf* in, const struct key_cb* cb)
 {
   char buf[40];
   if (!ibuf_gets(in, buf, sizeof buf, '\n')) return 0;
@@ -31,7 +32,7 @@ int key_load(struct key* key, const char* prefix, const struct key_cb* cb)
   int result;
   wrap_str(str_copy2s(&keybuf, prefix, cb->name));
   if (!ibuf_open(&in, keybuf.s, 0)) return 0;
-  result = load_key_line(&in, key, cb);
+  result = key_load_line(key, &in, cb);
   ibuf_close(&in);
   return result;
 }
