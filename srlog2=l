@@ -3,6 +3,7 @@ authenticator.o
 curve25519.o
 encr.o
 key.o
+keylist.o
 nistp224.o
 packet.o
 random.o
