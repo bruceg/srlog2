@@ -122,14 +122,27 @@ static void add_sender(const char* sender, const char* service,
   struct sender_key a;
   struct sender_data d;
 
+  msg2("Loading sender: ", dir);
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
   wrap_str(str_copys(&d.dir, dir));
+  d.key.cb = key->cb;
+  memcpy(d.key.data, key->data, key->cb->size);
   auth_start(&d.ini_authenticator, key);
   if (!senders_add(&senders, &a, &d)) die_oom(1);
-  msg2("Loaded sender: ", dir);
+}
+
+static void update_sender(struct senders_entry* s, const struct key* key)
+{
+  if (s->data.key.cb != key->cb
+      || memcmp(s->data.key.data, key->data, key->cb->size) != 0) {
+    msg2("Reloading sender: ", s->data.dir.s);
+    s->data.key.cb = key->cb;
+    memcpy(s->data.key.data, key->data, key->cb->size);
+    auth_start(&s->data.ini_authenticator, key);
+  }
 }
 
 static struct key* loadkey(const char* host, const char* service,
@@ -155,21 +168,22 @@ static struct key* loadkey(const char* host, const char* service,
 }
     
 static void try_load_service(const char* host, const char* service,
-			     const struct key* hostkey)
+			     const struct key* key)
 {
   struct stat st;
   struct key svckey;
+  struct senders_entry* s;
 
-  if (find_sender(host, service) != 0)
-    return;
   wrap_str(str_copy3s(&path, host, "/", service));
   if (stat(path.s, &st) != 0)
     warnfsys("{Could not stat '}s{', skipping}", path.s);
   else if (S_ISDIR(st.st_mode)) {
     if (loadkey(host, service, &svckey))
-      add_sender(host, service, &svckey, path.s);
-    else if (hostkey != 0)
-      add_sender(host, service, hostkey, path.s);
+      key = &svckey;
+    if ((s = find_sender(host, service)) == 0)
+      add_sender(host, service, key, path.s);
+    else
+      update_sender(s, key);
   }
 }
 
