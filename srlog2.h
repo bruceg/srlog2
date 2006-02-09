@@ -70,7 +70,6 @@ struct sender_key
 
 struct sender_data
 {
-  int fd;
   AUTH_CTX ini_authenticator;
   DECR_CTX decryptor;
   str dir;

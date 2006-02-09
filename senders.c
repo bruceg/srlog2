@@ -125,7 +125,6 @@ static void add_sender(const char* sender, const char* service,
   wrap_str(str_copys(&a.service, service));
   wrap_str(str_copys(&d.dir, dir));
   auth_start(&d.ini_authenticator, key);
-  d.fd = -1;
   if (!senders_add(&senders, &a, &d)) die_oom(1);
   msg2("Loaded sender: ", dir);
 }
