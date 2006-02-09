@@ -148,7 +148,7 @@ static void parse_sender_line(void)
     if (find_sender(line.s, line.s+i))
       return;
     if (!str_truncate(&tmp, 0) ||
-        !key_import(&tmpkey, line.s+j, &nistp224_cb)) {
+        !key_import(&tmpkey, line.s+j)) {
       warn3("Invalid client key '", line.s+j, "', ignoring line");
       return;
     }

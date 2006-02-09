@@ -50,17 +50,23 @@ int key_export(const struct key* key, str* s)
   return base64_encode_line(key->data, key->cb->size, s);
 }
 
-int key_import(struct key* key, const char* s, const struct key_cb* cb)
+int key_import(struct key* key, const char* s)
 {
+  int result = 0;
   str tmp = {0,0,0};
-  if (!base64_decode_line(s, &tmp)
-      || tmp.len != cb->size) {
-    str_free(&tmp);
-    return 0;
+  key->cb = 0;
+  if (base64_decode_line(s, &tmp)
+      && tmp.len <= MAX_KEY_LENGTH) {
+    memcpy(key->data, tmp.s, tmp.len);
+    if (tmp.len == nistp224_cb.size)
+      key->cb = &nistp224_cb, result = 1;
+#ifdef HASCURVE25519
+    if (tmp.len == curve25519_cb.size)
+      key->cb = &nistp224_cb, result = 1;
+#endif
   }
-  key->cb = cb;
-  memcpy(key->data, tmp.s, cb->size);
-  return 1;
+  str_free(&tmp);
+  return result;
 }
 
 int key_exchange(struct key* shared,
