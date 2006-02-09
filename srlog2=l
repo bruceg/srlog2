@@ -1,12 +1,9 @@
 addrname.o
 authenticator.o
-connections.o
 curve25519.o
 encr.o
 key.o
 nistp224.o
 packet.o
 random.o
-senders.o
-sequence.o
 surfrand.o

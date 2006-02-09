@@ -1,3 +1,5 @@
+connections.o
+senders.o
 srlog2.a
 curve25519.a
 -lnistp224
