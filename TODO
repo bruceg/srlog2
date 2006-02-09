@@ -1,3 +1,5 @@
+- create keylist_import, and drop use of key_import
+
 - srlog2:
 
   - Add option to set path to host key
@@ -12,16 +14,16 @@
 
   - sender & service names may not contain '/' or start with '.'
 
+  - Don't preload/reload senders
+
   - Look up senders and services in directories:
-
-    - Don't preload/reload senders
-
-    - Look up key on INI
 
     - Store host key in SENDER/.TYPE.pub
 
     - Store per-service key in SENDER/SERVICE/.TYPE.pub
 
   - Add more counters for error packets
+
+  - Support rotation schemes other than hourly
 
 - Switch to curve25519 http://cr.yp.to/ecdh.html

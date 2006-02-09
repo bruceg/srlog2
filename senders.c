@@ -1,5 +1,8 @@
 /* $Id$ */
+#include <sysdeps.h>
+#include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include <adt/ghash.h>
 #include <base64/base64.h>
@@ -11,7 +14,12 @@
 
 #include "srlog2.h"
 
+extern struct key server_secret;
+
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
+
+static str path;
+static str tmp;
 
 static uint32 sender_hash(struct sender_key const* key)
 {
@@ -57,11 +65,10 @@ GHASH_DEFN(senders, struct sender_key, struct sender_data,
 /* ------------------------------------------------------------------------- */
 static const char* format_sender(const struct senders_entry* c)
 {
-  static str s;
-  if (!str_copy(&s, &c->key.sender)) return 0;
-  if (!str_catc(&s, '/')) return 0;
-  if (!str_cat(&s, &c->key.service)) return 0;
-  return s.s;
+  if (!str_copy(&tmp, &c->key.sender)) return 0;
+  if (!str_catc(&tmp, '/')) return 0;
+  if (!str_cat(&tmp, &c->key.service)) return 0;
+  return tmp.s;
 }
 
 void msg_sender(const struct senders_entry* c, const char* a, const char* b)
@@ -109,12 +116,8 @@ struct senders_entry* find_sender(const char* sender, const char* service)
 }
 
 /* ------------------------------------------------------------------------- */
-static str line;
-static str tmp;
-extern struct key server_secret;
-
 static void add_sender(const char* sender, const char* service, 
-		       struct key* key, const char* dir)
+		       const struct key* key, const char* dir)
 {
   struct sender_key a;
   struct sender_data d;
@@ -129,44 +132,85 @@ static void add_sender(const char* sender, const char* service,
   msg2("Loaded sender: ", dir);
 }
 
-static void parse_sender_line(void)
+static struct key* loadkey(const char* host, const char* service,
+			   struct key* key)
 {
-  int i;
-  int j;
-  int k;
-  struct key tmpkey;
-  if ((i = str_findfirst(&line, ':')) == -1 ||
-      (j = str_findnext(&line, ':', i+1)) == -1 ||
-      (k = str_findnext(&line, ':', j+1)) == -1 ||
-      k-j != 41)
-    warn3("Invalid senders line: '", line.s, "', ignoring");
-  else {
-    line.s[i++] = 0;
-    line.s[j++] = 0;
-    line.s[k++] = 0;
-    if (find_sender(line.s, line.s+i))
-      return;
-    if (!str_truncate(&tmp, 0) ||
-        !key_import(&tmpkey, line.s+j)) {
-      warn3("Invalid client key '", line.s+j, "', ignoring line");
-      return;
+  ibuf in;
+  
+  wrap_str(str_copys(&tmp, host));
+  if (service != 0)
+    wrap_str(str_cat2s(&tmp, "/", service));
+  wrap_str(str_cats(&tmp, "/.nistp224.pub"));
+  if (ibuf_open(&in, tmp.s, 0)) {
+    if (key_load_line(key, &in, &nistp224_cb)) {
+      key_exchange(key, key, &server_secret);
+      ibuf_close(&in);
+      return key;
     }
-    key_exchange(&tmpkey, &tmpkey, &server_secret);
-    add_sender(line.s, line.s+i, &tmpkey, line.s+k);
+    ibuf_close(&in);
+  }
+  else if (errno != ENOENT)
+    diefsys(1, "{Error opening '}s{'}", tmp.s);
+  return 0;
+}
+    
+static void try_load_service(const char* host, const char* service,
+			     const struct key* hostkey)
+{
+  struct stat st;
+  struct key svckey;
+
+  if (find_sender(host, service) != 0)
+    return;
+  wrap_str(str_copy3s(&path, host, "/", service));
+  if (stat(path.s, &st) != 0)
+    warnfsys("{Could not stat '}s{', skipping}", path.s);
+  else if (S_ISDIR(st.st_mode)) {
+    if (loadkey(host, service, &svckey))
+      add_sender(host, service, &svckey, path.s);
+    else if (hostkey != 0)
+      add_sender(host, service, hostkey, path.s);
   }
 }
 
-static void read_senders(const char* path)
+static void load_hostdir(const char* hostname)
 {
-  ibuf in;
-  if (!ibuf_open(&in, path, 0))
-    die3sys(1, "Could not open '", path, "'");
-  while (ibuf_getstr(&in, &line, LF)) {
-    str_strip(&line);
-    if (line.len == 0 || line.s[0] == '#') continue;
-    parse_sender_line();
+  DIR* dir;
+  direntry* entry;
+  struct key hostkey;
+  const struct key* hostkeyptr;
+  
+  if ((dir = opendir(hostname)) == 0)
+    warnfsys("{Could not open '}s{', skipping}", hostname);
+  else {
+    hostkeyptr = loadkey(hostname, 0, &hostkey);
+    while ((entry = readdir(dir)) != 0) {
+      const char* service = entry->d_name;
+      if (service[0] == '.')
+	continue;
+      try_load_service(hostname, service, hostkeyptr);
+    }
+    closedir(dir);
   }
-  ibuf_close(&in);
+}
+
+static void load_dir(void)
+{
+  DIR* dir;
+  direntry* entry;
+  struct stat st;
+  if ((dir = opendir(".")) == 0)
+    die1sys(1, "Could not open current directory");
+  while ((entry = readdir(dir)) != 0) {
+    const char* hostname = entry->d_name;
+    if (hostname[0] == '.')
+      continue;
+    if (stat(hostname, &st) != 0)
+      warnfsys("{Could not stat '}s{', skipping}", hostname);
+    else if (S_ISDIR(st.st_mode))
+      load_hostdir(hostname);
+  }
+  closedir(dir);
 }
 
 void load_senders(int reload)
@@ -178,5 +222,5 @@ void load_senders(int reload)
     senders_init(&senders);
     msg1("Loading senders");
   }
-  read_senders("senders");
+  load_dir();
 }
