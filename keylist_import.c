@@ -48,9 +48,14 @@ int keylist_import(struct keylist* list, const struct str* text)
 int keylist_load(struct keylist* list, const char* path)
 {
   str buf = {0,0,0};
-  int result = 0;
-  if (ibuf_openreadclose(path, &buf))
+  int result;
+  switch (ibuf_openreadclose(path, &buf)) {
+  case 0:
+  case -1:
+    return 0;
+  default:
     result = keylist_import(list, &buf);
+  }
   str_free(&buf);
   return result;
 }
