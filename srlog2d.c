@@ -41,11 +41,11 @@ static str line;
 static str sender;
 static str tmp;
 static str path;
-static str authenticator;
-static str keyexchange;
-static str keyhash;
-static str encryptor;
-static str compressor;
+static str auth_name;
+static str keyex_name;
+static str keyhash_name;
+static str encr_name;
+static str compr_name;
 
 /* Stats Gathering --------------------------------------------------------- */
 static uint64 packets_received;
@@ -410,19 +410,19 @@ static void handle_ini()
       (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &sender)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &line)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &authenticator)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &keyexchange)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &compressor)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &auth_name)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &keyhash_name)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &encr_name)) == 0 ||
+      (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0 ||
       (offset = pkt_get_key(&packet, offset,
 			    &csession_public, &nistp224_cb)) == 0 ||
       offset + AUTH_LENGTH != packet.len ||
-      str_diffs(&authenticator, AUTHENTICATOR_NAME) != 0 ||
-      str_diffs(&keyexchange, nistp224_cb.name) != 0 ||
-      str_diffs(&keyhash, KEYHASH_NAME) != 0 ||
-      str_diffs(&encryptor, ENCRYPTOR_NAME) != 0 ||
-      str_diffs(&compressor, "null") != 0) {
+      str_diffs(&auth_name, AUTHENTICATOR_NAME) != 0 ||
+      str_diffs(&keyex_name, nistp224_cb.name) != 0 ||
+      str_diffs(&keyhash_name, KEYHASH_NAME) != 0 ||
+      str_diffs(&encr_name, ENCRYPTOR_NAME) != 0 ||
+      str_diffs(&compr_name, "null") != 0) {
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": Error: INI has invalid format");
     ++ini_invalid;
@@ -505,11 +505,11 @@ static void handle_prq(void)
 {
   unsigned offset;
   if (pkt_get_b(&packet, 8, &line, 8) == 0
-      || (offset = pkt_get_s1(&packet, 16, &authenticator)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &keyexchange)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &keyhash)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &encryptor)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &compressor)) == 0)
+      || (offset = pkt_get_s1(&packet, 16, &auth_name)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &keyhash_name)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &encr_name)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0)
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": Warning: PRQ packet is missing elements");
   else
