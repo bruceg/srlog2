@@ -388,6 +388,7 @@ static void handle_ini()
   struct key ssession_public;
   struct key ssession_secret;
   struct key tmpkey;
+  AUTH_CTX authenticator;
   unsigned i;
 
   if (recv(sock, &i, 4, MSG_PEEK|MSG_DONTWAIT) != -1 &&
@@ -438,7 +439,8 @@ static void handle_ini()
   }
   last_ini = now;
   
-  if (!pkt_validate(&packet, &s->data.ini_authenticator)) {
+  auth_start(&authenticator, &s->data.key);
+  if (!pkt_validate(&packet, &authenticator)) {
     error_sender(s, "INI failed authentication");
     ++ini_failed_auth;
     return;

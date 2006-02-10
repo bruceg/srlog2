@@ -71,7 +71,6 @@ struct sender_key
 
 struct sender_data
 {
-  AUTH_CTX ini_authenticator;
   DECR_CTX decryptor;
   str dir;
   struct connection_key* connection;

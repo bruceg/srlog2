@@ -130,7 +130,6 @@ static void add_sender(const char* sender, const char* service,
   wrap_str(str_copys(&d.dir, dir));
   d.key.cb = key->cb;
   memcpy(d.key.data, key->data, key->cb->size);
-  auth_start(&d.ini_authenticator, key);
   if (!senders_add(&senders, &a, &d)) die_oom(1);
 }
 
@@ -141,7 +140,6 @@ static void update_sender(struct senders_entry* s, const struct key* key)
     msg2("Reloading sender: ", s->data.dir.s);
     s->data.key.cb = key->cb;
     memcpy(s->data.key.data, key->data, key->cb->size);
-    auth_start(&s->data.ini_authenticator, key);
   }
 }
 
