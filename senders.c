@@ -14,7 +14,7 @@
 
 #include "srlog2.h"
 
-extern struct key server_secret;
+extern struct keylist server_secrets;
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
@@ -156,7 +156,7 @@ static struct key* loadkey(const char* host, const char* service,
   wrap_str(str_cats(&tmp, "/.nistp224.pub"));
   if (ibuf_open(&in, tmp.s, 0)) {
     if (key_load_line(key, &in, &nistp224_cb)) {
-      key_exchange(key, key, &server_secret);
+      keylist_exchange(key, key, &server_secrets);
       ibuf_close(&in);
       return key;
     }

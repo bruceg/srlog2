@@ -8,6 +8,7 @@
 #include <str/str.h>
 
 #include "key.h"
+#include "keylist.h"
 #include "authenticator.h"
 #include "encr.h"
 

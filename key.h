@@ -41,7 +41,6 @@ extern int key_load(struct key* key, const char* prefix,
 extern void key_generate(struct key* secret, struct key* public,
 			 const struct key_cb* cb);
 extern int key_export(const struct key* key, struct str* s);
-extern int key_import(struct key* key, const char* s);
 extern int key_exchange(struct key* shared,
 			const struct key* public,
 			const struct key* secret);

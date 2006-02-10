@@ -74,7 +74,7 @@ static void show_stats(void)
 }
 
 /* Key Handling ------------------------------------------------------------ */
-struct key server_secret;
+struct keylist server_secrets;
 
 /* ------------------------------------------------------------------------- */
 static void send_ack(struct connections_entry* c, uint64 seq)
@@ -483,7 +483,7 @@ static void handle_ini()
   ce->data.last_count = 0;
   key_generate(&ssession_secret, &ssession_public, &nistp224_cb);
   csession_public.cb = &nistp224_cb;
-  key_exchange(&tmpkey, &csession_public, &server_secret);
+  keylist_exchange(&tmpkey, &csession_public, &server_secrets);
   auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
   send_cid(ce, &ssession_public);
@@ -532,7 +532,7 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   if ((env = getenv("MAXPACKETS")) != 0)
     maxpackets = strtoul(env, 0, 10);
-  if (!key_load(&server_secret, "", &nistp224_cb))
+  if (!keylist_load(&server_secrets, "secrets"))
     die1(1, "Could not load server key");
   load_senders(0);
   brandom_init();
