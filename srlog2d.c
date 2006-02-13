@@ -15,6 +15,7 @@
 #include <msg/msg.h>
 #include <net/resolve.h>
 #include <net/socket.h>
+#include <str/iter.h>
 #include <unix/sig.h>
 
 #include "srlog2.h"
@@ -143,13 +144,28 @@ static void send_srp(const char nonce[8])
   bytes_sent += packet.len;
 }
 
+static int contains(const str* s, const char* key)
+{
+  striter i;
+  striter_loop(&i, s, 0) {
+    if (strcasecmp(i.startptr, key) == 0)
+      return 1;
+  }
+  return 0;
+}
+
 static void send_prf(const char nonce[8])
 {
   pkt_add_u4(&packet, SRL2);
   pkt_add_u4(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
-  pkt_add_s1c(&packet, nistp224_cb.name);
+#ifdef HASCURVE25519
+  if (contains(&keyex_name, curve25519_cb.name))
+    pkt_add_s1c(&packet, curve25519_cb.name);
+  else
+#endif
+    pkt_add_s1c(&packet, nistp224_cb.name);
   pkt_add_s1c(&packet, KEYHASH_NAME);
   pkt_add_s1c(&packet, ENCRYPTOR_NAME);
   pkt_add_s1c(&packet, "null");
