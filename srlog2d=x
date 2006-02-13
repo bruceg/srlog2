@@ -1,7 +1,8 @@
-srlog2d-prf.o
-srlog2d-stats.o
 connections.o
 senders.o
+srlog2d-ini.o
+srlog2d-prf.o
+srlog2d-stats.o
 srlog2.a
 curve25519.a
 -lnistp224
