@@ -34,6 +34,8 @@ extern const struct key_cb nistp224_cb;
 extern const struct key_cb curve25519_cb;
 #endif
 
+extern const struct key_cb* key_cb_lookup(const char* name);
+
 extern int key_load_line(struct key* key,
 			 struct ibuf* in, const struct key_cb* cb);
 extern int key_load(struct key* key, const char* prefix,
