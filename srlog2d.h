@@ -30,10 +30,17 @@ extern ipv4port port;
 extern str line;
 extern str packet;
 extern str tmp;
+extern str auth_name;
+extern str keyex_name;
+extern str keyhash_name;
+extern str encr_name;
+extern str compr_name;
 
 extern void send_packet(void);
 
 extern void show_stats(void);
 extern void handle_srq(void);
+
+extern void handle_prq(void);
 
 #endif

@@ -1,3 +1,4 @@
+srlog2d-prf.o
 srlog2d-stats.o
 connections.o
 senders.o

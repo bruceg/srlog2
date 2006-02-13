@@ -38,14 +38,14 @@ ipv4port port;
 str packet = {0,0,0};
 str line = {0,0,0};
 str tmp = {0,0,0};
+str auth_name = {0,0,0};
+str keyex_name = {0,0,0};
+str keyhash_name = {0,0,0};
+str encr_name = {0,0,0};
+str compr_name = {0,0,0};
 
 static str sender;
 static str path;
-static str auth_name;
-static str keyex_name;
-static str keyhash_name;
-static str encr_name;
-static str compr_name;
 
 struct keylist server_secrets;
 
@@ -86,27 +86,6 @@ static int contains(const str* s, const char* key)
       return 1;
   }
   return 0;
-}
-
-static void send_prf(const char nonce[8])
-{
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, PRF1);
-  pkt_add_b(&packet, nonce, 8);
-  pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
-#ifdef HASCURVE25519
-  if (contains(&keyex_name, curve25519_cb.name))
-    pkt_add_s1c(&packet, curve25519_cb.name);
-  else
-#endif
-    pkt_add_s1c(&packet, nistp224_cb.name);
-  pkt_add_s1c(&packet, KEYHASH_NAME);
-  pkt_add_s1c(&packet, ENCRYPTOR_NAME);
-  pkt_add_s1c(&packet, "null");
-  if (!socket_send4(sock, packet.s, packet.len, &ip, port))
-    die1sys(1, "Could not send PRF packet");
-  packets_sent++;
-  bytes_sent += packet.len;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -465,21 +444,6 @@ static void handle_ini()
   key_exchange(&tmpkey, &csession_public, &ssession_secret);
   auth_start(&ce->data.authenticator, &tmpkey);
   decr_init(&ce->data.decryptor, &tmpkey);
-}
-
-static void handle_prq(void)
-{
-  unsigned offset;
-  if (pkt_get_b(&packet, 8, &line, 8) == 0
-      || (offset = pkt_get_s1(&packet, 16, &auth_name)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &keyhash_name)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &encr_name)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0)
-    msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": Warning: PRQ packet is missing elements");
-  else
-    send_prf(line.s);
 }
 
 /* ------------------------------------------------------------------------- */
