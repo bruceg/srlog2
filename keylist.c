@@ -44,3 +44,20 @@ int keylist_exchange(struct key* shared,
     ? 0
     : public->cb->exchange(shared, public, &secrets->keys[i]);
 }
+
+int keylist_exchange_list(struct keylist* shareds,
+			  const struct keylist* publics,
+			  const struct keylist* secrets)
+{
+  int count;
+  int i;
+  for (count = i = 0; i < KEY_TYPE_COUNT; ++i) {
+    const struct key_cb* cb = publics->keys[i].cb;
+    if (cb != 0 && secrets->keys[i].cb == cb)
+      count += cb->exchange(&shareds->keys[i],
+			    &publics->keys[i], &secrets->keys[i]);
+    else
+      shareds->keys[i].cb = 0;
+  }
+  return count;
+}

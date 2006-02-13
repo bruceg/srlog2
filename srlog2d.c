@@ -59,6 +59,7 @@ static uint64 ini_too_many;
 static uint64 ini_invalid;
 static uint64 ini_unknown_sender;
 static uint64 ini_failed_auth;
+static uint64 ini_missing_key;
 static uint64 ini_valid;
 static uint64 lines_written;
 static uint64 bytes_written;
@@ -125,6 +126,7 @@ static void send_srp(const char nonce[8])
   str_catstat(&tmp, "INI-Invalid-Format", ini_invalid);
   str_catstat(&tmp, "INI-Unknown-Sender", ini_unknown_sender);
   str_catstat(&tmp, "INI-Failed-Authentication", ini_failed_auth);
+  str_catstat(&tmp, "INI-Missing-Key", ini_missing_key);
   str_catstat(&tmp, "INI-Valid", ini_valid);
   str_catstat(&tmp, "MSG-Retransmits", msg_retransmits);
   str_catstat(&tmp, "MSG-Valid", msg_valid);
@@ -388,6 +390,7 @@ static void handle_ini()
   struct key ssession_public;
   struct key ssession_secret;
   struct key tmpkey;
+  struct key* key;
   AUTH_CTX authenticator;
   unsigned i;
 
@@ -439,7 +442,13 @@ static void handle_ini()
   }
   last_ini = now;
   
-  auth_start(&authenticator, &s->data.key);
+  if ((key = keylist_get(&s->data.keys, keyex_name.s)) == 0) {
+    error_sender(s, "Given key type is missing");
+    ++ini_missing_key;
+    return;
+  }
+
+  auth_start(&authenticator, key);
   if (!pkt_validate(&packet, &authenticator)) {
     error_sender(s, "INI failed authentication");
     ++ini_failed_auth;

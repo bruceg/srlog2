@@ -74,7 +74,7 @@ struct sender_data
   DECR_CTX decryptor;
   str dir;
   struct connection_key* connection;
-  struct key key;
+  struct keylist keys;
 };
 
 GHASH_DECL(senders,struct sender_key,struct sender_data);
