@@ -4,10 +4,10 @@
 
 static int keyindex(const char* name)
 {
-  if (strcmp(name, "nistp224") == 0)
+  if (strcasecmp(name, nistp224_cb.name) == 0)
     return 0;
 #ifdef HASCURVE25519
-  if (strcmp(name, "curve25519") == 0)
+  if (strcasecmp(name, curve25519_cb.name) == 0)
     return 1;
 #endif
   return -1;
