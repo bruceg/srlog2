@@ -5,6 +5,10 @@
 
 #define STATS_INTERVAL 10000
 
+/* Set this to 1 when testing log rotation, and it will rotate logs
+   every second instead of every hour */
+#define ROLLOVER_SECOND 0
+
 extern uint64 stats_next;
 extern uint64 packets_received;
 extern uint64 packets_sent;
@@ -46,6 +50,9 @@ extern int tslt(const struct timestamp* a, const struct timestamp* b);
 
 /* srlog2d-ini.c */
 extern void handle_ini(void);
+
+/* srlog2d-msg.c */
+extern void handle_msg(void);
 
 /* srlog2d-prf.c */
 extern void handle_prq(void);

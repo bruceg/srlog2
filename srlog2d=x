@@ -1,6 +1,7 @@
 connections.o
 senders.o
 srlog2d-ini.o
+srlog2d-msg.o
 srlog2d-prf.o
 srlog2d-stats.o
 srlog2.a
