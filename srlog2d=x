@@ -1,3 +1,4 @@
+srlog2d-stats.o
 connections.o
 senders.o
 srlog2.a

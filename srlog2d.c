@@ -19,6 +19,7 @@
 #include <unix/sig.h>
 
 #include "srlog2.h"
+#include "srlog2d.h"
 #include "srlog2d-cli.h"
 
 /* Time in seconds to pause between accepting INIs */
@@ -28,19 +29,17 @@ static double ini_throttle = 1.0 / 64;
    every second instead of every hour */
 #define ROLLOVER_SECOND 0
 
-#define STATS_INTERVAL 10000
-static uint64 stats_next = STATS_INTERVAL;
-
 /* The maximum number of packets to receive before exiting. */
 static uint32 maxpackets = 0;
 
 static int sock;
-static ipv4addr ip;
-static ipv4port port;
-static str packet;
-static str line;
+ipv4addr ip;
+ipv4port port;
+str packet = {0,0,0};
+str line = {0,0,0};
+str tmp = {0,0,0};
+
 static str sender;
-static str tmp;
 static str path;
 static str auth_name;
 static str keyex_name;
@@ -48,38 +47,17 @@ static str keyhash_name;
 static str encr_name;
 static str compr_name;
 
-/* Stats Gathering --------------------------------------------------------- */
-static uint64 packets_received;
-static uint64 packets_sent;
-static uint64 bytes_received;
-static uint64 bytes_sent;
-static uint64 msg_retransmits;
-static uint64 msg_valid;
-static uint64 ini_queued;
-static uint64 ini_too_many;
-static uint64 ini_invalid;
-static uint64 ini_unknown_sender;
-static uint64 ini_unknown_parameter;
-static uint64 ini_failed_auth;
-static uint64 ini_missing_key;
-static uint64 ini_valid;
-static uint64 lines_written;
-static uint64 bytes_written;
-
-static void show_stats(void)
-{
-  str_copys(&tmp, "R:"); str_catull(&tmp, packets_received);
-  str_cats(&tmp, " S:"); str_catull(&tmp, packets_sent);
-  str_cats(&tmp, " I:"); str_catull(&tmp, ini_valid);
-  str_cats(&tmp, " M:"); str_catull(&tmp, msg_valid);
-  str_cats(&tmp, " L:"); str_catull(&tmp, lines_written);
-  msg2("stats: ", tmp.s);
-}
-
-/* Key Handling ------------------------------------------------------------ */
 struct keylist server_secrets;
 
 /* ------------------------------------------------------------------------- */
+void send_packet(void)
+{
+  if (!socket_send4(sock, packet.s, packet.len, &ip, port))
+    die1sys(1, "Could not send packet");
+  packets_sent++;
+  bytes_sent += packet.len;
+}
+
 static void send_ack(struct connections_entry* c, uint64 seq)
 {
   packet.len = 0;
@@ -87,10 +65,7 @@ static void send_ack(struct connections_entry* c, uint64 seq)
   pkt_add_u4(&packet, ACK1);
   pkt_add_u8(&packet, seq);
   pkt_add_cc(&packet, &c->data.authenticator);
-  if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
-    die1sys(1, "Could not send ACK packet");
-  packets_sent++;
-  bytes_sent += packet.len;
+  send_packet();
 }
 
 static void send_cid(struct connections_entry* c, struct key* sp)
@@ -100,48 +75,7 @@ static void send_cid(struct connections_entry* c, struct key* sp)
   pkt_add_u4(&packet, CID1);
   pkt_add_key(&packet, sp);
   pkt_add_cc(&packet, &c->data.authenticator);
-  if (!socket_send4(sock, packet.s, packet.len, &c->key.ip, c->key.port))
-    die1sys(1, "Could not send CID packet");
-  packets_sent++;
-  bytes_sent += packet.len;
-}
-
-static int str_catstat(str* s, const char* prefix, uint64 u)
-{
-  return
-    str_cat2s(s, prefix, ": ") &&
-    str_catull(s, u) &&
-    str_catc(s, '\n');
-}
-
-static void send_srp(const char nonce[8])
-{
-  tmp.len = 0;
-  str_catstat(&tmp, "Packets-Received", packets_received);
-  str_catstat(&tmp, "Packets-Sent", packets_sent);
-  str_catstat(&tmp, "Bytes-Received", bytes_received);
-  str_catstat(&tmp, "Bytes-Sent", bytes_sent);
-  str_catstat(&tmp, "Lines-Written", lines_written);
-  str_catstat(&tmp, "Bytes-Written", bytes_written);
-  str_catstat(&tmp, "INI-Dropped-Queued", ini_queued);
-  str_catstat(&tmp, "INI-Dropped-Too-Many", ini_too_many);
-  str_catstat(&tmp, "INI-Invalid-Format", ini_invalid);
-  str_catstat(&tmp, "INI-Unknown-Sender", ini_unknown_sender);
-  str_catstat(&tmp, "INI-Unknown-Parameter", ini_unknown_parameter);
-  str_catstat(&tmp, "INI-Failed-Authentication", ini_failed_auth);
-  str_catstat(&tmp, "INI-Missing-Key", ini_missing_key);
-  str_catstat(&tmp, "INI-Valid", ini_valid);
-  str_catstat(&tmp, "MSG-Retransmits", msg_retransmits);
-  str_catstat(&tmp, "MSG-Valid", msg_valid);
-  packet.len = 0;
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, SRP1);
-  pkt_add_b(&packet, nonce, 8);
-  pkt_add_s2(&packet, &tmp);
-  if (!socket_send4(sock, packet.s, packet.len, &ip, port))
-    die1sys(1, "Could not send SRP packet");
-  packets_sent++;
-  bytes_sent += packet.len;
+  send_packet();
 }
 
 static int contains(const str* s, const char* key)
@@ -531,15 +465,6 @@ static void handle_ini()
   key_exchange(&tmpkey, &csession_public, &ssession_secret);
   auth_start(&ce->data.authenticator, &tmpkey);
   decr_init(&ce->data.decryptor, &tmpkey);
-}
-
-static void handle_srq(void)
-{
-  if (pkt_get_b(&packet, 8, &line, 8) == 0)
-    msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": Warning: SRQ packet is missing nonce");
-  else
-    send_srp(line.s);
 }
 
 static void handle_prq(void)
