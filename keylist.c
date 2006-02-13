@@ -23,14 +23,13 @@ int keylist_set(struct keylist* list, const struct key* key)
   return 1;
 }
   
-struct key* keylist_get(struct keylist* list, const char* type)
+struct key* keylist_get(struct keylist* list, const struct key_cb* cb)
 {
   int i;
-  return ((i = keyindex(type)) < 0)
-    ? 0
-    : (list->keys[i].cb == 0)
-    ? 0
-    : &list->keys[i];
+  for (i = 0; i < KEY_TYPE_COUNT; ++i)
+    if (list->keys[i].cb == cb)
+      return &list->keys[i];
+  return 0;
 }
 
 int keylist_exchange(struct key* shared,
