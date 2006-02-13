@@ -1,5 +1,4 @@
 /* $Id$ */
-#include <misc/misc.h>
 #include <msg/msg.h>
 #include <net/socket.h>
 
@@ -74,8 +73,7 @@ static void send_srp(const char nonce[8])
 void handle_srq(void)
 {
   if (pkt_get_b(&packet, 8, &line, 8) == 0)
-    msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": Warning: SRQ packet is missing nonce");
+    msgpkt2("Warning: SRQ packet is missing nonce");
   else
     send_srp(line.s);
 }

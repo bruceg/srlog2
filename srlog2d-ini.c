@@ -25,16 +25,6 @@ static void send_cid(struct connections_entry* c, struct key* sp)
 
 static struct timeval last_ini;
 
-static void msgpkt2(const char* msg)
-{
-  msgf("s{/}u{: }s", ipv4_format(&ip), port, msg);
-}
-
-static void msgpkt3(const char* msg)
-{
-  msgf("s{/}u{/}s{: }s", ipv4_format(&ip), port, line.s, msg);
-}
-
 void handle_ini(void)
 {
   struct timeval now;

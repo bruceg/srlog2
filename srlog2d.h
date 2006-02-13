@@ -47,6 +47,8 @@ extern struct keylist server_secrets;
 extern void send_packet(void);
 extern void reopen(struct connections_entry* c, const struct timestamp* ts);
 extern int tslt(const struct timestamp* a, const struct timestamp* b);
+extern void msgpkt2(const char* msg);
+extern void msgpkt3(const char* msg);
 
 /* srlog2d-ini.c */
 extern void handle_ini(void);

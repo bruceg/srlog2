@@ -1,7 +1,6 @@
 /* $Id$ */
 #include <string.h>
 
-#include <misc/misc.h>
 #include <msg/msg.h>
 #include <net/resolve.h>
 #include <str/iter.h>
@@ -47,8 +46,7 @@ void handle_prq(void)
       || (offset = pkt_get_s1(&packet, offset, &keyhash_name)) == 0
       || (offset = pkt_get_s1(&packet, offset, &encr_name)) == 0
       || (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0)
-    msg4(ipv4_format(&ip), "/", utoa(port),
-	 ": Warning: PRQ packet is missing elements");
+    msgpkt2("Warning: PRQ packet is missing elements");
   else
     send_prf(line.s);
 }

@@ -11,7 +11,6 @@
 #include <base64/base64.h>
 #include <crc/crc32.h>
 #include <iobuf/iobuf.h>
-#include <misc/misc.h>
 #include <msg/msg.h>
 #include <net/resolve.h>
 #include <net/socket.h>
@@ -43,6 +42,17 @@ str compr_name = {0,0,0};
 static str path;
 
 struct keylist server_secrets;
+
+/* ------------------------------------------------------------------------- */
+void msgpkt2(const char* msg)
+{
+  msgf("s{/}u{: }s", ipv4_format(&ip), port, msg);
+}
+
+void msgpkt3(const char* msg)
+{
+  msgf("s{/}u{/}s{: }s", ipv4_format(&ip), port, line.s, msg);
+}
 
 /* ------------------------------------------------------------------------- */
 void send_packet(void)
@@ -181,8 +191,7 @@ int cli_main(int argc, char* argv[])
     packet.len = i;
     if (!pkt_get_u4(&packet, 0, &type)
 	|| type != SRL2)
-      msg4(ipv4_format(&ip), "/", utoa(port),
-	   ": Warning: Packet is missing prefix");
+      msgpkt2("Warning: Packet is missing prefix");
     else {
       pkt_get_u4(&packet, 4, &type);
       if (type == INI1)
@@ -194,8 +203,7 @@ int cli_main(int argc, char* argv[])
       else if (type == PRQ1)
 	handle_prq();
       else
-	msg4(ipv4_format(&ip), "/", utoa(port),
-	     ": Warning: Unknown packet type");
+	msgpkt2("Warning: Unknown packet type");
     }
     packets_received++;
     bytes_received += i;

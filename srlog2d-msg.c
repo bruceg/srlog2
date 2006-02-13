@@ -72,7 +72,7 @@ void handle_msg(void)
   unsigned i;
 
   if ((c = connections_get(&connections, &key)) == 0) {
-    msgf("s{/}u{: }s", ipv4_format(&ip), port, "MSG from unknown sender");
+    msgpkt2("Warning: MSG from unknown sender");
     return;
   }
   if (!pkt_validate(&packet, &c->data.authenticator)) {
