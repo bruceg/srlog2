@@ -58,6 +58,7 @@ static uint64 ini_queued;
 static uint64 ini_too_many;
 static uint64 ini_invalid;
 static uint64 ini_unknown_sender;
+static uint64 ini_unknown_parameter;
 static uint64 ini_failed_auth;
 static uint64 ini_missing_key;
 static uint64 ini_valid;
@@ -125,6 +126,7 @@ static void send_srp(const char nonce[8])
   str_catstat(&tmp, "INI-Dropped-Too-Many", ini_too_many);
   str_catstat(&tmp, "INI-Invalid-Format", ini_invalid);
   str_catstat(&tmp, "INI-Unknown-Sender", ini_unknown_sender);
+  str_catstat(&tmp, "INI-Unknown-Parameter", ini_unknown_parameter);
   str_catstat(&tmp, "INI-Failed-Authentication", ini_failed_auth);
   str_catstat(&tmp, "INI-Missing-Key", ini_missing_key);
   str_catstat(&tmp, "INI-Valid", ini_valid);
@@ -390,7 +392,8 @@ static void handle_ini()
   struct key ssession_public;
   struct key ssession_secret;
   struct key tmpkey;
-  struct key* key;
+  const struct key* key;
+  const struct key_cb* cb;
   AUTH_CTX authenticator;
   unsigned i;
 
@@ -418,15 +421,27 @@ static void handle_ini()
       (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &keyhash_name)) == 0 ||
       (offset = pkt_get_s1(&packet, offset, &encr_name)) == 0 ||
-      (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0 ||
-      (offset = pkt_get_key(&packet, offset,
-			    &csession_public, &nistp224_cb)) == 0 ||
-      offset + AUTH_LENGTH != packet.len ||
-      str_diffs(&auth_name, AUTHENTICATOR_NAME) != 0 ||
-      str_diffs(&keyex_name, nistp224_cb.name) != 0 ||
-      str_diffs(&keyhash_name, KEYHASH_NAME) != 0 ||
-      str_diffs(&encr_name, ENCRYPTOR_NAME) != 0 ||
-      str_diffs(&compr_name, "null") != 0) {
+      (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0) {
+    msg4(ipv4_format(&ip), "/", utoa(port),
+	 ": Error: INI has invalid format");
+    ++ini_invalid;
+    return;
+  }
+
+  if (str_diffs(&auth_name, AUTHENTICATOR_NAME) != 0
+      || (cb = key_cb_lookup(keyex_name.s)) == 0
+      || str_diffs(&keyhash_name, KEYHASH_NAME) != 0
+      || str_diffs(&encr_name, ENCRYPTOR_NAME) != 0
+      || str_diffs(&compr_name, "null") != 0) {
+    msg6(ipv4_format(&ip), "/", utoa(port), "/", line.s,
+	 ": Warning: INI has unknown parameter value");
+    ++ini_unknown_parameter;
+    return;
+  }
+
+  if ((offset = pkt_get_key(&packet, offset,
+			    &csession_public, cb)) == 0 ||
+      offset + AUTH_LENGTH != packet.len) {
     msg4(ipv4_format(&ip), "/", utoa(port),
 	 ": Error: INI has invalid format");
     ++ini_invalid;
@@ -441,8 +456,8 @@ static void handle_ini()
     return;
   }
   last_ini = now;
-  
-  if ((key = keylist_get(&s->data.keys, keyex_name.s)) == 0) {
+
+  if ((key = keylist_get(&s->data.keys, cb)) == 0) {
     error_sender(s, "Given key type is missing");
     ++ini_missing_key;
     return;
@@ -492,8 +507,7 @@ static void handle_ini()
   ce->data.next_seq = seq;
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
-  key_generate(&ssession_secret, &ssession_public, &nistp224_cb);
-  csession_public.cb = &nistp224_cb;
+  key_generate(&ssession_secret, &ssession_public, cb);
   keylist_exchange(&tmpkey, &csession_public, &server_secrets);
   auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
