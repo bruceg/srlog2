@@ -13,8 +13,7 @@
 #include <fmt/number.h>
 
 #include "srlog2.h"
-
-extern struct keylist server_secrets;
+#include "srlog2d.h"
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 

@@ -10,6 +10,7 @@
 #include <fmt/number.h>
 
 #include "srlog2.h"
+#include "srlog2d.h"
 
 struct ghash connections = {0,0,0,0,0,0,0,0,0,0,0};
 

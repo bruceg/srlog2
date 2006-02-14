@@ -42,43 +42,6 @@ struct line
   str line;
 };
 
-struct connection_key
-{
-  ipv4port port;
-  ipv4addr ip;
-};
-
-struct connection_data
-{
-  time_t rotate_at;
-  uint64 next_seq;
-  uint64 last_seq;
-  struct timestamp last_timestamp;
-  int fd;
-  AUTH_CTX authenticator;
-  DECR_CTX decryptor;
-  unsigned long last_count;
-  str dir;
-};
-
-GHASH_DECL(connections,struct connection_key,struct connection_data);
-
-struct sender_key
-{
-  str sender;
-  str service;
-};
-
-struct sender_data
-{
-  DECR_CTX decryptor;
-  str dir;
-  struct connection_key* connection;
-  struct keylist keys;
-};
-
-GHASH_DECL(senders,struct sender_key,struct sender_data);
-
 /* packet.c */
 extern void auth_start(AUTH_CTX* ctx, const struct key* key);
 extern int pkt_add_u1(str* s, unsigned u);
@@ -128,27 +91,5 @@ extern void buffer_rewind(void);
 /* addrname.c */
 GHASH_DECL(addrname,ipv4addr,const char*);
 extern struct ghash addrname;
-
-/* senders.c */
-extern struct ghash senders;
-void msg_sender(const struct senders_entry* c, const char* a, const char* b);
-void error_sender(const struct senders_entry* c, const char* s);
-void error_sender3(const struct senders_entry* c, const char* s,
-		   uint64 u1, uint64 u2);
-void warn_sender(const struct senders_entry* c, const char* s);
-void warn_sender3(const struct senders_entry* c, const char* s,
-		  uint64 u1, uint64 u2);
-void load_senders(int reload);
-struct senders_entry* find_sender(const char* sender, const char* service);
-
-/* connections.c */
-extern struct ghash connections;
-void msg_connection(const struct connections_entry* c, const char* a, const char* b);
-void error_connection(const struct connections_entry* c, const char* s);
-void error_connection3(const struct connections_entry* c, const char* s,
-		   uint64 u1, uint64 u2);
-void warn_connection(const struct connections_entry* c, const char* s);
-void warn_connection3(const struct connections_entry* c, const char* s,
-		  uint64 u1, uint64 u2);
 
 #endif
