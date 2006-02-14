@@ -31,7 +31,6 @@ ipv4port port;
 str packet = {0,0,0};
 str line = {0,0,0};
 str tmp = {0,0,0};
-str sender = {0,0,0};
 
 str auth_name = {0,0,0};
 str keyex_name = {0,0,0};

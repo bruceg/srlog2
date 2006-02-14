@@ -34,7 +34,6 @@ extern ipv4port port;
 extern str line;
 extern str packet;
 extern str tmp;
-extern str sender;
 
 extern str auth_name;
 extern str keyex_name;

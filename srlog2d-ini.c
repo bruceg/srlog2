@@ -13,6 +13,8 @@
 /* Time in seconds to pause between accepting INIs */
 static double ini_throttle = 1.0 / 64;
 
+static str sender;
+
 static void send_cid(struct connections_entry* c, struct key* sp)
 {
   packet.len = 0;
