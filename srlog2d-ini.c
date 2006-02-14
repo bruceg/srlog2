@@ -150,7 +150,7 @@ void handle_ini(void)
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
   key_generate(&ssession_secret, &ssession_public, cb);
-  keylist_exchange(&tmpkey, &csession_public, &server_secrets);
+  keylist_exchange_key_list(&tmpkey, &csession_public, &server_secrets);
   auth_start(&ce->data.authenticator, &tmpkey);
   reopen(ce, &ts);
   send_cid(ce, &ssession_public);

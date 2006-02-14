@@ -22,11 +22,14 @@ extern int keylist_set(struct keylist* list, const struct key* key);
 extern struct key* keylist_get(struct keylist* list, const struct key_cb* cb);
 extern int keylist_import(struct keylist* list, const struct str* text);
 extern int keylist_load(struct keylist* list, const char* path);
-extern int keylist_exchange(struct key* shared,
-			    const struct key* public,
-			    const struct keylist* secrets);
-extern int keylist_exchange_list(struct keylist* shareds,
-				 const struct keylist* publics,
-				 const struct keylist* secrets);
+extern int keylist_exchange_key_list(struct key* shared,
+				     const struct key* public,
+				     const struct keylist* secrets);
+extern int keylist_exchange_list_key(struct key* shared,
+				     const struct keylist* publics,
+				     const struct key* secret);
+extern int keylist_exchange_all(struct keylist* shareds,
+				const struct keylist* publics,
+				const struct keylist* secrets);
 
 #endif

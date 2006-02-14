@@ -32,9 +32,9 @@ struct key* keylist_get(struct keylist* list, const struct key_cb* cb)
   return 0;
 }
 
-int keylist_exchange(struct key* shared,
-		     const struct key* public,
-		     const struct keylist* secrets)
+int keylist_exchange_key_list(struct key* shared,
+			      const struct key* public,
+			      const struct keylist* secrets)
 {
   int i;
   return ((i = keyindex(public->cb->name)) < 0)
@@ -44,9 +44,21 @@ int keylist_exchange(struct key* shared,
     : public->cb->exchange(shared, public, &secrets->keys[i]);
 }
 
-int keylist_exchange_list(struct keylist* shareds,
-			  const struct keylist* publics,
-			  const struct keylist* secrets)
+int keylist_exchange_list_key(struct key* shared,
+			      const struct keylist* publics,
+			      const struct key* secret)
+{
+  int i;
+  return ((i = keyindex(secret->cb->name)) < 0)
+    ? 0
+    : (publics->keys[i].cb == 0)
+    ? 0
+    : secret->cb->exchange(shared, &publics->keys[i], secret);
+}
+
+int keylist_exchange_all(struct keylist* shareds,
+			 const struct keylist* publics,
+			 const struct keylist* secrets)
 {
   int count;
   int i;

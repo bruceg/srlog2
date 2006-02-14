@@ -147,7 +147,7 @@ static struct keylist* loadkeys(const char* host, const char* service,
     wrap_str(str_cat2s(&tmp, "/", service));
   wrap_str(str_cats(&tmp, "/.publics"));
   if (keylist_load(keys, tmp.s)
-      && keylist_exchange_list(keys, keys, &server_secrets))
+      && keylist_exchange_all(keys, keys, &server_secrets))
     return keys;
   else if (errno != ENOENT)
     diefsys(1, "{Error opening '}s{'}", tmp.s);
