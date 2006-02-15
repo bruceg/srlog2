@@ -312,6 +312,7 @@ static int receive_prf(void)
     REJECTf("{PRF response contained bad keyex name: }s", keyex_name.s);
   if ((key = keylist_get(&shared_secrets, keyex)) == 0)
     REJECTf("{PRF response referenced missing shared secret: }s", keyex_name.s);
+  debug1(DEBUG_PACKET, "Received PRF packet");
   auth_start(&ini_authenticator, key);
 
   return 1;
@@ -324,15 +325,15 @@ static int receive_ack(void)
     return 0;
   pkt_get_u8(&packet, 8, &seq);
   if (seq != seq_last) {
-    debugf(DEBUG_PACKET, "{Received wrong ACK sequence }llu{ sent }llu",
+    debugf(DEBUG_PACKET, "{Received wrong ACK sequence #}llu{ sent #}llu",
 	   seq, seq_last);
     return 0;
   }
   if (!pkt_validate(&packet, &msg_authenticator)) {
-    debug1(DEBUG_PACKET, "Received invalid ACK");
+    debug1(DEBUG_PACKET, "Received ACK failed validation");
     return 0;
   }
-  debugf(DEBUG_PACKET, "{Received ACK packet }llu", seq);
+  debugf(DEBUG_PACKET, "{Received ACK packet #}llu", seq);
   buffer_pop();
   seq_last = 0;
   return 1;
