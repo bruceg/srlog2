@@ -4,6 +4,7 @@
 
 #include <crc/crc32.h>
 #include <msg/msg.h>
+#include <msg/wrap.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"
@@ -32,21 +33,21 @@ static int str_catuhex(str* s, uint32 u)
   return str_catb(s, hex, 8);
 }
 
-static void write_line(struct connections_entry* c,
+static void write_line(struct senders_entry* s,
 		       const struct timestamp* ts, const str* l)
 {
-  /* Assumption: the timestamp is monotonically increasing */
-  if (ts->sec >= c->data.rotate_at)
-    reopen(c, ts);
-  if (!str_copys(&tmp, "@40000000") ||
-      !str_catuhex(&tmp, ts->sec) ||
-      !str_catuhex(&tmp, ts->nsec) ||
-      !str_catc(&tmp, ' ') ||
-      !str_cat(&tmp, l) ||
-      !str_catc(&tmp, '\n'))
-    die1(1, "Out of memory");
-  if (write(c->data.fd, tmp.s, tmp.len) != (long)tmp.len)
-    die1sys(1, "Write to log file failed");
+  wrap_str(str_copys(&tmp, "@40000000"));
+  wrap_str(str_catuhex(&tmp, ts->sec));
+  wrap_str(str_catuhex(&tmp, ts->nsec));
+  wrap_str(str_catc(&tmp, ' '));
+  wrap_str(str_cat(&tmp, &s->key.sender));
+  wrap_str(str_catc(&tmp, ' '));
+  wrap_str(str_cat(&tmp, &s->key.service));
+  wrap_str(str_catc(&tmp, ' '));
+  wrap_str(str_cat(&tmp, l));
+  wrap_str(str_catc(&tmp, '\n'));
+  if (write(logger, tmp.s, tmp.len) != (long)tmp.len)
+    die1sys(1, "Write to logger failed");
   lines_written++;
   bytes_written += tmp.len;
 }
@@ -64,6 +65,7 @@ void handle_msg(void)
   struct timestamp ts;
   struct timestamp last_ts;
   struct connections_entry* c;
+  struct senders_entry* s;
   const struct connection_key key = { port, ip };
   uint64 seq;
   unsigned count;
@@ -73,6 +75,7 @@ void handle_msg(void)
     msgpkt2("Warning: MSG from unknown sender");
     return;
   }
+  s = c->data.sender;
   if (!pkt_validate(&packet, &c->data.authenticator)) {
     error_connection(c, "MSG failed authentication");
     return;
@@ -132,7 +135,7 @@ void handle_msg(void)
       offset = pkt_get_s2(&packet, offset, &line);
       /* Only write out lines we haven't already acknowledged yet. */
       if (seq >= c->data.next_seq)
-	write_line(c, &ts, &line);
+	write_line(s, &ts, &line);
     }
     
     c->data.next_seq = seq;

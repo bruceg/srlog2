@@ -5,6 +5,7 @@
 #include <systime.h>
 #include <adt/ghash.h>
 #include <msg/msg.h>
+#include <msg/wrap.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"
@@ -120,7 +121,6 @@ void handle_ini(void)
     struct connection_key ck = { port, ip };
     struct connection_data cd;
     memset(&cd, 0, sizeof cd);
-    str_copy(&cd.dir, &s->data.dir);
 
     if (!connections_add(&connections, &ck, &cd)) die_oom(1);
     ce = connections_get(&connections, &ck);
@@ -148,10 +148,10 @@ void handle_ini(void)
   ce->data.next_seq = seq;
   ce->data.last_timestamp = ts;
   ce->data.last_count = 0;
+  ce->data.sender = s;
   key_generate(&ssession_secret, &ssession_public, cb);
   keylist_exchange_key_list(&tmpkey, &csession_public, &server_secrets);
   auth_start(&ce->data.authenticator, &tmpkey);
-  reopen(ce, &ts);
   send_cid(ce, &ssession_public);
   key_exchange(&tmpkey, &csession_public, &ssession_secret);
   auth_start(&ce->data.authenticator, &tmpkey);

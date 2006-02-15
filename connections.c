@@ -36,19 +36,13 @@ static int connection_datacopy(struct connection_data* a,
 			       struct connection_data const* b)
 {
   *a = *b;
-  memset(&a->dir, 0, sizeof a->dir);
-  return str_copy(&a->dir, &b->dir);
-}
-
-static void connection_datafree(struct connection_data* data)
-{
-  str_free(&data->dir);
+  return 1;
 }
 
 GHASH_DEFN(connections, struct connection_key, struct connection_data,
 	   connection_hash, connection_cmp,
 	   connection_keycopy, connection_datacopy,
-	   0, connection_datafree);
+	   0, 0);
 
 /* ------------------------------------------------------------------------- */
 const char* format_connection(const struct connections_entry* c)
@@ -58,7 +52,9 @@ const char* format_connection(const struct connections_entry* c)
   if (!str_catc(&s, '/')) return 0;
   if (!str_catu(&s, c->key.port)) return 0;
   if (!str_catc(&s, '/')) return 0;
-  if (!str_cat(&s, &c->data.dir)) return 0;
+  if (!str_cat(&s, &c->data.sender->key.sender)) return 0;
+  if (!str_catc(&s, '/')) return 0;
+  if (!str_cat(&s, &c->data.sender->key.service)) return 0;
   if (!str_cats(&s, ": ")) return 0;
   return s.s;
 }

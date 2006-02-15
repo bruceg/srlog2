@@ -5,10 +5,6 @@
 
 #define STATS_INTERVAL 10000
 
-/* Set this to 1 when testing log rotation, and it will rotate logs
-   every second instead of every hour */
-#define ROLLOVER_SECOND 0
-
 extern uint64 stats_next;
 extern uint64 packets_received;
 extern uint64 packets_sent;
@@ -27,6 +23,7 @@ extern uint64 ini_valid;
 extern uint64 lines_written;
 extern uint64 bytes_written;
 
+extern int logger;
 extern int sock;
 extern ipv4addr ip;
 extern ipv4port port;
@@ -50,17 +47,16 @@ struct connection_key
   ipv4addr ip;
 };
 
+struct senders_entry;
 struct connection_data
 {
-  time_t rotate_at;
   uint64 next_seq;
   uint64 last_seq;
   struct timestamp last_timestamp;
-  int fd;
   AUTH_CTX authenticator;
   DECR_CTX decryptor;
   unsigned long last_count;
-  str dir;
+  struct senders_entry* sender;
 };
 
 GHASH_DECL(connections,struct connection_key,struct connection_data);
@@ -84,7 +80,6 @@ struct sender_key
 struct sender_data
 {
   DECR_CTX decryptor;
-  str dir;
   struct connection_key* connection;
   struct keylist keys;
 };
@@ -99,7 +94,6 @@ extern struct senders_entry* find_sender(const char* sender,
 
 /* srlog2d.c */
 extern void send_packet(void);
-extern void reopen(struct connections_entry* c, const struct timestamp* ts);
 extern int tslt(const struct timestamp* a, const struct timestamp* b);
 extern void msgpkt2(const char* msg);
 extern void msgpkt3(const char* msg);

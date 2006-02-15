@@ -52,14 +52,9 @@ static void sender_keyfree(struct sender_key* addr)
   str_free(&addr->service);
 }
 
-static void sender_datafree(struct sender_data* data)
-{
-  str_free(&data->dir);
-}
-
 GHASH_DEFN(senders, struct sender_key, struct sender_data,
 	   sender_hash, sender_cmp,
-	   sender_keycopy, sender_datacopy, sender_keyfree, sender_datafree);
+	   sender_keycopy, sender_datacopy, sender_keyfree, 0);
 
 /* ------------------------------------------------------------------------- */
 const char* format_sender(const struct senders_entry* c)
@@ -92,7 +87,7 @@ static void add_sender(const char* sender, const char* service,
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
-  wrap_str(str_copys(&d.dir, dir));
+  //wrap_str(str_copys(&d.dir, dir));
   d.keys = *keys;
   if (!senders_add(&senders, &a, &d)) die_oom(1);
 }
@@ -100,7 +95,7 @@ static void add_sender(const char* sender, const char* service,
 static void update_sender(struct senders_entry* s, const struct keylist* keys)
 {
   if (memcmp(&s->data.keys, keys, sizeof *keys) != 0) {
-    msg2("Reloading sender: ", s->data.dir.s);
+    //msg2("Reloading sender: ", s->data.dir.s);
     s->data.keys = *keys;
   }
 }

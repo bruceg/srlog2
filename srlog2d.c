@@ -24,6 +24,7 @@
 /* The maximum number of packets to receive before exiting. */
 static uint32 maxpackets = 0;
 
+int logger;
 int sock;
 ipv4addr ip;
 ipv4port port;
@@ -37,8 +38,6 @@ str keyex_name = {0,0,0};
 str keyhash_name = {0,0,0};
 str encr_name = {0,0,0};
 str compr_name = {0,0,0};
-
-static str path;
 
 struct keylist server_secrets;
 
@@ -60,56 +59,6 @@ void send_packet(void)
     die1sys(1, "Could not send packet");
   packets_sent++;
   bytes_sent += packet.len;
-}
-
-/* ------------------------------------------------------------------------- */
-void reopen(struct connections_entry* c, const struct timestamp* ts)
-{
-  time_t t;
-  struct tm* lt;
-
-  t = ts->sec;
-  lt = localtime(&t);
-  tmp.len = 0;
-  str_catuw(&tmp, lt->tm_year+1900, 4, '0');
-  str_catc(&tmp, '-');
-  str_catuw(&tmp, lt->tm_mon+1, 2, '0');
-  str_catc(&tmp, '-');
-  str_catuw(&tmp, lt->tm_mday, 2, '0');
-  str_catc(&tmp, '-');
-  str_catuw(&tmp, lt->tm_hour, 2, '0');
-#if ROLLOVER_SECOND
-  str_catc(&tmp, ':');
-  str_catuw(&tmp, lt->tm_min, 2, '0');
-  str_catc(&tmp, ':');
-  str_catuw(&tmp, lt->tm_sec, 2, '0');
-#endif
-
-  if (c->data.fd > 0) {
-    fsync(c->data.fd);
-    close(c->data.fd);
-  }
-
-  str_copy(&path, &c->data.dir);
-  str_catc(&path, '/');
-  str_cat(&path, &tmp);
-  msg3(format_connection(c), "Opening ", path.s);
-  if ((c->data.fd = open(path.s, O_WRONLY|O_CREAT|O_APPEND, 0644)) == -1)
-    die3sys(1, "Could not open '", path.s, "'"); /* FIXME: should not die */
-
-  str_copy(&path, &c->data.dir);
-  str_cats(&path, "/current");
-  unlink(path.s);
-  symlink(tmp.s, path.s);
-
-#if ROLLOVER_SECOND
-  ++lt->tm_sec;
-#else
-  ++lt->tm_hour;
-  lt->tm_sec = 0;
-  lt->tm_min = 0;
-#endif
-  c->data.rotate_at = mktime(lt);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -150,6 +99,29 @@ static int reload;
 static void sigfn(int ignored) { exitasap = 1; (void)ignored; }
 static void sighup(int ignored) { reload = 1; (void)ignored; }
 
+static int start_logger(int argc, char* argv[])
+{
+  pid_t pid;
+  int fds[2];
+  if (argc == 0)
+    return 1;
+  else {
+    if (pipe(fds) == -1)
+      die1sys(1, "Could not create pipe");
+    if ((pid = fork()) == -1)
+      die1sys(1, "Could not fork");
+    if (pid == 0) {
+      dup2(fds[0], 0);
+      close(fds[0]);
+      close(fds[1]);
+      execvp(argv[0], argv);
+      diefsys(1, "{Could not execute '}s{'}", argv[0]);
+    }
+    close(fds[0]);
+    return fds[1];
+  }
+}
+
 int cli_main(int argc, char* argv[])
 {
   int i;
@@ -177,6 +149,8 @@ int cli_main(int argc, char* argv[])
   sig_hup_catch(sighup);
 
   msg1("Starting");
+  logger = start_logger(argc, argv);
+  
   while (!exitasap) {
     if (reload) {
       reload = 0;
