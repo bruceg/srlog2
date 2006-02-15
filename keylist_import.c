@@ -2,6 +2,7 @@
 #include <string.h>
 #include <base64/base64.h>
 #include <iobuf/ibuf.h>
+#include <msg/wrap.h>
 #include <str/str.h>
 #include <str/iter.h>
 
@@ -60,3 +61,20 @@ int keylist_load(struct keylist* list, const char* path)
   return result;
 }
 
+int keylist_load_multi(struct keylist* list,
+		       const char* prefix,
+		       const char* suffix)
+{
+  str path = {0,0,0};
+  int result = 0;
+  if (suffix == 0)
+    suffix = "";
+  wrap_str(str_copy3s(&path, prefix, nistp224_cb.name, suffix));
+  result += keylist_load(list, path.s);
+#ifdef HASCURVE25519
+  wrap_str(str_copy3s(&path, prefix, curve25519_cb.name, suffix));
+  result += keylist_load(list, path.s);
+#endif
+  str_free(&path);
+  return result;
+}
