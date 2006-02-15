@@ -11,7 +11,6 @@
 #include <systime.h>
 #include <crc/crc32.h>
 #include <iobuf/iobuf.h>
-#include <misc/misc.h>
 #include <msg/msg.h>
 #include <msg/wrap.h>
 #include <net/resolve.h>
@@ -23,6 +22,16 @@
 #include "srlog2.h"
 #include "srlog2-cli.h"
 
+#define REJECTf(FORMAT, ...) do { \
+  debugf(DEBUG_PACKET, FORMAT, __VA_ARGS__); \
+  return 0; \
+} while (0)
+
+#define REJECT1(STRING) do { \
+  debug1(DEBUG_PACKET, STRING); \
+  return 0; \
+} while (0)
+
 static str service;
 static ipv4addr ip;
 static ipv4port port;
@@ -32,17 +41,20 @@ static unsigned long cid_timeout = 5*1000;
 static unsigned long retransmits = 4;
 static unsigned long readwait = 100;
 static const char** patterns;
+static str keyex_name;
+static const struct key_cb* keyex;
+static str tmpstr;
+static unsigned char nonce[8];
 
 static int exitasap;
 
 static str out_packet;
 static str ack_packet;
 
-static char num1[40];
-static char num2[40];
-
 /* Key/Encryption Handling ------------------------------------------------- */
-static struct key server_public;
+static struct keylist shared_secrets;
+static struct keylist server_publics;
+static struct keylist client_secrets;
 static AUTH_CTX ini_authenticator;
 static AUTH_CTX msg_authenticator;
 static AUTH_CTX cid_authenticator;
@@ -156,7 +168,7 @@ static int add_msg(const struct line* l)
       || out_packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
-  debug2(DEBUG_MSG, "Adding line #", utoa(l->seq));
+  debugf(DEBUG_MSG, "{Adding line #}llu", l->seq);
   ++out_packet.s[8+8];
   pkt_add_ts(&out_packet, &l->timestamp);
   pkt_add_s2(&out_packet, &l->line);
@@ -177,9 +189,9 @@ static void start_msg(const struct line* l)
 
 static void end_msg(void)
 {
-  unsigned char nonce[ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE];
-  brandom_fill(nonce, sizeof nonce);
-  pkt_add_b(&out_packet, nonce, sizeof nonce);
+  unsigned char pad[ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE];
+  brandom_fill(pad, sizeof pad);
+  pkt_add_b(&out_packet, pad, sizeof pad);
   pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
   encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17, seq_first);
   pkt_add_cc(&out_packet, &msg_authenticator);
@@ -200,6 +212,26 @@ static int make_msg(void)
   return 1;
 }
 
+static void make_prq(void)
+{
+  brandom_fill(nonce, sizeof nonce);
+  pkt_add_u4(&out_packet, SRL2);
+  pkt_add_u4(&out_packet, PRQ1);
+  pkt_add_b(&out_packet, nonce, sizeof nonce);
+  pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
+  wrap_str(str_copys(&keyex_name, nistp224_cb.name));
+#ifdef HASCURVE25519
+  if (keylist_get(&shared_secrets, &curve25519_cb) != 0) {
+    wrap_str(str_catc(&keyex_name, 0));
+    wrap_str(str_cats(&keyex_name, curve25519_cb.name));
+  }
+#endif
+  pkt_add_s1(&out_packet, &keyex_name);
+  pkt_add_s1c(&out_packet, KEYHASH_NAME);
+  pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
+  pkt_add_s1c(&out_packet, "null");
+}
+
 static void make_ini(const struct key* key, const struct line* line)
 {
   const struct timestamp* ts;
@@ -218,7 +250,7 @@ static void make_ini(const struct key* key, const struct line* line)
   pkt_add_s1c(&out_packet, opt_sender);
   pkt_add_s1(&out_packet, &service);
   pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
-  pkt_add_s1c(&out_packet, nistp224_cb.name);
+  pkt_add_s1c(&out_packet, keyex->name);
   pkt_add_s1c(&out_packet, KEYHASH_NAME);
   pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
   pkt_add_s1c(&out_packet, "null");
@@ -227,6 +259,59 @@ static void make_ini(const struct key* key, const struct line* line)
 }
 
 /* Network I/O ------------------------------------------------------------- */
+static void send_prq(void)
+{
+  if (!socket_send4(sock, out_packet.s, out_packet.len, &ip, port)) {
+    error1sys("Could not send PRQ packet to server");
+    exitasap = 1;
+  }
+  else {
+    debug1(DEBUG_PACKET, "Sent PRQ packet");
+    poll_reset(cid_timeout);
+  }
+}
+
+static int receive_prf(void)
+{
+  int i;
+  uint32 t;
+  int offset;
+  struct key* key;
+  
+  if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
+    return 0;
+  ack_packet.len = i;
+  pkt_get_u4(&ack_packet, 0, &t);
+  if (t != SRL2)
+    REJECT1("Received packet format was not SRL2");
+  pkt_get_u4(&ack_packet, 4, &t);
+  if (t != PRF1)
+    REJECT1("Received packet type was not PRF1");
+  if ((offset = pkt_get_b(&ack_packet, 8, &tmpstr, sizeof nonce)) == 0
+      || memcmp(tmpstr.s, nonce, sizeof nonce) != 0
+      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || strcasecmp(tmpstr.s, AUTHENTICATOR_NAME) != 0
+      || (offset = pkt_get_s1(&ack_packet, offset, &keyex_name)) == 0
+      || (keyex = key_cb_lookup(keyex_name.s)) == 0
+      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || strcasecmp(tmpstr.s, KEYHASH_NAME) != 0
+      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || strcasecmp(tmpstr.s, ENCRYPTOR_NAME) != 0
+      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || strcasecmp(tmpstr.s, "null") != 0
+      || offset != ack_packet.len)
+    REJECT1("Received PRF1 had invalid format or parameters");
+
+  if ((keyex = key_cb_lookup(keyex_name.s)) == 0)
+    REJECTf("{PRF response contained bad keyex name: }s", keyex_name.s);
+  if ((key = keylist_get(&shared_secrets, keyex)) == 0)
+    REJECTf("{PRF response referenced missing shared secret: }s", keyex_name.s);
+  auth_start(&ini_authenticator, key);
+
+  return 1;
+}
+  
+
 static void send_msg(unsigned scale)
 {
   if (!socket_send4(sock, out_packet.s, out_packet.len, &ip, port)) {
@@ -234,9 +319,7 @@ static void send_msg(unsigned scale)
     exitasap = 1;
   }
   else {
-    utoa2(seq_send, num1);
-    utoa2(seq_last, num2);
-    debug4(DEBUG_PACKET, "Sent MSG packet ", num1, "-", num2);
+    debugf(DEBUG_PACKET, "{Sent MSG packet }llu{-}llu", seq_send, seq_last);
     poll_reset(ack_timeout*scale);
   }
 }
@@ -255,16 +338,15 @@ static int receive_ack(void)
   if (t != ACK1) return 0;
   pkt_get_u8(&ack_packet, 8, &seq);
   if (seq != seq_last) {
-    utoa2(seq, num1);
-    utoa2(seq_last, num2);
-    debug4(DEBUG_PACKET, "Received wrong ACK sequence ", num1, " ", num2);
+    debugf(DEBUG_PACKET, "{Received wrong ACK sequence }llu{ sent }llu",
+	   seq, seq_last);
     return 0;
   }
   if (!pkt_validate(&ack_packet, &msg_authenticator)) {
     debug1(DEBUG_PACKET, "Received invalid ACK");
     return 0;
   }
-  debug2(DEBUG_PACKET, "Received ACK packet ", utoa(seq));
+  debugf(DEBUG_PACKET, "{Received ACK packet }llu", seq);
   buffer_pop();
   seq_last = 0;
   return 1;
@@ -308,7 +390,7 @@ static int receive_cid(struct key* csession_secret)
     debug1(DEBUG_PACKET, "Received CID failed validation");
     return 0;
   }
-  pkt_get_key(&ack_packet, 8, &ssession_public, &nistp224_cb);
+  pkt_get_key(&ack_packet, 8, &ssession_public, keyex);
   key_exchange(&tmpkey, &ssession_public, csession_secret);
   auth_start(&msg_authenticator, &tmpkey);
   encr_init(&encryptor, &tmpkey);
@@ -319,11 +401,29 @@ static int receive_cid(struct key* csession_secret)
 
 /* States ------------------------------------------------------------------ */
 #define STATE_DISCONNECTED 0
-#define STATE_SENDING 1
-#define STATE_CONNECTED 2
-#define STATE_EXITING 3
+#define STATE_NEGOTIATED 1
+#define STATE_SENDING 2
+#define STATE_CONNECTED 3
+#define STATE_EXITING 4
 
-static int do_disconnected(void)
+static int do_negotiating(void)
+{
+  make_prq();
+  while (!exitasap) {
+    send_prq();
+    while (!exitasap) {
+      if (poll_both() == 0)
+	break;
+      if (stdin_ready)
+	read_lines();
+      if (sock_ready && receive_prf())
+	return STATE_NEGOTIATED;
+    }
+  }
+  return STATE_EXITING;
+}
+
+static int do_connecting(void)
 {
   struct key csession_secret;
   struct key csession_public;
@@ -332,9 +432,9 @@ static int do_disconnected(void)
   buffer_rewind();
   buffer_sync();
   brandom_init();
-  key_generate(&csession_secret, &csession_public, &nistp224_cb);
+  key_generate(&csession_secret, &csession_public, keyex);
   make_ini(&csession_public, buffer_peek());
-  key_exchange(&tmpkey, &server_public, &csession_secret);
+  keylist_exchange_list_key(&tmpkey, &server_publics, &csession_secret);
   auth_start(&cid_authenticator, &tmpkey);
 
   while (!exitasap) {
@@ -401,9 +501,10 @@ static void mainloop(void)
 {
   int state = STATE_DISCONNECTED;
   while (!exitasap) {
-    debug2(DEBUG_STATE, "Entering state ", utoa(state));
+    debugf(DEBUG_STATE, "{Entering state }u", state);
     switch (state) {
-    case STATE_DISCONNECTED: state = do_disconnected(); break;
+    case STATE_DISCONNECTED: state = do_negotiating(); break;
+    case STATE_NEGOTIATED:   state = do_connecting(); break;
     case STATE_SENDING:      state = do_sending(); break;
     case STATE_CONNECTED:    state = do_connected(); break;
     case STATE_EXITING:      exitasap = 1; break;
@@ -414,7 +515,7 @@ static void mainloop(void)
 
 /* Main Loop --------------------------------------------------------------- */
 static void sigfn(int s) {
-  warn2("Killed with signal ", utoa(s));
+  warnf("{Killed with signal }u", s);
   exitasap = 1;
 }
 
@@ -428,29 +529,25 @@ static void load_patterns(char** argv)
   }
 }
 
-static void load_server_key(const char* hostname)
+static void load_keys(const char* server)
 {
   str path = {0,0,0};
-  wrap_str(str_copy4s(&path, conf_etc, "/servers/", hostname, "."));
-  if (!key_load(&server_public, path.s, &nistp224_cb) &&
-      !key_load(&server_public, "server.", &nistp224_cb))
-    die1sys(1, "Could not load server key");
-  str_free(&path);
-}
 
-static void load_host_key(void)
-{
-  struct key client_secret;
-  struct key tmpkey;
-  str path = {0,0,0};
-  if (!key_load(&client_secret, "", &nistp224_cb)) {
+  wrap_str(str_copy4s(&path, conf_etc, "/servers/", server, "."));
+  if (!keylist_load_multi(&server_publics, path.s, 0) &&
+      !keylist_load_multi(&server_publics, "server.", 0))
+    die1sys(1, "Could not load server keys");
+
+  if (!keylist_load_multi(&client_secrets, "", 0)) {
     wrap_str(str_copy2s(&path, conf_etc, "/"));
-    if (!key_load(&client_secret, path.s, &nistp224_cb))
-      die1sys(1, "Could not load sender key");
-    str_free(&path);
+    if (!keylist_load_multi(&client_secrets, path.s, 0))
+      die1sys(1, "Could not load sender keys");
   }
-  key_exchange(&tmpkey, &server_public, &client_secret);
-  auth_start(&ini_authenticator, &tmpkey);
+
+  if (!keylist_exchange_all(&shared_secrets, &server_publics, &client_secrets))
+    die1(1, "No server keys matched any sender keys");
+  
+  str_free(&path);
 }
 
 static void getenvu(const char* name, unsigned long* dst)
@@ -500,8 +597,7 @@ int cli_main(int argc, char* argv[])
   if (!resolve_ipv4name(server_name, &ip))
     die3(1, "Could not resolve '", server_name, "'");
 
-  load_server_key(server_name);
-  load_host_key();
+  load_keys(server_name);
 
   port = opt_port;
   if ((sock = socket_udp()) == -1)
