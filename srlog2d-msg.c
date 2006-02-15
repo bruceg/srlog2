@@ -91,9 +91,9 @@ void handle_msg(void)
   
   pkt_get_u8(&packet, 8, &seq);
   pkt_get_u1(&packet, 8+8, &count);
-  if (seq > c->data.next_seq) {
+  if (seq > s->data.next_seq) {
     error_connection3(c, "MSG has sequence number in future: ",
-		      seq, c->data.next_seq);
+		      seq, s->data.next_seq);
     return;
   }
 
@@ -107,10 +107,10 @@ void handle_msg(void)
 
   ++msg_valid;
 
-  if (seq == c->data.next_seq ||
-      (seq == c->data.last_seq && count > c->data.last_count)) {
+  if (seq == s->data.next_seq ||
+      (seq == s->data.last_seq && count > s->data.last_count)) {
     /* Pass 1 -- validate the offsets and timestamps before writing anything */
-    last_ts = c->data.last_timestamp;
+    last_ts = s->data.last_timestamp;
     for (offset = 8+8+1, i = 0; i < count; ++i) {
       if ((offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
 	  (offset = pkt_get_s2(&packet, offset, &line)) == 0) {
@@ -118,35 +118,35 @@ void handle_msg(void)
 	return;
       }
       if (tslt(&ts, &last_ts) &&
-	  (i > 0 || seq == c->data.next_seq)) {
+	  (i > 0 || seq == s->data.next_seq)) {
 	error_connection(c, "MSG has timestamp going backwards");
 	return;
       }
       last_ts = ts;
     }
-    if (seq == c->data.last_seq) {
+    if (seq == s->data.last_seq) {
       warn_connection3(c, "MSG has retransmitted lines: ", seq, count);
       ++msg_retransmits;
     }
     /* Pass 2 -- write out the lines */
-    c->data.last_seq = seq;
+    s->data.last_seq = seq;
     for (offset = 8+8+1, i = 0; i < count; ++i, ++seq) {
       offset = pkt_get_ts(&packet, offset, &ts);
       offset = pkt_get_s2(&packet, offset, &line);
       /* Only write out lines we haven't already acknowledged yet. */
-      if (seq >= c->data.next_seq)
+      if (seq >= s->data.next_seq)
 	write_line(s, &ts, &line);
     }
     
-    c->data.next_seq = seq;
-    c->data.last_timestamp = ts;
-    c->data.last_count = count;
+    s->data.next_seq = seq;
+    s->data.last_timestamp = ts;
+    s->data.last_count = count;
     send_ack(c, seq - 1);
   }
   /* Since the sender waits for an ACK before sending the next MSG,
    * it will never resend anything except for the previous packet. */
-  else if (seq == c->data.last_seq &&
-	   count == c->data.last_count) {
+  else if (seq == s->data.last_seq &&
+	   count == s->data.last_count) {
     /* Ignore the contents of the message, just ACK it
      * since we've already seen it */
     send_ack(c, seq+count-1);

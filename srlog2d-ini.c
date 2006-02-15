@@ -124,6 +124,7 @@ void handle_ini(void)
 
     if (!connections_add(&connections, &ck, &cd)) die_oom(1);
     ce = connections_get(&connections, &ck);
+    ce->data.sender = s;
     s->data.connection = &ce->key;
   }
   else {
@@ -132,23 +133,22 @@ void handle_ini(void)
     connections_rehash(&connections);
     ce = connections_get(&connections, c);
 
-    if (seq > ce->data.next_seq)
+    if (seq > s->data.next_seq)
       warn_connection(ce, "Reset sequence number forwards");
     /* Special case: if the sent sequence number is the immediate
      * previous number (the just-received packet), accept the
      * sequence number but skip writing the next line.
      */
-    else if (seq == ce->data.last_seq) 
-      seq = ce->data.next_seq, ts = ce->data.last_timestamp;
-    else if (seq < ce->data.next_seq)
+    else if (seq == s->data.last_seq) 
+      seq = s->data.next_seq, ts = s->data.last_timestamp;
+    else if (seq < s->data.next_seq)
       warn_connection(ce, "Reset sequence number backwards");
-    if (tslt(&ts, &ce->data.last_timestamp))
+    if (tslt(&ts, &s->data.last_timestamp))
       warn_connection(ce, "Reset timestamp backwards");
   }
-  ce->data.next_seq = seq;
-  ce->data.last_timestamp = ts;
-  ce->data.last_count = 0;
-  ce->data.sender = s;
+  s->data.next_seq = seq;
+  s->data.last_timestamp = ts;
+  s->data.last_count = 0;
   key_generate(&ssession_secret, &ssession_public, cb);
   keylist_exchange_key_list(&tmpkey, &csession_public, &server_secrets);
   auth_start(&ce->data.authenticator, &tmpkey);

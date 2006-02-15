@@ -50,12 +50,8 @@ struct connection_key
 struct senders_entry;
 struct connection_data
 {
-  uint64 next_seq;
-  uint64 last_seq;
-  struct timestamp last_timestamp;
   AUTH_CTX authenticator;
   DECR_CTX decryptor;
-  unsigned long last_count;
   struct senders_entry* sender;
 };
 
@@ -79,9 +75,12 @@ struct sender_key
 
 struct sender_data
 {
-  DECR_CTX decryptor;
-  struct connection_key* connection;
   struct keylist keys;
+  uint64 next_seq;
+  uint64 last_seq;
+  unsigned long last_count;
+  struct timestamp last_timestamp;
+  struct connection_key* connection;
 };
 
 GHASH_DECL(senders,struct sender_key,struct sender_data);
