@@ -77,17 +77,16 @@ struct senders_entry* find_sender(const char* sender, const char* service)
 
 /* ------------------------------------------------------------------------- */
 static void add_sender(const char* sender, const char* service, 
-		       const struct keylist* keys, const char* dir)
+		       const struct keylist* keys)
 {
   struct sender_key a;
   struct sender_data d;
 
-  msg2("Loading sender: ", dir);
+  msgf("{Loading sender: }s{/}s", sender, service);
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
-  //wrap_str(str_copys(&d.dir, dir));
   d.keys = *keys;
   if (!senders_add(&senders, &a, &d)) die_oom(1);
 }
@@ -95,7 +94,7 @@ static void add_sender(const char* sender, const char* service,
 static void update_sender(struct senders_entry* s, const struct keylist* keys)
 {
   if (memcmp(&s->data.keys, keys, sizeof *keys) != 0) {
-    //msg2("Reloading sender: ", s->data.dir.s);
+    msgf("{Reloading sender: }s{/}s", s->key.sender.s, s->key.service.s);
     s->data.keys = *keys;
   }
 }
@@ -130,7 +129,7 @@ static void try_load_service(const char* host, const char* service,
       keys = &svckey;
     if (keys) {
       if ((s = find_sender(host, service)) == 0)
-	add_sender(host, service, keys, path.s);
+	add_sender(host, service, keys);
       else
 	update_sender(s, keys);
     }
