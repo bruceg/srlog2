@@ -51,7 +51,7 @@ GHASH_DEFN(connections, struct connection_key, struct connection_data,
 	   0, connection_datafree);
 
 /* ------------------------------------------------------------------------- */
-static const char* format_connection(const struct connections_entry* c)
+const char* format_connection(const struct connections_entry* c)
 {
   static str s;
   if (!str_copys(&s, ipv4_format(&c->key.ip))) return 0;
@@ -59,17 +59,13 @@ static const char* format_connection(const struct connections_entry* c)
   if (!str_catu(&s, c->key.port)) return 0;
   if (!str_catc(&s, '/')) return 0;
   if (!str_cat(&s, &c->data.dir)) return 0;
+  if (!str_cats(&s, ": ")) return 0;
   return s.s;
-}
-
-void msg_connection(const struct connections_entry* c, const char* a, const char* b)
-{
-  msg4(format_connection(c), ": ", a, b);
 }
 
 void error_connection(const struct connections_entry* c, const char* s)
 {
-  msg3(format_connection(c), ": Error: ", s);
+  msg3(format_connection(c), "Error: ", s);
 }
 
 void error_connection3(const struct connections_entry* c, const char* s,
@@ -79,12 +75,12 @@ void error_connection3(const struct connections_entry* c, const char* s,
   char num2[FMT_ULONG_LEN];
   num1[fmt_ulldec(num1, u1)] = 0;
   num2[fmt_ulldec(num2, u2)] = 0;
-  msg6(format_connection(c), ": Error: ", s, num1, " ", num2);
+  msg6(format_connection(c), "Error: ", s, num1, " ", num2);
 }
 
 void warn_connection(const struct connections_entry* c, const char* s)
 {
-  msg3(format_connection(c), ": Warning: ", s);
+  msg3(format_connection(c), "Warning: ", s);
 }
 
 void warn_connection3(const struct connections_entry* c, const char* s,
@@ -94,5 +90,5 @@ void warn_connection3(const struct connections_entry* c, const char* s,
   char num2[FMT_ULONG_LEN];
   num1[fmt_ulldec(num1, u1)] = 0;
   num2[fmt_ulldec(num2, u2)] = 0;
-  msg6(format_connection(c), ": Warning: ", s, num1, " ", num2);
+  msg6(format_connection(c), "Warning: ", s, num1, " ", num2);
 }

@@ -91,29 +91,32 @@ void handle_ini(void)
 
   /* Only allow connections to services listed in our config */
   if ((s = find_sender(sender.s, line.s)) == 0) {
-    msgpkt3("Warning: INI from unknown sender");
+    msgpkt3("Error: INI from unknown sender");
     ++ini_unknown_sender;
     return;
   }
   last_ini = now;
 
   if ((key = keylist_get(&s->data.keys, cb)) == 0) {
-    error_sender(s, "Given key type is missing");
+    msgpkt3("Error: Given key type is missing");
     ++ini_missing_key;
     return;
   }
 
   auth_start(&authenticator, key);
   if (!pkt_validate(&packet, &authenticator)) {
-    error_sender(s, "INI failed authentication");
+    msgpkt3("Error: INI failed authentication");
     ++ini_failed_auth;
     return;
   }
   ++ini_valid;
 
-  if ((c = s->data.connection) == 0) {
-    msg_sender(s, "New connection");
+  c = s->data.connection;
+  msgf("ss{ (}s{/}s{/}s{/}s{/}s{)}", format_sender(s),
+       c ? "Reconnected" : "New connection",
+       auth_name.s, keyex_name.s, keyhash_name.s, encr_name.s, compr_name.s);
 
+  if (c == 0) {
     struct connection_key ck = { port, ip };
     struct connection_data cd;
     memset(&cd, 0, sizeof cd);
@@ -124,8 +127,6 @@ void handle_ini(void)
     s->data.connection = &ce->key;
   }
   else {
-    msg_sender(s, "Reconnected");
-
     c->port = port;
     c->ip = ip;
     connections_rehash(&connections);

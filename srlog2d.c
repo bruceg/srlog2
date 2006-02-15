@@ -93,7 +93,7 @@ void reopen(struct connections_entry* c, const struct timestamp* ts)
   str_copy(&path, &c->data.dir);
   str_catc(&path, '/');
   str_cat(&path, &tmp);
-  msg_connection(c, "Opening ", path.s);
+  msg3(format_connection(c), "Opening ", path.s);
   if ((c->data.fd = open(path.s, O_WRONLY|O_CREAT|O_APPEND, 0644)) == -1)
     die3sys(1, "Could not open '", path.s, "'"); /* FIXME: should not die */
 

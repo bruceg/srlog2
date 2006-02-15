@@ -66,7 +66,7 @@ struct connection_data
 GHASH_DECL(connections,struct connection_key,struct connection_data);
 
 extern struct ghash connections;
-void msg_connection(const struct connections_entry* c, const char* a, const char* b);
+extern const char* format_connection(const struct connections_entry* c);
 void error_connection(const struct connections_entry* c, const char* s);
 void error_connection3(const struct connections_entry* c, const char* s,
 		   uint64 u1, uint64 u2);
@@ -92,15 +92,10 @@ struct sender_data
 GHASH_DECL(senders,struct sender_key,struct sender_data);
 
 extern struct ghash senders;
-void msg_sender(const struct senders_entry* c, const char* a);
-void error_sender(const struct senders_entry* c, const char* s);
-void error_sender3(const struct senders_entry* c, const char* s,
-		   uint64 u1, uint64 u2);
-void warn_sender(const struct senders_entry* c, const char* s);
-void warn_sender3(const struct senders_entry* c, const char* s,
-		  uint64 u1, uint64 u2);
-void load_senders(int reload);
-struct senders_entry* find_sender(const char* sender, const char* service);
+extern const char* format_sender(const struct senders_entry* c);
+extern void load_senders(int reload);
+extern struct senders_entry* find_sender(const char* sender,
+					 const char* service);
 
 /* srlog2d.c */
 extern void send_packet(void);

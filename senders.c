@@ -62,47 +62,13 @@ GHASH_DEFN(senders, struct sender_key, struct sender_data,
 	   sender_keycopy, sender_datacopy, sender_keyfree, sender_datafree);
 
 /* ------------------------------------------------------------------------- */
-static const char* format_sender(const struct senders_entry* c)
+const char* format_sender(const struct senders_entry* c)
 {
   if (!str_copy(&tmp, &c->key.sender)) return 0;
   if (!str_catc(&tmp, '/')) return 0;
   if (!str_cat(&tmp, &c->key.service)) return 0;
+  if (!str_cats(&tmp, ": ")) return 0;
   return tmp.s;
-}
-
-void msg_sender(const struct senders_entry* c, const char* a)
-{
-  msg3(format_sender(c), ": ", a);
-}
-
-void error_sender(const struct senders_entry* c, const char* s)
-{
-  msg3(format_sender(c), ": Error: ", s);
-}
-
-void error_sender3(const struct senders_entry* c, const char* s,
-		   uint64 u1, uint64 u2)
-{
-  char num1[FMT_ULONG_LEN];
-  char num2[FMT_ULONG_LEN];
-  num1[fmt_ulldec(num1, u1)] = 0;
-  num2[fmt_ulldec(num2, u2)] = 0;
-  msg6(format_sender(c), ": Error: ", s, num1, " ", num2);
-}
-
-void warn_sender(const struct senders_entry* c, const char* s)
-{
-  msg3(format_sender(c), ": Warning: ", s);
-}
-
-void warn_sender3(const struct senders_entry* c, const char* s,
-		  uint64 u1, uint64 u2)
-{
-  char num1[FMT_ULONG_LEN];
-  char num2[FMT_ULONG_LEN];
-  num1[fmt_ulldec(num1, u1)] = 0;
-  num2[fmt_ulldec(num2, u2)] = 0;
-  msg6(format_sender(c), ": Warning: ", s, num1, " ", num2);
 }
 
 /* ------------------------------------------------------------------------- */
