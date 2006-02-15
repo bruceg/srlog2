@@ -48,8 +48,7 @@ static unsigned char nonce[8];
 
 static int exitasap;
 
-static str out_packet;
-static str ack_packet;
+static str packet;
 
 /* Key/Encryption Handling ------------------------------------------------- */
 static struct keylist shared_secrets;
@@ -164,14 +163,14 @@ static uint64 seq_first;
 
 static int add_msg(const struct line* l)
 {
-  if ((unsigned char)out_packet.s[8] == 0xff
-      || out_packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
+  if ((unsigned char)packet.s[8] == 0xff
+      || packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
   debugf(DEBUG_MSG, "{Adding line #}llu", l->seq);
-  ++out_packet.s[8+8];
-  pkt_add_ts(&out_packet, &l->timestamp);
-  pkt_add_s2(&out_packet, &l->line);
+  ++packet.s[8+8];
+  pkt_add_ts(&packet, &l->timestamp);
+  pkt_add_s2(&packet, &l->line);
   seq_last = l->seq;
   return 1;
 }
@@ -179,20 +178,20 @@ static int add_msg(const struct line* l)
 static void start_msg(const struct line* l)
 {
   seq_first = l->seq;
-  pkt_start(&out_packet, MSG1);
-  pkt_add_u8(&out_packet, l->seq);
-  pkt_add_u1(&out_packet, 0);
+  pkt_start(&packet, MSG1);
+  pkt_add_u8(&packet, l->seq);
+  pkt_add_u1(&packet, 0);
   add_msg(l);
 }
 
 static void end_msg(void)
 {
-  unsigned char pad[ENCR_BLOCK_SIZE - (out_packet.len - 17 + 4) % ENCR_BLOCK_SIZE];
+  unsigned char pad[ENCR_BLOCK_SIZE - (packet.len - 17 + 4) % ENCR_BLOCK_SIZE];
   brandom_fill(pad, sizeof pad);
-  pkt_add_b(&out_packet, pad, sizeof pad);
-  pkt_add_u4(&out_packet, crc32_block(out_packet.s+17, out_packet.len-17));
-  encr_blocks(&encryptor, out_packet.s+17, out_packet.len-17, seq_first);
-  pkt_add_cc(&out_packet, &msg_authenticator);
+  pkt_add_b(&packet, pad, sizeof pad);
+  pkt_add_u4(&packet, crc32_block(packet.s+17, packet.len-17));
+  encr_blocks(&encryptor, packet.s+17, packet.len-17, seq_first);
+  pkt_add_cc(&packet, &msg_authenticator);
 }
 
 static int make_msg(void)
@@ -213,9 +212,9 @@ static int make_msg(void)
 static void make_prq(void)
 {
   brandom_fill(nonce, sizeof nonce);
-  pkt_start(&out_packet, PRQ1);
-  pkt_add_b(&out_packet, nonce, sizeof nonce);
-  pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
+  pkt_start(&packet, PRQ1);
+  pkt_add_b(&packet, nonce, sizeof nonce);
+  pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
   wrap_str(str_copys(&keyex_name, nistp224_cb.name));
 #ifdef HASCURVE25519
   if (keylist_get(&shared_secrets, &curve25519_cb) != 0) {
@@ -223,78 +222,90 @@ static void make_prq(void)
     wrap_str(str_cats(&keyex_name, curve25519_cb.name));
   }
 #endif
-  pkt_add_s1(&out_packet, &keyex_name);
-  pkt_add_s1c(&out_packet, KEYHASH_NAME);
-  pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
-  pkt_add_s1c(&out_packet, "null");
+  pkt_add_s1(&packet, &keyex_name);
+  pkt_add_s1c(&packet, KEYHASH_NAME);
+  pkt_add_s1c(&packet, ENCRYPTOR_NAME);
+  pkt_add_s1c(&packet, "null");
 }
 
 static void make_ini(const struct key* key, const struct line* line)
 {
   const struct timestamp* ts;
   struct timestamp now;
-  pkt_start(&out_packet, INI1);
-  pkt_add_u8(&out_packet, seq_send);
+  pkt_start(&packet, INI1);
+  pkt_add_u8(&packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);
     ts = &now;
   }
   else
     ts = &line->timestamp;
-  pkt_add_ts(&out_packet, ts);
-  pkt_add_s1c(&out_packet, opt_sender);
-  pkt_add_s1(&out_packet, &service);
-  pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
-  pkt_add_s1c(&out_packet, keyex->name);
-  pkt_add_s1c(&out_packet, KEYHASH_NAME);
-  pkt_add_s1c(&out_packet, ENCRYPTOR_NAME);
-  pkt_add_s1c(&out_packet, "null");
-  pkt_add_key(&out_packet, key);
-  pkt_add_cc(&out_packet, &ini_authenticator);
+  pkt_add_ts(&packet, ts);
+  pkt_add_s1c(&packet, opt_sender);
+  pkt_add_s1(&packet, &service);
+  pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
+  pkt_add_s1c(&packet, keyex->name);
+  pkt_add_s1c(&packet, KEYHASH_NAME);
+  pkt_add_s1c(&packet, ENCRYPTOR_NAME);
+  pkt_add_s1c(&packet, "null");
+  pkt_add_key(&packet, key);
+  pkt_add_cc(&packet, &ini_authenticator);
 }
 
 /* Network I/O ------------------------------------------------------------- */
-static void send_prq(void)
+static void send_packet(const char* type, int timeout)
 {
-  if (!socket_send4(sock, out_packet.s, out_packet.len, &ip, port)) {
-    error1sys("Could not send PRQ packet to server");
+  if (!socket_send4(sock, packet.s, packet.len, &ip, port)) {
+    errorfsys("{Could not send }s{ packet to server}", type);
     exitasap = 1;
   }
   else {
-    debug1(DEBUG_PACKET, "Sent PRQ packet");
-    poll_reset(cid_timeout);
+    debugf(DEBUG_PACKET, "{Sent }s{ packet}", type);
+    poll_reset(timeout);
   }
+}
+
+static int receive_packet(uint32 type, int minlength, int maxlength)
+{
+  int i;
+  uint32 t;
+  if ((i = socket_recv4(sock, packet.s, packet.size, &ip,&port)) < 0)
+    REJECT1("Socket receive failed");
+  if (i < minlength)
+    REJECT1("Received packet is too short");
+  if (maxlength > 0
+      && i > maxlength)
+    REJECT1("Received packet is too long");
+  packet.len = i;
+  pkt_get_u4(&packet, 0, &t);
+  if (t != SRL2)
+    REJECT1("Received packet format was not SRL2");
+  pkt_get_u4(&packet, 4, &t);
+  if (t != type)
+    REJECT1("Received incorrect packet type");
+  return 1;
 }
 
 static int receive_prf(void)
 {
-  int i;
-  uint32 t;
-  int offset;
+  unsigned offset;
   struct key* key;
-  
-  if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
+
+  if (!receive_packet(PRF1, 8+8+2+2+2+2+2, 8+8+256+256+256+256+256))
     return 0;
-  ack_packet.len = i;
-  pkt_get_u4(&ack_packet, 0, &t);
-  if (t != SRL2)
-    REJECT1("Received packet format was not SRL2");
-  pkt_get_u4(&ack_packet, 4, &t);
-  if (t != PRF1)
-    REJECT1("Received packet type was not PRF1");
-  if ((offset = pkt_get_b(&ack_packet, 8, &tmpstr, sizeof nonce)) == 0
+  if ((offset = pkt_get_b(&packet, 8, &tmpstr, sizeof nonce)) == 0
       || memcmp(tmpstr.s, nonce, sizeof nonce) != 0
-      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, AUTHENTICATOR_NAME) != 0
-      || (offset = pkt_get_s1(&ack_packet, offset, &keyex_name)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0
       || (keyex = key_cb_lookup(keyex_name.s)) == 0
-      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, KEYHASH_NAME) != 0
-      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, ENCRYPTOR_NAME) != 0
-      || (offset = pkt_get_s1(&ack_packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, "null") != 0
-      || offset != ack_packet.len)
+      || offset != packet.len)
     REJECT1("Received PRF1 had invalid format or parameters");
 
   if ((keyex = key_cb_lookup(keyex_name.s)) == 0)
@@ -306,38 +317,18 @@ static int receive_prf(void)
   return 1;
 }
   
-
-static void send_msg(unsigned scale)
-{
-  if (!socket_send4(sock, out_packet.s, out_packet.len, &ip, port)) {
-    error1sys("Could not send packet to server");
-    exitasap = 1;
-  }
-  else {
-    debugf(DEBUG_PACKET, "{Sent MSG packet }llu{-}llu", seq_send, seq_last);
-    poll_reset(ack_timeout*scale);
-  }
-}
-
 static int receive_ack(void)
 {
-  int i;
   uint64 seq;
-  uint32 t;
-  if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
+  if (!receive_packet(ACK1, 8+8+AUTH_LENGTH, 8+8+AUTH_LENGTH))
     return 0;
-  if ((ack_packet.len = i) != 4+4+8 + AUTH_LENGTH) return 0;
-  pkt_get_u4(&ack_packet, 0, &t);
-  if (t != SRL2) return 0;
-  pkt_get_u4(&ack_packet, 4, &t);
-  if (t != ACK1) return 0;
-  pkt_get_u8(&ack_packet, 8, &seq);
+  pkt_get_u8(&packet, 8, &seq);
   if (seq != seq_last) {
     debugf(DEBUG_PACKET, "{Received wrong ACK sequence }llu{ sent }llu",
 	   seq, seq_last);
     return 0;
   }
-  if (!pkt_validate(&ack_packet, &msg_authenticator)) {
+  if (!pkt_validate(&packet, &msg_authenticator)) {
     debug1(DEBUG_PACKET, "Received invalid ACK");
     return 0;
   }
@@ -347,45 +338,19 @@ static int receive_ack(void)
   return 1;
 }
 
-static void send_ini(void)
-{
-  if (!socket_send4(sock, out_packet.s, out_packet.len, &ip, port)) {
-    error1sys("Could not send INI packet");
-    exitasap = 1;
-  }
-  else {
-    debug1(DEBUG_PACKET, "Sent INI packet");
-    poll_reset(cid_timeout);
-  }
-}
-
 static int receive_cid(struct key* csession_secret)
 {
-  int i;
-  uint32 t;
   struct key ssession_public;
   struct key tmpkey;
-  if ((i = socket_recv4(sock, ack_packet.s, ack_packet.size, &ip,&port)) == -1)
+  if (!receive_packet(CID1,
+		      8 + keyex->size + AUTH_LENGTH,
+		      8 + keyex->size + AUTH_LENGTH))
     return 0;
-  if ((ack_packet.len = i) != 8 + csession_secret->cb->size + AUTH_LENGTH) {
-    debug1(DEBUG_PACKET, "Received packet has wrong length");
-    return 0;
-  }
-  pkt_get_u4(&ack_packet, 0, &t);
-  if (t != SRL2) {
-    debug1(DEBUG_PACKET, "Received packet is not a srlog2 packet");
-    return 0;
-  }
-  pkt_get_u4(&ack_packet, 4, &t);
-  if (t != CID1) {
-    debug1(DEBUG_PACKET, "Received packet is not a CID packet");
-    return 0;
-  }
-  if (!pkt_validate(&ack_packet, &cid_authenticator)) {
+  if (!pkt_validate(&packet, &cid_authenticator)) {
     debug1(DEBUG_PACKET, "Received CID failed validation");
     return 0;
   }
-  pkt_get_key(&ack_packet, 8, &ssession_public, keyex);
+  pkt_get_key(&packet, 8, &ssession_public, keyex);
   key_exchange(&tmpkey, &ssession_public, csession_secret);
   auth_start(&msg_authenticator, &tmpkey);
   encr_init(&encryptor, &tmpkey);
@@ -405,7 +370,7 @@ static int do_negotiating(void)
 {
   make_prq();
   while (!exitasap) {
-    send_prq();
+    send_packet("PRQ1", cid_timeout);
     while (!exitasap) {
       if (poll_both() == 0)
 	break;
@@ -433,7 +398,7 @@ static int do_connecting(void)
   auth_start(&cid_authenticator, &tmpkey);
 
   while (!exitasap) {
-    send_ini();
+    send_packet("INI1", cid_timeout);
     while (!exitasap) {
       if (poll_both() == 0)
 	break;
@@ -453,7 +418,8 @@ static int do_sending(void)
     return STATE_CONNECTED;
   /* Try to send the message packet multiple times. */
   for (i = 1; !exitasap && i <= retransmits; ++i) {
-    send_msg(i);
+    debugf(DEBUG_PACKET, "{Sending seq #}llu{ to #}llu", seq_send, seq_last);
+    send_packet("MSG1", ack_timeout * i);
     while (!exitasap) {
       if (poll_both() == 0) {
 	debug1(DEBUG_STATE, "Timed out waiting for ACK");
@@ -599,8 +565,7 @@ int cli_main(int argc, char* argv[])
     die1sys(1, "Could not create UDP socket");
   if (!socket_connect4(sock, &ip, port))
     die1sys(1, "Could not bind socket");
-  if (!str_ready(&out_packet, 65535) ||
-      !str_ready(&ack_packet, 65535))
+  if (!str_ready(&packet, 65535))
     die1(1, "Out of memory");
 
   getenvu("ACK_TIMEOUT", &ack_timeout);
