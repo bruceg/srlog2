@@ -44,6 +44,7 @@ struct line
 
 /* packet.c */
 extern void auth_start(AUTH_CTX* ctx, const struct key* key);
+extern int pkt_start(str* s, uint32 type);
 extern int pkt_add_u1(str* s, unsigned u);
 extern int pkt_add_u2(str* s, unsigned u);
 extern int pkt_add_u4(str* s, uint32 u);

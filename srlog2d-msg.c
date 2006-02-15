@@ -11,9 +11,7 @@
 
 static void send_ack(struct connections_entry* c, uint64 seq)
 {
-  packet.len = 0;
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, ACK1);
+  pkt_start(&packet, ACK1);
   pkt_add_u8(&packet, seq);
   pkt_add_cc(&packet, &c->data.authenticator);
   send_packet();

@@ -56,8 +56,7 @@ int cli_main(int argc, char* argv[])
 
   brandom_init();
   brandom_fill(nonce, sizeof nonce);
-  pkt_add_u4(&pktout, SRL2);
-  pkt_add_u4(&pktout, SRQ1);
+  pkt_start(&pktout, SRQ1);
   pkt_add_b(&pktout, nonce, sizeof nonce);
 
   io.fd = sock;

@@ -21,9 +21,7 @@ static int contains(const str* s, const char* key)
 
 static void send_prf(const char nonce[8])
 {
-  packet.len = 0;
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, PRF1);
+  pkt_start(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
 #ifdef HASCURVE25519

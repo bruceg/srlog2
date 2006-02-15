@@ -10,10 +10,11 @@
 
 static unsigned char digest[AUTH_LENGTH];
 
-int pkt_start(str* s, const char type[4])
+int pkt_start(str* s, uint32 type)
 {
-  return str_copyb(s, "SRL2", 4) &&
-    str_catb(s, type, 4);
+  s->len = 0;
+  return pkt_add_u4(s, SRL2)
+    && pkt_add_u4(s, type);
 }
 
 int pkt_add_u1(str* s, unsigned u)

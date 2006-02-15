@@ -179,9 +179,7 @@ static int add_msg(const struct line* l)
 static void start_msg(const struct line* l)
 {
   seq_first = l->seq;
-  out_packet.len = 0;
-  pkt_add_u4(&out_packet, SRL2);
-  pkt_add_u4(&out_packet, MSG1);
+  pkt_start(&out_packet, MSG1);
   pkt_add_u8(&out_packet, l->seq);
   pkt_add_u1(&out_packet, 0);
   add_msg(l);
@@ -215,8 +213,7 @@ static int make_msg(void)
 static void make_prq(void)
 {
   brandom_fill(nonce, sizeof nonce);
-  pkt_add_u4(&out_packet, SRL2);
-  pkt_add_u4(&out_packet, PRQ1);
+  pkt_start(&out_packet, PRQ1);
   pkt_add_b(&out_packet, nonce, sizeof nonce);
   pkt_add_s1c(&out_packet, AUTHENTICATOR_NAME);
   wrap_str(str_copys(&keyex_name, nistp224_cb.name));
@@ -236,9 +233,7 @@ static void make_ini(const struct key* key, const struct line* line)
 {
   const struct timestamp* ts;
   struct timestamp now;
-  out_packet.len = 0;
-  pkt_add_u4(&out_packet, SRL2);
-  pkt_add_u4(&out_packet, INI1);
+  pkt_start(&out_packet, INI1);
   pkt_add_u8(&out_packet, seq_send);
   if (line == 0) {
     gettimestamp(&now);

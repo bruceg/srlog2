@@ -62,9 +62,8 @@ static void send_srp(const char nonce[8])
   str_catstat(&tmp, "INI-Valid", ini_valid);
   str_catstat(&tmp, "MSG-Retransmits", msg_retransmits);
   str_catstat(&tmp, "MSG-Valid", msg_valid);
-  packet.len = 0;
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, SRP1);
+
+  pkt_start(&packet, SRP1);
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s2(&packet, &tmp);
   send_packet();

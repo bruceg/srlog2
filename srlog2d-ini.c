@@ -17,9 +17,7 @@ static str sender;
 
 static void send_cid(struct connections_entry* c, struct key* sp)
 {
-  packet.len = 0;
-  pkt_add_u4(&packet, SRL2);
-  pkt_add_u4(&packet, CID1);
+  pkt_start(&packet, CID1);
   pkt_add_key(&packet, sp);
   pkt_add_cc(&packet, &c->data.authenticator);
   send_packet();

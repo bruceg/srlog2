@@ -1,5 +1,3 @@
-- Add a common packet_start(type) function
-
 - srlog2:
 
   - Add option to set path to host key
