@@ -112,7 +112,7 @@ void handle_ini(void)
   ++ini_valid;
 
   if ((c = s->data.connection) == 0) {
-    msg_sender(s, "New connection", 0);
+    msg_sender(s, "New connection");
 
     struct connection_key ck = { port, ip };
     struct connection_data cd;
@@ -124,7 +124,7 @@ void handle_ini(void)
     s->data.connection = &ce->key;
   }
   else {
-    msg_sender(s, "Reconnected", 0);
+    msg_sender(s, "Reconnected");
 
     c->port = port;
     c->ip = ip;

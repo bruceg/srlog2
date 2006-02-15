@@ -92,7 +92,7 @@ struct sender_data
 GHASH_DECL(senders,struct sender_key,struct sender_data);
 
 extern struct ghash senders;
-void msg_sender(const struct senders_entry* c, const char* a, const char* b);
+void msg_sender(const struct senders_entry* c, const char* a);
 void error_sender(const struct senders_entry* c, const char* s);
 void error_sender3(const struct senders_entry* c, const char* s,
 		   uint64 u1, uint64 u2);

@@ -70,9 +70,9 @@ static const char* format_sender(const struct senders_entry* c)
   return tmp.s;
 }
 
-void msg_sender(const struct senders_entry* c, const char* a, const char* b)
+void msg_sender(const struct senders_entry* c, const char* a)
 {
-  msg4(format_sender(c), ": ", a, b);
+  msg3(format_sender(c), ": ", a);
 }
 
 void error_sender(const struct senders_entry* c, const char* s)
