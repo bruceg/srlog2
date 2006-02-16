@@ -33,7 +33,7 @@ static int str_catuhex(str* s, uint32 u)
   return str_catb(s, hex, 8);
 }
 
-static void write_line(struct senders_entry* s,
+static void write_line(struct services_entry* s,
 		       const struct timestamp* ts, const str* l)
 {
   wrap_str(str_copys(&tmp, "@40000000"));
@@ -65,7 +65,7 @@ void handle_msg(void)
   struct timestamp ts;
   struct timestamp last_ts;
   struct connections_entry* c;
-  struct senders_entry* s;
+  struct services_entry* s;
   const struct connection_key key = { port, ip };
   uint64 seq;
   unsigned count;
@@ -75,7 +75,7 @@ void handle_msg(void)
     msgpkt2("Warning: MSG from unknown sender");
     return;
   }
-  s = c->data.sender;
+  s = c->data.service;
   if (!pkt_validate(&packet, &c->data.authenticator)) {
     error_connection(c, "MSG failed authentication");
     return;

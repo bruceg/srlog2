@@ -8,6 +8,12 @@
 
 - srlog2d:
 
+  - Add a seperate senders list, with only hostnames and keys
+
+  - Automatically add all services for anything in senders
+
+  - Sanity check the sender and service names
+
   - Add more counters for error packets
 
   - Allow specification of secret key and senders filename
@@ -17,3 +23,21 @@
     - Break pointer from sender to connection.
 
     - Periodically garbage collect inactive connections.
+
+- srlog2-logger:
+
+  - Break apart the sender and service words when parsing
+
+  - Sanity check the sender and service names
+
+  - Add an option for formatting the directory name(s)
+
+  - Add an option to auto-create sender or service directories
+
+  - Add options for size/count-based rotation (ala multilog)
+
+- srlog2-logsplit
+
+  - New program, similar to -logger, but pipes logs into one process per
+    incoming stream
+

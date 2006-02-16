@@ -1,5 +1,5 @@
 connections.o
-senders.o
+services.o
 srlog2d-ini.o
 srlog2d-msg.o
 srlog2d-prf.o

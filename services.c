@@ -15,17 +15,18 @@
 #include "srlog2.h"
 #include "srlog2d.h"
 
-struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
+struct ghash services = {0,0,0,0,0,0,0,0,0,0,0};
 
 static str tmp;
 
-static uint32 sender_hash(struct sender_key const* key)
+static uint32 service_hash(struct service_key const* key)
 {
   uint32 crc = crc32_update(CRC32INIT, key->sender.s, key->sender.len);
-  return crc32_update(crc, key->service.s, key->service.len) & CRC32POST;
+  return crc32_update(crc, key->service.s, key->service.len) ^ CRC32POST;
 }
 
-static int sender_cmp(struct sender_key const* a, struct sender_key const* b)
+static int service_cmp(struct service_key const* a,
+		       struct service_key const* b)
 { 
   int i;
   if ((i = str_diff(&a->sender, &b->sender)) == 0)
@@ -33,30 +34,33 @@ static int sender_cmp(struct sender_key const* a, struct sender_key const* b)
   return i;
 }
 
-static int sender_keycopy(struct sender_key* a, struct sender_key const* b)
+static int service_keycopy(struct service_key* a,
+			   struct service_key const* b)
 {
   *a = *b;
   return 1;
 }
 
-static int sender_datacopy(struct sender_data* a, struct sender_data const* b)
+static int service_datacopy(struct service_data* a,
+			    struct service_data const* b)
 {
   *a = *b;
   return 1;
 }
 
-static void sender_keyfree(struct sender_key* addr)
+static void service_keyfree(struct service_key* addr)
 {
   str_free(&addr->sender);
   str_free(&addr->service);
 }
 
-GHASH_DEFN(senders, struct sender_key, struct sender_data,
-	   sender_hash, sender_cmp,
-	   sender_keycopy, sender_datacopy, sender_keyfree, 0);
+GHASH_DEFN(services, struct service_key, struct service_data,
+	   service_hash, service_cmp,
+	   service_keycopy, service_datacopy,
+	   service_keyfree, 0);
 
 /* ------------------------------------------------------------------------- */
-const char* format_sender(const struct senders_entry* c)
+const char* format_service(const struct services_entry* c)
 {
   if (!str_copy(&tmp, &c->key.sender)) return 0;
   if (!str_catc(&tmp, '/')) return 0;
@@ -66,61 +70,61 @@ const char* format_sender(const struct senders_entry* c)
 }
 
 /* ------------------------------------------------------------------------- */
-struct senders_entry* find_sender(const char* sender, const char* service)
+struct services_entry* find_service(const char* sender, const char* service)
 {
-  static struct sender_key key;
+  static struct service_key key;
   wrap_str(str_copys(&key.sender, sender));
   wrap_str(str_copys(&key.service, service));
-  return senders_get(&senders, &key);
+  return services_get(&services, &key);
 }
 
 /* ------------------------------------------------------------------------- */
-static struct senders_entry* add_sender(const char* sender,
+static struct services_entry* add_service(const char* sender,
 					const char* service)
 {
-  struct sender_key a;
-  struct sender_data d;
-  struct senders_entry* s;
+  struct service_key a;
+  struct service_data d;
+  struct services_entry* s;
   
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
-  if ((s = senders_get(&senders, &a)) == 0) {
-    if (!senders_add(&senders, &a, &d))
+  if ((s = services_get(&services, &a)) == 0) {
+    if (!services_add(&services, &a, &d))
       die_oom(1);
-    s = senders_get(&senders, &a);
-    msgf("{Added sender: }s{/}s", sender, service);
+    s = services_get(&services, &a);
+    msgf("{Added service: }s{/}s", sender, service);
   }
   return s;
 }
 
-static void update_sender(struct senders_entry* s, const struct key* key)
+static void update_service(struct services_entry* s, const struct key* key)
 {
   const struct key* old;
   if ((old = keylist_get(&s->data.keys, key->cb)) == 0
       || memcmp(old->data, key->data, key->cb->size) != 0) {
     keylist_set(&s->data.keys, key);
-    msgf("{Updated sender key: }s{/}s{ (}s{)}",
+    msgf("{Updated service key: }s{/}s{ (}s{)}",
 	 s->key.sender.s, s->key.service.s, key->cb->name);
   }
 }
 
-static void parse_sender_line(void)
+static void parse_service_line(void)
 {
   int i;
   int j;
   int k;
   struct key tmpkey;
   const struct key_cb* cb;
-  struct senders_entry* s;
+  struct services_entry* s;
 
   tmp.len = 0;
   if ((i = str_findfirst(&line, ':')) == -1
       || (j = str_findnext(&line, ':', i+1)) == -1
       || (k = str_findnext(&line, ':', j+1)) == -1
       || !base64_decode_line(line.s + k+1, &tmp))
-    warnf("{Invalid senders line, ignoring: }s", line.s);
+    warnf("{Invalid services line, ignoring: }s", line.s);
   else {
     line.s[i++] = 0;
     line.s[j++] = 0;
@@ -132,16 +136,16 @@ static void parse_sender_line(void)
     else if (keylist_get(&server_secrets, cb) == 0)
       warnf("{Key type does not match any server keys, ignoring: }s", line.s);
     else {
-      s = add_sender(line.s, line.s + i);
+      s = add_service(line.s, line.s + i);
       memset(&tmpkey, 0, sizeof tmpkey);
       tmpkey.cb = cb;
       memcpy(tmpkey.data, tmp.s, tmp.len);
-      update_sender(s, &tmpkey);
+      update_service(s, &tmpkey);
     }
   }
 }
 
-static void read_senders(const char* filename)
+static void read_services(const char* filename)
 {
   ibuf in;
   if (!ibuf_open(&in, filename, 0))
@@ -149,19 +153,19 @@ static void read_senders(const char* filename)
   while (ibuf_getstr(&in, &line, LF)) {
     str_strip(&line);
     if (line.len == 0 || line.s[0] == '#') continue;
-    parse_sender_line();
+    parse_service_line();
   }
   ibuf_close(&in);
 }
 
-void load_senders(int reload)
+void load_services(int reload)
 {
   if (reload)
-    msg1("Reloading new senders");
+    msg1("Reloading new services");
   else {
     connections_init(&connections);
-    senders_init(&senders);
-    msg1("Loading senders");
+    services_init(&services);
+    msg1("Loading services");
   }
-  read_senders("senders");
+  read_services("services");
 }

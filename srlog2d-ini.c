@@ -32,7 +32,7 @@ void handle_ini(void)
   unsigned offset;
   uint64 seq;
   struct timestamp ts;
-  struct senders_entry* s;
+  struct services_entry* s;
   struct connection_key* c;
   struct connections_entry* ce;
   struct key csession_public;
@@ -91,7 +91,7 @@ void handle_ini(void)
   }
 
   /* Only allow connections to services listed in our config */
-  if ((s = find_sender(sender.s, line.s)) == 0) {
+  if ((s = find_service(sender.s, line.s)) == 0) {
     msgpkt3("Error: INI from unknown sender");
     ++ini_unknown_sender;
     return;
@@ -114,7 +114,7 @@ void handle_ini(void)
   ++ini_valid;
 
   c = s->data.connection;
-  msgf("ss{ (}s{/}s{/}s{/}s{/}s{)}", format_sender(s),
+  msgf("ss{ (}s{/}s{/}s{/}s{/}s{)}", format_service(s),
        c ? "Reconnected" : "New connection",
        auth_name.s, keyex_name.s, keyhash_name.s, encr_name.s, compr_name.s);
 
@@ -125,7 +125,7 @@ void handle_ini(void)
 
     if (!connections_add(&connections, &ck, &cd)) die_oom(1);
     ce = connections_get(&connections, &ck);
-    ce->data.sender = s;
+    ce->data.service = s;
     s->data.connection = &ce->key;
   }
   else {

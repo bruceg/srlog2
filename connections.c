@@ -52,9 +52,9 @@ const char* format_connection(const struct connections_entry* c)
   if (!str_catc(&s, '/')) return 0;
   if (!str_catu(&s, c->key.port)) return 0;
   if (!str_catc(&s, '/')) return 0;
-  if (!str_cat(&s, &c->data.sender->key.sender)) return 0;
+  if (!str_cat(&s, &c->data.service->key.sender)) return 0;
   if (!str_catc(&s, '/')) return 0;
-  if (!str_cat(&s, &c->data.sender->key.service)) return 0;
+  if (!str_cat(&s, &c->data.service->key.service)) return 0;
   if (!str_cats(&s, ": ")) return 0;
   return s.s;
 }

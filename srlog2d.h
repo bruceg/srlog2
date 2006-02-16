@@ -47,12 +47,12 @@ struct connection_key
   ipv4addr ip;
 };
 
-struct senders_entry;
+struct services_entry;
 struct connection_data
 {
   AUTH_CTX authenticator;
   DECR_CTX decryptor;
-  struct senders_entry* sender;
+  struct services_entry* service;
 };
 
 GHASH_DECL(connections,struct connection_key,struct connection_data);
@@ -66,14 +66,14 @@ void warn_connection(const struct connections_entry* c, const char* s);
 void warn_connection3(const struct connections_entry* c, const char* s,
 		  uint64 u1, uint64 u2);
 
-/* senders.c */
-struct sender_key
+/* services.c */
+struct service_key
 {
   str sender;
   str service;
 };
 
-struct sender_data
+struct service_data
 {
   struct keylist keys;
   uint64 next_seq;
@@ -83,13 +83,13 @@ struct sender_data
   struct connection_key* connection;
 };
 
-GHASH_DECL(senders,struct sender_key,struct sender_data);
+GHASH_DECL(services,struct service_key,struct service_data);
 
-extern struct ghash senders;
-extern const char* format_sender(const struct senders_entry* c);
-extern void load_senders(int reload);
-extern struct senders_entry* find_sender(const char* sender,
-					 const char* service);
+extern struct ghash services;
+extern const char* format_service(const struct services_entry* c);
+extern void load_services(int reload);
+extern struct services_entry* find_service(const char* sender,
+					   const char* service);
 
 /* srlog2d.c */
 extern void send_packet(void);
