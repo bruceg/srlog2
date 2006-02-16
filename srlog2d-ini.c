@@ -33,7 +33,6 @@ void handle_ini(void)
   uint64 seq;
   struct timestamp ts;
   struct services_entry* s;
-  struct connection_key* c;
   struct connections_entry* ce;
   struct key csession_public;
   struct key ssession_public;
@@ -113,12 +112,12 @@ void handle_ini(void)
   }
   ++ini_valid;
 
-  c = s->data.connection;
+  ce = s->data.connection;
   msgf("ss{ (}s{/}s{/}s{/}s{/}s{)}", format_service(s),
-       c ? "Reconnected" : "New connection",
+       (ce != 0) ? "Reconnected" : "New connection",
        auth_name.s, keyex_name.s, keyhash_name.s, encr_name.s, compr_name.s);
 
-  if (c == 0) {
+  if (ce == 0) {
     struct connection_key ck = { port, ip };
     struct connection_data cd;
     memset(&cd, 0, sizeof cd);
@@ -126,13 +125,13 @@ void handle_ini(void)
     if (!connections_add(&connections, &ck, &cd)) die_oom(1);
     ce = connections_get(&connections, &ck);
     ce->data.service = s;
-    s->data.connection = &ce->key;
+    s->data.connection = ce;
   }
   else {
-    c->port = port;
-    c->ip = ip;
+    ce->key.port = port;
+    ce->key.ip = ip;
     connections_rehash(&connections);
-    ce = connections_get(&connections, c);
+    ce = connections_get(&connections, &ce->key);
 
     if (seq > s->data.next_seq)
       warn_connection(ce, "Reset sequence number forwards");

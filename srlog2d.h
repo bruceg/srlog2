@@ -80,7 +80,7 @@ struct service_data
   uint64 last_seq;
   unsigned long last_count;
   struct timestamp last_timestamp;
-  struct connection_key* connection;
+  struct connections_entry* connection;
 };
 
 GHASH_DECL(services,struct service_key,struct service_data);
