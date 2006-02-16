@@ -1,0 +1,9 @@
+Min: 0
+Max: 0
+
+[options]
+-h --hourly FLAG=1 opt_rotate
+Rotate log files hourly
+
+-d --daily FLAG=0 opt_rotate
+Rotate log files daily (default)

@@ -1,3 +1,5 @@
+* Write man pages *
+
 - srlog2:
 
   - Add option to set path to host key
@@ -6,22 +8,12 @@
 
 - srlog2d:
 
-  - Add encryption parameters to Connected/Reconnected messages
-
   - Add more counters for error packets
 
-  - Support rotation schemes other than hourly
+  - Allow specification of secret key and senders filename
 
   - Don't preload/reload senders:
 
     - Break pointer from sender to connection.
 
     - Periodically garbage collect inactive connections.
-
-    - Save sequence number state to a file.
-
-    - Load sender info on demand as needed.
-
-    - sender & service names may not contain '/' or start with '.'
-
-- Switch to curve25519 http://cr.yp.to/ecdh.html
