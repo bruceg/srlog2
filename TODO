@@ -22,11 +22,7 @@
 
 - srlog2-logger:
 
-  - Break apart the sender and service words when parsing
-
-  - Sanity check the sender and service names
-
-  - Add an option for formatting the directory name(s)
+  - Add an option for formatting the directory name(s)?
 
   - Add an option to auto-create sender or service directories
 
@@ -37,3 +33,4 @@
   - New program, similar to -logger, but pipes logs into one process per
     incoming stream
 
+- Merge common parts of hash tables in services.c and srlog2-logger.c

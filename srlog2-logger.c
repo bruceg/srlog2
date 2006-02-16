@@ -14,28 +14,62 @@
 #include "srlog2-logger-cli.h"
 
 /*****************************************************************************/
+struct sender_key
+{
+  str sender;
+  str service;
+};
+
 struct sender_data
 {
   time_t rotate_at;
   int fd;
 };
 
-static uint32 sender_hash(str const* key)
+static uint32 sender_hash(struct sender_key const* key)
 {
-  return crc32_block(key->s, key->len);
+  uint32 crc = CRC32INIT;
+  crc = crc32_update(crc, key->sender.s, key->sender.len);
+  crc = crc32_update(crc, "", 1);
+  crc = crc32_update(crc, key->service.s, key->service.len);
+  return crc ^ CRC32POST;
 }
 
-static int sender_datacopy(struct sender_data* a, struct sender_data const* b)
+static int sender_cmp(struct sender_key const* a,
+		      struct sender_key const* b)
+{ 
+  int i;
+  if ((i = str_diff(&a->sender, &b->sender)) == 0)
+    i = str_diff(&a->service, &b->service);
+  return i;
+}
+
+static int sender_keycopy(struct sender_key* a,
+			  struct sender_key const* b)
+{
+  *a = *b;
+  return 1;
+}
+
+static int sender_datacopy(struct sender_data* a,
+			   struct sender_data const* b)
 {
   a->fd = b->fd;
   a->rotate_at = b->rotate_at;
   return 1;
 }
 
-GHASH_DECL(senders, str, struct sender_data);
-GHASH_DEFN(senders, str, struct sender_data,
-	   sender_hash, str_diff,
-	   str_copy, sender_datacopy, 0, 0);
+static void sender_keyfree(struct sender_key* addr)
+{
+  str_free(&addr->sender);
+  str_free(&addr->service);
+}
+
+GHASH_DECL(senders, struct sender_key, struct sender_data);
+GHASH_DEFN(senders, struct sender_key, struct sender_data,
+	   sender_hash, sender_cmp,
+	   sender_keycopy, sender_datacopy,
+	   sender_keyfree, 0);
 
 static struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
@@ -110,10 +144,8 @@ static void make_path(str* path,
 		      const struct senders_entry* s,
 		      const char* suffix)
 {
-  wrap_str(str_copy(path, &s->key));
-  str_subst(path, ' ', '/');
-  wrap_str(str_catc(path, '/'));
-  wrap_str(str_cats(path, suffix));
+  wrap_str(str_copyf(path, "s{/}s{/}s",
+		     s->key.sender.s, s->key.service.s, suffix));
 }
 
 static void test_reopen(struct senders_entry* s,
@@ -151,29 +183,35 @@ static void test_reopen(struct senders_entry* s,
 
 static struct senders_entry* parse_line(str* line)
 {
-  static str key;
+  static struct sender_key key;
   int i;
   int j;
+  int k;
   struct timestamp ts;
   struct senders_entry* s;
 
   s = 0;
   if ((i = parse_timestamp(line, &ts)) > 0
       && line->s[i] == ' '
-      && (j = str_findnext(line, ' ', i + 1)) > 0
-      && (j = str_findnext(line, ' ', j + 1)) > 0) {
-    i++;
-    wrap_str(str_copyb(&key, line->s + i, j - i));
-    str_spliceb(line, i, j - i + 1, 0, 0);
+      && (j = str_findnext(line, ' ', ++i)) > 0
+      && (k = str_findnext(line, ' ', ++j)) > 0) {
+    ++k;
+    wrap_str(str_copyb(&key.sender, line->s + i, j - i - 1));
+    wrap_str(str_copyb(&key.service, line->s + j, k - j - 1));
+    if (key.sender.s[0] != '.'
+	&& str_findfirst(&key.sender, '/') < 0
+	&& key.service.s[0] != '.'
+	&& str_findfirst(&key.service, '/') < 0) {
+      str_spliceb(line, i, k - i, 0, 0);
 
-    if ((s = senders_get(&senders, &key)) == 0) {
-      struct sender_data data;
-      memset(&data, 0, sizeof data);
-      wrap_str(senders_add(&senders, &key, &data));
-      s = senders_get(&senders, &key);
+      if ((s = senders_get(&senders, &key)) == 0) {
+	struct sender_data data;
+	memset(&data, 0, sizeof data);
+	wrap_str(senders_add(&senders, &key, &data));
+	s = senders_get(&senders, &key);
+      }
+      test_reopen(s, &ts);
     }
-
-    test_reopen(s, &ts);
   }
   return s;
 }
