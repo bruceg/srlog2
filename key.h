@@ -36,10 +36,6 @@ extern const struct key_cb curve25519_cb;
 
 extern const struct key_cb* key_cb_lookup(const char* name);
 
-extern int key_load_line(struct key* key,
-			 struct ibuf* in, const struct key_cb* cb);
-extern int key_load(struct key* key, const char* prefix,
-		    const struct key_cb* cb);
 extern void key_generate(struct key* secret, struct key* public,
 			 const struct key_cb* cb);
 extern int key_export(const struct key* key, struct str* s);
