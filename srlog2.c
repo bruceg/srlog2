@@ -402,7 +402,7 @@ static int do_connecting(void)
     send_packet("INI1", cid_timeout);
     while (!exitasap) {
       if (poll_both() == 0)
-	break;
+	return STATE_DISCONNECTED;
       if (stdin_ready)
 	read_lines();
       if (sock_ready && receive_cid(&csession_secret))
