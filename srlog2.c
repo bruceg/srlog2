@@ -163,7 +163,7 @@ static uint64 seq_first;
 
 static int add_msg(const struct line* l)
 {
-  if ((unsigned char)packet.s[8] == 0xff
+  if ((unsigned char)packet.s[8+8] == 0xff
       || packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
       || (seq_last > 0 && l->seq != seq_last + 1))
     return 0;
