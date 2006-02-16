@@ -8,11 +8,9 @@
 
 - srlog2d:
 
-  - Sanity check the sender and service names
+  - Sanity check the sender and service names?
 
   - Add more counters for error packets
-
-  - Allow specification of secret key and senders filename
 
   - Don't preload/reload senders:
 

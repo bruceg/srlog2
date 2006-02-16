@@ -21,9 +21,6 @@
 #include "srlog2d.h"
 #include "srlog2d-cli.h"
 
-/* The maximum number of packets to receive before exiting. */
-static uint32 maxpackets = 0;
-
 int logger;
 int sock;
 ipv4addr ip;
@@ -126,13 +123,10 @@ int cli_main(int argc, char* argv[])
 {
   int i;
   uint32 type;
-  const char* env;
 
   msg_debug_init();
-  if ((env = getenv("MAXPACKETS")) != 0)
-    maxpackets = strtoul(env, 0, 10);
-  if (!keylist_load(&server_secrets, "secrets"))
-    die1(1, "Could not load server key");
+  if (!keylist_load(&server_secrets, opt_keylist))
+    die1(1, "Could not load server keys");
   load_senders(0);
   load_services(0);
   brandom_init();
@@ -187,7 +181,9 @@ int cli_main(int argc, char* argv[])
       stats_next += STATS_INTERVAL;
     }
     /* Profiling hook: */
-    if (maxpackets > 0 && packets_received >= maxpackets) break;
+    if (opt_maxpackets > 0
+	&& packets_received >= opt_maxpackets)
+      break;
   }
 
   msg1("Exiting");

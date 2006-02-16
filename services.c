@@ -14,6 +14,7 @@
 
 #include "srlog2.h"
 #include "srlog2d.h"
+#include "srlog2d-cli.h"
 
 struct ghash services = {0,0,0,0,0,0,0,0,0,0,0};
 
@@ -163,11 +164,11 @@ static void parse_service_line(void)
   }
 }
 
-static void read_services(const char* filename)
+static void read_services(void)
 {
   ibuf in;
-  if (!ibuf_open(&in, filename, 0))
-    warnfsys("{Could not open '}s{', skipping}", filename);
+  if (!ibuf_open(&in, opt_services, 0))
+    warnfsys("{Could not open '}s{', skipping}", opt_services);
   else {
     while (ibuf_getstr(&in, &line, LF)) {
       str_strip(&line);
@@ -187,5 +188,5 @@ void load_services(int reload)
     services_init(&services);
     msg1("Loading services");
   }
-  read_services("services");
+  read_services();
 }

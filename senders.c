@@ -14,6 +14,7 @@
 
 #include "srlog2.h"
 #include "srlog2d.h"
+#include "srlog2d-cli.h"
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
@@ -98,11 +99,11 @@ static void parse_sender_line(void)
   }
 }
 
-static void read_senders(const char* filename)
+static void read_senders(void)
 {
   ibuf in;
-  if (!ibuf_open(&in, filename, 0))
-    warnfsys("{Could not open '}s{', skipping}", filename);
+  if (!ibuf_open(&in, opt_senders, 0))
+    warnfsys("{Could not open '}s{', skipping}", opt_senders);
   else {
     while (ibuf_getstr(&in, &line, LF)) {
       str_strip(&line);
@@ -122,5 +123,5 @@ void load_senders(int reload)
     senders_init(&senders);
     msg1("Loading senders");
   }
-  read_senders("senders");
+  read_senders();
 }
