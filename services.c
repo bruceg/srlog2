@@ -73,9 +73,24 @@ const char* format_service(const struct services_entry* c)
 struct services_entry* find_service(const char* sender, const char* service)
 {
   static struct service_key key;
+  struct services_entry* svc;
+  struct senders_entry* snd;
+
   wrap_str(str_copys(&key.sender, sender));
   wrap_str(str_copys(&key.service, service));
-  return services_get(&services, &key);
+  if ((svc = services_get(&services, &key)) == 0) {
+    /* If a corresponding sender entry can be found,
+     * automatically add a service entry. */
+    if ((snd = senders_get(&senders, &key.sender)) != 0) {
+      struct service_data data;
+      memset(&data, 0, sizeof data);
+      data.keys = snd->data.keys;
+      wrap_str(services_add(&services, &key, &data));
+      svc = services_get(&services, &key);
+      msgf("{Automatically added service: }s{/}s", sender, service);
+    }
+  }
+  return svc;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -149,13 +164,15 @@ static void read_services(const char* filename)
 {
   ibuf in;
   if (!ibuf_open(&in, filename, 0))
-    die3sys(1, "Could not open '", filename, "'");
-  while (ibuf_getstr(&in, &line, LF)) {
-    str_strip(&line);
-    if (line.len == 0 || line.s[0] == '#') continue;
-    parse_service_line();
+    warnfsys("{Could not open '}s{', skipping}", filename);
+  else {
+    while (ibuf_getstr(&in, &line, LF)) {
+      str_strip(&line);
+      if (line.len == 0 || line.s[0] == '#') continue;
+      parse_service_line();
+    }
+    ibuf_close(&in);
   }
-  ibuf_close(&in);
 }
 
 void load_services(int reload)

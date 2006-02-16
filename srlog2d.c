@@ -133,6 +133,7 @@ int cli_main(int argc, char* argv[])
     maxpackets = strtoul(env, 0, 10);
   if (!keylist_load(&server_secrets, "secrets"))
     die1(1, "Could not load server key");
+  load_senders(0);
   load_services(0);
   brandom_init();
 
@@ -154,6 +155,7 @@ int cli_main(int argc, char* argv[])
   while (!exitasap) {
     if (reload) {
       reload = 0;
+      load_senders(1);
       load_services(1);
       msg1("Continuing");
     }

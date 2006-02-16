@@ -66,6 +66,18 @@ void warn_connection(const struct connections_entry* c, const char* s);
 void warn_connection3(const struct connections_entry* c, const char* s,
 		  uint64 u1, uint64 u2);
 
+/* senders.c */
+struct sender_data
+{
+  struct keylist keys;
+};
+
+GHASH_DECL(senders, str, struct sender_data);
+
+extern struct ghash senders;
+
+extern void load_senders(int reload);
+
 /* services.c */
 struct service_key
 {
