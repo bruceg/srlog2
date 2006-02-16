@@ -17,7 +17,6 @@
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
-static str path;
 static str tmp;
 
 static uint32 sender_hash(struct sender_key const* key)
@@ -76,104 +75,83 @@ struct senders_entry* find_sender(const char* sender, const char* service)
 }
 
 /* ------------------------------------------------------------------------- */
-static void add_sender(const char* sender, const char* service, 
-		       const struct keylist* keys)
+static struct senders_entry* add_sender(const char* sender,
+					const char* service)
 {
   struct sender_key a;
   struct sender_data d;
-
-  msgf("{Loading sender: }s{/}s", sender, service);
+  struct senders_entry* s;
+  
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
-  d.keys = *keys;
-  if (!senders_add(&senders, &a, &d)) die_oom(1);
+  if ((s = senders_get(&senders, &a)) == 0) {
+    if (!senders_add(&senders, &a, &d))
+      die_oom(1);
+    s = senders_get(&senders, &a);
+    msgf("{Added sender: }s{/}s", sender, service);
+  }
+  return s;
 }
 
-static void update_sender(struct senders_entry* s, const struct keylist* keys)
+static void update_sender(struct senders_entry* s, const struct key* key)
 {
-  if (memcmp(&s->data.keys, keys, sizeof *keys) != 0) {
-    msgf("{Reloading sender: }s{/}s", s->key.sender.s, s->key.service.s);
-    s->data.keys = *keys;
+  const struct key* old;
+  if ((old = keylist_get(&s->data.keys, key->cb)) == 0
+      || memcmp(old->data, key->data, key->cb->size) != 0) {
+    keylist_set(&s->data.keys, key);
+    msgf("{Updated sender key: }s{/}s{ (}s{)}",
+	 s->key.sender.s, s->key.service.s, key->cb->name);
   }
 }
 
-static struct keylist* loadkeys(const char* host, const char* service,
-				struct keylist* keys)
+static void parse_sender_line(void)
 {
-  wrap_str(str_copys(&tmp, host));
-  if (service != 0)
-    wrap_str(str_cat2s(&tmp, "/", service));
-  wrap_str(str_cats(&tmp, "/.publics"));
-  if (keylist_load(keys, tmp.s)
-      && keylist_exchange_all(keys, keys, &server_secrets))
-    return keys;
-  else if (errno != ENOENT)
-    diefsys(1, "{Error opening '}s{'}", tmp.s);
-  return 0;
-}
-    
-static void try_load_service(const char* host, const char* service,
-			     const struct keylist* keys)
-{
-  struct stat st;
-  struct keylist svckey;
+  int i;
+  int j;
+  int k;
+  struct key tmpkey;
+  const struct key_cb* cb;
   struct senders_entry* s;
 
-  wrap_str(str_copy3s(&path, host, "/", service));
-  if (stat(path.s, &st) != 0)
-    warnfsys("{Could not stat '}s{', skipping}", path.s);
-  else if (S_ISDIR(st.st_mode)) {
-    if (loadkeys(host, service, &svckey))
-      keys = &svckey;
-    if (keys) {
-      if ((s = find_sender(host, service)) == 0)
-	add_sender(host, service, keys);
-      else
-	update_sender(s, keys);
-    }
-  }
-}
-
-static void load_hostdir(const char* hostname)
-{
-  DIR* dir;
-  direntry* entry;
-  struct keylist hostkey;
-  const struct keylist* hostkeyptr;
-  
-  if ((dir = opendir(hostname)) == 0)
-    warnfsys("{Could not open '}s{', skipping}", hostname);
+  tmp.len = 0;
+  if ((i = str_findfirst(&line, ':')) == -1
+      || (j = str_findnext(&line, ':', i+1)) == -1
+      || (k = str_findnext(&line, ':', j+1)) == -1
+      || !base64_decode_line(line.s + k+1, &tmp))
+    warnf("{Invalid senders line, ignoring: }s", line.s);
   else {
-    hostkeyptr = loadkeys(hostname, 0, &hostkey);
-    while ((entry = readdir(dir)) != 0) {
-      const char* service = entry->d_name;
-      if (service[0] == '.')
-	continue;
-      try_load_service(hostname, service, hostkeyptr);
+    line.s[i++] = 0;
+    line.s[j++] = 0;
+    line.s[k++] = 0;
+    if ((cb = key_cb_lookup(line.s + j)) == 0)
+      warnf("{Invalid key type, ignoring: }s", line.s);
+    else if (tmp.len != cb->size)
+      warnf("{Invalid key size, ignoring: }s", line.s);
+    else if (keylist_get(&server_secrets, cb) == 0)
+      warnf("{Key type does not match any server keys, ignoring: }s", line.s);
+    else {
+      s = add_sender(line.s, line.s + i);
+      memset(&tmpkey, 0, sizeof tmpkey);
+      tmpkey.cb = cb;
+      memcpy(tmpkey.data, tmp.s, tmp.len);
+      update_sender(s, &tmpkey);
     }
-    closedir(dir);
   }
 }
 
-static void load_dir(void)
+static void read_senders(const char* filename)
 {
-  DIR* dir;
-  direntry* entry;
-  struct stat st;
-  if ((dir = opendir(".")) == 0)
-    die1sys(1, "Could not open current directory");
-  while ((entry = readdir(dir)) != 0) {
-    const char* hostname = entry->d_name;
-    if (hostname[0] == '.')
-      continue;
-    if (stat(hostname, &st) != 0)
-      warnfsys("{Could not stat '}s{', skipping}", hostname);
-    else if (S_ISDIR(st.st_mode))
-      load_hostdir(hostname);
+  ibuf in;
+  if (!ibuf_open(&in, filename, 0))
+    die3sys(1, "Could not open '", filename, "'");
+  while (ibuf_getstr(&in, &line, LF)) {
+    str_strip(&line);
+    if (line.len == 0 || line.s[0] == '#') continue;
+    parse_sender_line();
   }
-  closedir(dir);
+  ibuf_close(&in);
 }
 
 void load_senders(int reload)
@@ -185,5 +163,5 @@ void load_senders(int reload)
     senders_init(&senders);
     msg1("Loading senders");
   }
-  load_dir();
+  read_senders("senders");
 }

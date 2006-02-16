@@ -104,7 +104,8 @@ void handle_ini(void)
     return;
   }
 
-  auth_start(&authenticator, key);
+  key_exchange(&tmpkey, key, keylist_get(&server_secrets, cb));
+  auth_start(&authenticator, &tmpkey);
   if (!pkt_validate(&packet, &authenticator)) {
     msgpkt3("Error: INI failed authentication");
     ++ini_failed_auth;
