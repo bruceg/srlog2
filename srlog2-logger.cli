@@ -2,8 +2,11 @@ Min: 0
 Max: 0
 
 [options]
+-d --daily FLAG=0 opt_rotate
+Rotate log files daily (default)
+
 -h --hourly FLAG=1 opt_rotate
 Rotate log files hourly
 
--d --daily FLAG=0 opt_rotate
-Rotate log files daily (default)
+-m --mkdirs FLAG=1 opt_mkdirs
+Automatically create missing directories

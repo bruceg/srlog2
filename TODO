@@ -24,8 +24,6 @@
 
   - Add an option for formatting the directory name(s)?
 
-  - Add an option to auto-create sender or service directories
-
   - Add options for size/count-based rotation (ala multilog)
 
 - srlog2-logsplit

@@ -1,5 +1,8 @@
 /* $Id$ */
+#include <sysdeps.h>
+#include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <systime.h>
@@ -148,10 +151,11 @@ static void make_path(str* path,
 		     s->key.sender.s, s->key.service.s, suffix));
 }
 
+static str path;
+
 static void test_reopen(struct senders_entry* s,
 			struct timestamp* ts)
 {
-  static str path;
   const char* filename;
   struct tm* lt;
   time_t sec;
@@ -209,6 +213,16 @@ static struct senders_entry* parse_line(str* line)
 	memset(&data, 0, sizeof data);
 	wrap_str(senders_add(&senders, &key, &data));
 	s = senders_get(&senders, &key);
+
+	if (opt_mkdirs) {
+	  if (mkdir(key.sender.s, 0777) == -1
+	      && errno != EEXIST)
+	    diefsys(1, "{Could not create directory '}s{'}", key.sender.s);
+	  wrap_str(str_copyf(&path, "s{/}s", key.sender.s, key.service.s));
+	  if (mkdir(path.s, 0777) == -1
+	      && errno != EEXIST)
+	    diefsys(1, "{Could not create directory '}s{'}", path.s);
+	}
       }
       test_reopen(s, &ts);
     }
@@ -225,7 +239,8 @@ int cli_main(int argc, char* argv[])
   senders_init(&senders);
 
   while (ibuf_getstr(&inbuf, &line, LF)) {
-    if ((s = parse_line(&line)) != 0)
+    if ((s = parse_line(&line)) != 0
+	&& s->data.fd > 0)
       write(s->data.fd, line.s, line.len);
   }
 
