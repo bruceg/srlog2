@@ -18,8 +18,7 @@ int keylist_set(struct keylist* list, const struct key* key)
   int i;
   if ((i = keyindex(key->cb->name)) < 0)
     return 0;
-  list->keys[i].cb = key->cb;
-  memcpy(&list->keys[i], key, sizeof *key);
+  list->keys[i] = *key;
   return 1;
 }
   
