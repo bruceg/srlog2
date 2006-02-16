@@ -21,8 +21,11 @@ static str tmp;
 
 static uint32 service_hash(struct service_key const* key)
 {
-  uint32 crc = crc32_update(CRC32INIT, key->sender.s, key->sender.len);
-  return crc32_update(crc, key->service.s, key->service.len) ^ CRC32POST;
+  uint32 crc = CRC32INIT;
+  crc = crc32_update(crc, key->sender.s, key->sender.len);
+  crc = crc32_update(crc, "", 1);
+  crc = crc32_update(crc, key->service.s, key->service.len);
+  return crc ^ CRC32POST;
 }
 
 static int service_cmp(struct service_key const* a,
