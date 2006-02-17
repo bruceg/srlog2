@@ -1,8 +1,8 @@
-* Write man pages *
+* Add man page documentation to CLI files *
 
 - srlog2:
 
-  - Add option to set path to host key
+  - Add option to set path to host key list
 
   - Add backoff on INI timing
 

@@ -1,10 +1,22 @@
 Min: 1
 Max: 1
-Usage: FILENAME
+Usage: PATH
+Description: Create a secret/public key pair for srlog2.
 
 [prefix]
-If FILENAME ends with "/", it is suffixed with the key type.
+If the given PATH is a directory, it is suffixed with the key type.
+
+[description]
+@program generates a new random secret key for use with @command{srlog2}
+or @command{srlog2d}, calculates the corresponding public key, and
+writes both to seperate files.  It also displays the public key for
+convenience.
+
+If the given @option{PATH} is a directory, it is suffixed with the key
+type name.
 
 [options]
 -t --type STRING opt_type = "nistp224"
 The type of key to generate = nistp224
+Possible types for this include @option{nistp224} and
+@option{curve25519} (if support for curve25519 was included).
