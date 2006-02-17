@@ -38,7 +38,6 @@ extern const struct key_cb* key_cb_lookup(const char* name);
 
 extern void key_generate(struct key* secret, struct key* public,
 			 const struct key_cb* cb);
-extern int key_export(const struct key* key, struct str* s);
 extern int key_exchange(struct key* shared,
 			const struct key* public,
 			const struct key* secret);

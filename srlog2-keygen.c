@@ -13,6 +13,13 @@
 #include "srlog2.h"
 #include "srlog2-keygen-cli.h"
 
+static int key_export(const struct key* key, str* s)
+{
+  return str_copys(s, key->cb->name)
+    && str_catc(s, ':')
+    && base64_encode_line(key->data, key->cb->size, s);
+}
+
 static void write_key(const char* filename, int mode, const char* keyline)
 {
   obuf out;

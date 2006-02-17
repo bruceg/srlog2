@@ -21,11 +21,6 @@ void key_generate(struct key* secret, struct key* public,
   } while (!type->exchange(public, &type->public, secret));
 }
 
-int key_export(const struct key* key, str* s)
-{
-  return base64_encode_line(key->data, key->cb->size, s);
-}
-
 int key_exchange(struct key* shared,
 		 const struct key* public,
 		 const struct key* secret)
