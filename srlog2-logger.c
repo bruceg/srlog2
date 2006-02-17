@@ -211,8 +211,7 @@ static struct senders_entry* parse_line(str* line)
       if ((s = senders_get(&senders, &key)) == 0) {
 	struct sender_data data;
 	memset(&data, 0, sizeof data);
-	wrap_str(senders_add(&senders, &key, &data));
-	s = senders_get(&senders, &key);
+	wrap_alloc(s = senders_add(&senders, &key, &data));
 
 	if (opt_mkdirs) {
 	  if (mkdir(key.sender.s, 0777) == -1

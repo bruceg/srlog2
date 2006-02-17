@@ -89,8 +89,7 @@ struct services_entry* find_service(const char* sender, const char* service)
       struct service_data data;
       memset(&data, 0, sizeof data);
       data.keys = snd->data.keys;
-      wrap_str(services_add(&services, &key, &data));
-      svc = services_get(&services, &key);
+      wrap_alloc(svc = services_add(&services, &key, &data));
       msgf("{Automatically added service: }s{/}s", sender, service);
     }
   }
@@ -99,7 +98,7 @@ struct services_entry* find_service(const char* sender, const char* service)
 
 /* ------------------------------------------------------------------------- */
 static struct services_entry* add_service(const char* sender,
-					const char* service)
+					  const char* service)
 {
   struct service_key a;
   struct service_data d;
@@ -110,9 +109,7 @@ static struct services_entry* add_service(const char* sender,
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
   if ((s = services_get(&services, &a)) == 0) {
-    if (!services_add(&services, &a, &d))
-      die_oom(1);
-    s = services_get(&services, &a);
+    wrap_alloc(s = services_add(&services, &a, &d));
     msgf("{Added service: }s{/}s", sender, service);
   }
   return s;

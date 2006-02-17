@@ -122,8 +122,7 @@ void handle_ini(void)
     struct connection_data cd;
     memset(&cd, 0, sizeof cd);
 
-    if (!connections_add(&connections, &ck, &cd)) die_oom(1);
-    ce = connections_get(&connections, &ck);
+    wrap_alloc(ce = connections_add(&connections, &ck, &cd));
     ce->data.service = s;
     s->data.connection = ce;
   }
