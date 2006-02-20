@@ -4,7 +4,7 @@
 #include "key.h"
 
 #define AUTH_LENGTH 16
-typedef struct { struct key secret; } AUTH_CTX;
+typedef struct { unsigned char context[4*4*2]; } AUTH_CTX;
 
 #define AUTHENTICATOR_NAME "HMAC-MD5"
 
