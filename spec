@@ -2,7 +2,7 @@ Name: @PACKAGE@
 Summary: Secure Remote Log transmission system
 Version: @VERSION@
 Release: 2
-Copyright: Proprietary
+License: GPL
 Group: Utilities/System
 Source: http://untroubled.org/@PACKAGE@/@PACKAGE@-@VERSION@.tar.gz
 BuildRoot: %{_tmppath}/@PACKAGE@-buildroot
