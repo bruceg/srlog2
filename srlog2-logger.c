@@ -172,7 +172,7 @@ static void test_reopen(struct senders_entry* s,
     filename = make_filename(lt);
     make_path(&path, s, filename);
     
-    debug2(1, "Opening ", path.s);
+    msg2("Opening ", path.s);
     if ((s->data.fd = open(path.s, O_WRONLY|O_CREAT|O_APPEND, 0644)) == -1)
       warnfsys("{Could not open '}s{'}", path.s);
     else {
@@ -234,7 +234,6 @@ int cli_main(int argc, char* argv[])
   str line = {0,0,0};
   struct senders_entry* s;
   
-  msg_debug_init();
   senders_init(&senders);
 
   while (ibuf_getstr(&inbuf, &line, LF)) {
