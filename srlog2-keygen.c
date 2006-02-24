@@ -41,13 +41,7 @@ int cli_main(int argc, char* argv[])
   struct key secret;
   str line = {0,0,0};
 
-  if (strcmp(opt_type, nistp224_cb.name) == 0)
-    type = &nistp224_cb;
-#ifdef HASCURVE25519
-  else if (strcmp(opt_type, curve25519_cb.name) == 0)
-    type = &curve25519_cb;
-#endif
-  else
+  if ((type = key_cb_lookup(opt_type)) == 0)
     dief(1, "{Unknown key type: }s", opt_type);
   brandom_init();
   key_generate(&secret, &public, type);
