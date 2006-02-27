@@ -1,6 +1,7 @@
 Min: 1
 Max: -1
 Usage: SERVICE [SERVER] [[+-]PATTERN ...]
+Description: Sends logs to a network receiver.
 
 [prefix]
 If the SERVER command-line parameter is not present, srlog looks for the
@@ -12,3 +13,88 @@ The UDP port to communicate on. = 11014
 
 -s --sender STRING opt_sender
 The sender name to give to the server.
+By default, the sender name is formed from the result of the
+@code{gethostname(2)} system call, truncated at the first ".".
+
+[description]
+
+@command{srlog2} reads lines from standard input, filters them based on
+command line patterns, timestamps them, and writes them to a buffer.  If
+a connection has been established with the receiver, it gathers together
+batches of lines and sends them to the receiver.  Once the receiver
+acknowledges the receipt of the lines, the sender marks the lines as
+having been fully sent.
+
+When reading input, an attempt is made to batch together as many lines
+into one packet as possible without significantly delaying transmission.
+To do this, @command{srlog2} waits a short (configurable) time after
+each line to see if another line is coming before forming the outgoing
+message.  The longer the time waited, the more likely to batch together
+lines, but the longer it will take for lines to get sent to the
+receiver.
+
+[environment]
+
+@table @env
+
+@item CLEAN_BYTES
+
+The minimum size (in bytes) of the @file{buffer} file (described below)
+before it is considered for truncation.  Defaults to 100000 bytes.
+
+@item ACK_TIMEOUT
+
+The base time to wait (in milliseconds) for an acknowledgement from the
+receiver for each sent message.  The second retransmit waits twice this
+length, the third three times, and so on.  Defaults to 1000ms.
+
+@item ID_TIMEOUT
+
+The time to wait (in milliseconds) between sending connection
+initialization requests.  Defaults to 5000ms.
+
+@item RETRANSMITS
+
+The number of times to retransmit each message.  Defaults to 4.
+
+@item READWAIT
+
+The time to wait (in milliseconds) for more input data before forming an
+outgoing packet.  Defaults to 100ms.
+
+@item SERVER
+
+The host name or IP address of the system to which to send all traffic.
+This name is also used to look up the server's public key.  If a server
+name is present on the command line, this variable is ignored.
+
+@end table
+
+[files]
+
+The sender modifies two files in the current directory:
+
+@table @file
+
+@item buffer
+
+Every line received from standard input is written to this file
+@emph{before} sending it to the receiver.  If there are no lines left
+to be sent (as indicated by the @file{sequence} file described below),
+it may be truncated.  In normal operation, the sender will only
+truncate this file when it gets larger than a certain size, in order
+to prevent spending too much system time truncating the file.
+
+@item sequence
+
+The sender repeatedly writes two numbers to this file, seperated by a
+colon: the sequence number of the next line that needs to be sent and
+the sequence number to be assigned to the next line to be read.  If
+the two numbers are equal, the buffer is effectively empty.
+
+@end table
+
+[see also]
+srlog2-keygen(1),
+srlog2d(1),
+srlog2q(1)
