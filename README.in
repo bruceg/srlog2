@@ -17,7 +17,8 @@ Development versions of @PACKAGE@ are available via Subversion at:
 
 Requirements:
 
--
+- bglibs version 1.040 or later
+- libtomcrypt version 1.03 or later
 
 Installation:
 
