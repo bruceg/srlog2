@@ -1,6 +1,0 @@
-alg-fst.o
-decrypt_blocks.o
-decrypt_pad.o
-encrypt_blocks.o
-encrypt_pad.o
-init.o

@@ -541,6 +541,7 @@ int cli_main(int argc, char* argv[])
   const char* server_name = 0;
 
   msg_debug_init();
+  encr_start();
   prep_sender();
   if (!str_copys(&service, argv[0])) die_oom(1);
   if (argc > 1

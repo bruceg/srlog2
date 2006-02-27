@@ -125,6 +125,7 @@ int cli_main(int argc, char* argv[])
   uint32 type;
 
   msg_debug_init();
+  encr_start();
   if (!keylist_load(&server_secrets, opt_keylist))
     die1(1, "Could not load server keys");
   load_senders(0);
