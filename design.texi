@@ -1,0 +1,620 @@
+\input texinfo @c -*-texinfo-*-
+@c %**start of header
+@setfilename design.info
+@settitle Srlog2 Design Documentation
+@setchapternewpage off
+@paragraphindent 5
+@footnotestyle end
+@c %**end of header
+
+@ifinfo
+Copyright @copyright{} 2006 Bruce Guenter
+@end ifinfo
+
+@titlepage
+@title Srlog2 Design Documentation
+@author Bruce Guenter
+@subtitle @today{}
+@end titlepage
+
+@ifinfo
+This document explains the design of srlog2.
+@end ifinfo
+
+@node Top, Introduction, (dir), (dir)
+
+@menu
+* Introduction::                
+* Design::                      
+* Detailed Changes::            
+* Miscellaneous::               
+@end menu
+
+@c ****************************************************************************
+@node Introduction, Design, Top, Top
+@chapter Introduction
+
+The original srlog package originated as an internal mechanism for
+collecting all system logs at FutureQuest, Inc. in one place for
+analysys.
+
+@c ----------------------------------------------------------------------------
+@section Requirements
+
+When figuring out how to accomplish this, we identified several key
+requirements:
+
+@enumerate
+
+@item Delivery guarantees
+
+If the program is restarted, no logs should be lost, even if they were
+still in transit.  They also must not be repeated.  If the system
+crashes, a minimum amount of logs should be lost.
+
+@item Encrypted transport
+
+We have some untrusted customer equipment (dedicated servers), so we
+couldn't just sling the data across the network without encrypting it,
+since some of the data contains potentially sensitive information.
+
+@item Secured session keys
+
+Each connection should be set up with its own encryption key providing
+forward security (an attacker that somehow recovered all the keys
+could still not recover the data stream).  This requires some form of
+Diffie-Hellman key exchange mechanism.
+
+@item Public key handling
+
+If the system was set up to use just a single key, the potential
+existed for the exposure of that single key to expose all the logs
+being transmitted.  As such, at minimum each server should have its
+own key pair.
+
+@end enumerate
+
+We considered using some tools that were already available for this
+task.  In particular, reusing a tool like SSH would have been ideal.
+However, we were unaware of any such tool that give the delivery
+guarantees we wanted.
+
+@c ----------------------------------------------------------------------------
+@section Initial Implementation
+
+The initial implementation was fairly limited, and there were a number
+of design mistakes.  The packet format allowed no variations in what
+cryptography mechanisms were used.  It was hard coded to use MD5 for
+authentication, the @uref{http://cr.yp.to/nistp224.html,nistp224}
+elliptic curve for key exchange, and AES192-CBC for encryption, with
+no hashing of the shared secret to produce the encryption key, no IV,
+and no resets between packets.  Each service required its own secret
+key, and needed the server key copied into its directory.  Senders
+were identified exclusively by IP and authenticated by a manually
+copied public key.  The packet format was also overly optimized for
+the established connection path, and only allowed one line per packet.
+
+@c ----------------------------------------------------------------------------
+@section Rewriting to srlog2
+
+I recognized a number of the original design decisions were poor
+choices or outright mistakes, and set out to fix them.  In order to
+avoid recreating some original mistakes or throwing away existing
+knowledge, all of the changes were done incrementally, resulting in a
+system that was at least minimally usable at each step.
+
+However, many of the choices resulted in a system that was completely
+incompatible with the original srlog externally, even though much of
+the internal mechanism was still the same.  In particular the protocol
+and the key file handling were completely overhauled.  So, the package
+name (and the name of all the programs) was changed to reflect these
+differences, and to prevent confusion between the old and new
+packages.
+
+@c ****************************************************************************
+@node Design, Detailed Changes, Introduction, Top
+@chapter Design
+
+@c ----------------------------------------------------------------------------
+@section Protocol
+
+@subsection Network Transport
+
+All data is exchanged over UDP with a default port number of 11014.
+The sender and receiver first optionally negotiate encryption
+parameters, and then establish a virtual connection over which the
+sender delivers its log messages.  Only acknowledgements are sent by
+the receiver to successful packets; no negative acknowledgements are
+possible.
+
+@subsection Packet Formats
+
+@subsubsection Data Formats
+
+All integers are unsigned, and encoded in LSB order.
+
+A ``timestamp'' is encoded as a 4-byte integer number of seconds since
+the UNIX epoch, and a 4-byte integer nanosecond offset since the last
+whole second.  Using unsigned integers, this will be adequate until
+the year 2106.
+
+Strings is encoded as a 1 or 2 byte length integer followed by the
+unencoded data.  No trailing NUL byte is used (externally).
+
+@subsubsection PRQ: Preferences Query
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{PRQ1}
+
+@item 8 @tab 8 @tab String @tab Nonce
+
+@item 16 @tab 1+N @tab String @tab Authenticator list (@samp{HMAC-MD5})
+
+@item ?? @tab 1+N @tab String @tab Key exchange list (@samp{nistp224}
+or @samp{curve25519\000nistp224})
+
+@item ?? @tab 1+N @tab String @tab Key hash list (@samp{SHA512})
+
+@item ?? @tab 1+N @tab String @tab Encryptor list (@samp{AES-CBC-ESSID})
+
+@item ?? @tab 1+N @tab String @tab Compressor list (@samp{null})
+
+@end multitable
+
+Notes:
+
+@itemize @bullet
+
+@item Multiple items in each list are separated byte the @code{NUL} byte.
+
+@end itemize
+
+@subsubsection PRF: Preferences Response
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{PRF1}
+
+@item 8 @tab 8 @tab String @tab Copy of nonce
+
+@item 16 @tab 1+N @tab String @tab Authenticator choice
+
+@item ?? @tab 1+N @tab String @tab Key exchange choice
+
+@item ?? @tab 1+N @tab String @tab Key hash choice
+
+@item ?? @tab 1+N @tab String @tab Encryptor choice
+
+@item ?? @tab 1+N @tab String @tab Compressor choice
+
+@end multitable
+
+@subsubsection INI: Initialization Packet
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet format @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Packet type @samp{INI1}
+
+@item 8 @tab 8 @tab Integer @tab Initial sequence number
+
+@item 16 @tab 8 @tab Timestamp @tab Initial timestamp
+
+@item 20 @tab 1+N @tab String @tab Sender name
+
+@item ?? @tab 1+N @tab String @tab Service name
+
+@item ?? @tab 1+N @tab String @tab Authenticator name (A)
+
+@item ?? @tab 1+N @tab String @tab Key exchange name (E)
+
+@item ?? @tab 1+N @tab String @tab Key hash name (H)
+
+@item ?? @tab 1+N @tab String @tab Cipher name (C)
+
+@item ?? @tab 1+N @tab String @tab Compressor name (Z)
+
+@item ?? @tab sizeof(E) @tab E @tab Client session public key
+
+@item ?? @tab sizeof(A) @tab A @tab Authenticator
+
+@end multitable
+
+@subsubsection CID: Initialization Response
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{CID1}
+
+@item 8 @tab sizeof(E) @tab E @tab Server session public key
+
+@item ?? @tab sizeof(A) @tab A @tab Authenticator
+
+@end multitable
+
+@subsubsection MSG: Message Packet
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{MSG1}
+
+@item 8 @tab 8 @tab Unsigned @tab Initial sequence number
+
+@item 16 @tab 1 @tab Unsigned @tab Message count M
+
+@item ?? @tab 8 @tab Timestamp @tab Timestamp
+
+@item ?? @tab 2+N @tab String @tab Line
+
+@item ?? @tab ?? @tab Char @tab Padding to fill out encryption block
+
+@item ?? @tab 4 @tab CRC-32 @tab Check code on encrypted data
+
+@item ?? @tab sizeof(A) @tab A @tab Authenticator
+
+@end multitable
+
+Notes:
+
+@itemize @bullet
+
+@item The timestamp and line items are repeated M times.
+
+@item Everything from the first timestamp to the CRC is encrypted.
+
+@item The sequence number and message count are explicitly @emph{not} in
+the encrypted section, since an attacker can trivially determine them
+from INI/CID packets and the returning ACK packets.
+
+@item The ACK to a MSG packet uses the sequence number of the last line
+in the packet.
+
+@item The length of padding is: P=B-(2+8+N+4)%B where B is the block size
+of the cipher algorithm.  It will be at least one byte, and at most the
+encryption block size.
+
+@item A check code (CRC-32) is included inside the encrypted data on MSG1
+packets to ensure that the encryption state is properly synchronized
+on client and server.
+
+@item A 32-bit CRC takes no longer than a 16-bit CRC to calculate on
+modern (32-bit) CPUs, perhaps even shorter due to using native word
+size.  The difference in resulting packet size is negligable.
+
+@end itemize
+
+@subsubsection ACK: Message Acknowledgement Packet
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{ACK1}
+
+@item 8 @tab 8 @tab Unsigned @tab Sequence number
+
+@item 16 @tab sizeof(A) @tab A @tab Authenticator
+
+@end multitable
+
+@subsubsection SRQ: Status Request
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{SRQ1}
+
+@item 8 @tab 8 @tab String @tab Nonce
+
+@end multitable
+
+@subsubsection SRP: Status Response
+
+@multitable @columnfractions 0.1 0.15 0.15 0.7
+
+@headitem Offset @tab Size @tab Type @tab Description
+
+@item 0 @tab 4 @tab Constant @tab Packet type @samp{SRL2}
+
+@item 4 @tab 4 @tab Constant @tab Message type @samp{SRP1}
+
+@item 8 @tab 8 @tab String @tab Copy of nonce
+
+@item 16 @tab 2+N @tab String @tab Text status report
+
+@end multitable
+
+@c ----------------------------------------------------------------------------
+@section Key Exchange
+
+The shared secrets for the INI, CID, MSG, and ACK packets are computed
+as follows:
+
+@multitable @columnfractions 0.1 0.45 0.45
+
+@headitem Packet @tab Client Computes @tab Server Computes
+
+@item INI
+@tab Client secret * Server public
+@tab Server secret * Client public
+
+@item CID
+@tab Client session secret * Server public
+@tab Server secret * Client session public
+
+@item ACK or MSG
+@tab Client session secret * Server session public
+@tab Server session secret * Client session public
+
+@end multitable
+
+@c ----------------------------------------------------------------------------
+@section Encryption Parameters
+
+The current system is hard coded to use HMAC-MD5 for authentication
+and AES-CBC as the cipher with a 256-bit key for encryption and ESSIV,
+with the first 32 bytes of the SHA512 hash of the nistp224 shared
+secret used for the key.  Additionally, the first 32 bytes of the
+SHA512 hash of the previous SHA512 hash is used as the ESSIV
+encryptor.  The system may use either nistp224 or curve25519 for key
+exchange, depending on if curve25519 keys and software support is
+present on both ends.
+
+@c ****************************************************************************
+@node Detailed Changes, Miscellaneous, Design, Top
+@chapter Detailed Changes
+
+This chapter describes in detail the changes made between the original
+package and srlog2.  Some of the explanation for the design decisions
+above is explained here.
+
+@c ----------------------------------------------------------------------------
+@section Multiple lines per packet
+
+The largest real problem encountered with the original system was the
+high system load caused by the receiver.  Having the protocol handle a
+single line per packet meant that each log line would cause the system
+to handle two interrupts (incoming and outgoing), and the receiver
+would have to do a decryption and two full secure hashes.  This ended
+up being a significant issue as we were handling well over 1,000
+lines/sec.
+
+Adding a new packet type that would transmit multiple lines was not a
+big problem, but the bigger issue came with encryption.  Since the CBC
+state was not reset between packets, retransmissions caused a huge
+implementation headache that could not be satisfactorily resolved.
+
+@c ----------------------------------------------------------------------------
+@section IV computed using E(Salt|Sector)
+
+To resolve the CBC issue, the IV was initially forced to zero at the
+start of each packet.  Then while researching disk encryption I came
+across a scheme called E(Salt,Sector)IV or ESSIV.  In this scheme, the
+key used for the primary encryption is hashed to key another
+encryptor.  To produce the IV for each packet, the (public) sequence
+number is encrypted (in simple ECB mode) with this (secret) key
+material to produce a deterministic but still secret IV.  This
+eliminated encryption ordering issues, making one of the issues with
+having multiple lines per packet disappear.
+
+@c ----------------------------------------------------------------------------
+@section Introducing curve25519
+
+After writing the original package, the author of the nistp224
+package, @uref{http://cr.yp.to/,Daniel J. Bernstein} produced another,
+stronger, elliptic curve key exchange protocol called
+@uref{http://cr.yp.to/ecdh.html,curve25519}.  The nistp224 package was
+no longer being maintained, and had known bugs causing serious
+performance regressions with modern compilers, and the author was
+advocating the use of curve25519 over it.
+
+Initially I was inclined to switch the entire system to curve25519 and
+drop nistp224 entirely, but the core math of the new system was
+written entirely in assembler, and the released code only worked on
+Intel/AMD 32-bit systems.  As a result, a mechanism was introduced
+which would allow either system to be used, with a preference for the
+longer keys where both were supported.
+
+@c ----------------------------------------------------------------------------
+@section New packet format
+
+The original packet format had two shortcomings.  First, there was no
+identification information in the packet other than the leading
+sequence number, and that was only useful if there was a single line
+in the packet.  To add more packet formats, the sequence numbers from
+@code{0xffffffff00000000} and up were reserved.  While it is
+improbable that any sender would ever get close to this number, it is
+still a poor kludge for multiple packet types.  Second, all numbers
+were represented in MSB order but all the systems using it used LSB
+ordering, requiring byte swapping on each packet.
+
+So, a new packet format was designed that improved on several
+attributes.  First, the format itself included a version number in
+both a format identifier and a seperate type identifier, allowing for
+easily adding more packet types and for future updates to the format.
+Second, the single line packet was rejected in favor of a explicitly
+handling multiple lines in each transmission.  Finally, all numbers
+were encoded in LSB order.
+
+@c ----------------------------------------------------------------------------
+@section Sender Names
+
+The first design for srlog used IP addresses exclusively to identify
+senders in the receiver program.  This however led to problems when
+the IP address on a sender changed.  In particular, when a sender had
+multiple IP addresses, the kernel would make an arbitrary choice of
+which one to use for sending, and that could confuse the
+receiver. Switching from strictly IPs to names has the additional
+benefit of allowing support for roaming senders, which has happened
+when we set up servers in one place and install them in another.
+
+@c ****************************************************************************
+@node Miscellaneous,  , Detailed Changes, Top
+@chapter Miscellaneous
+
+@c ----------------------------------------------------------------------------
+@section External Encryption Libraries
+
+Originally, I had set up the package to use a built in Rijndael (AES)
+implementation for symmetric encryption.  There are, however, several
+encryption libraries available which may be preferable due to being
+more portable and/or faster (due to the use of assembler etc).
+
+Here are the features I have identified in an encryption library as
+being required or desireable for srlog2:
+
+@enumerate
+
+@item MUST provide a C API
+
+This package is written in C, and must link to a C library.
+
+@item MUST support AES
+
+AES is the only cipher currently supported by the existing code, and
+is the most popular high security cipher.
+
+@item MUST support multiple simultaneous encryption streams
+
+The receiver daemon needs to be able to handle large numbers of
+seperate encryption streams efficiently.  This means having seperate
+encryption states for each stream without the need to rekey.
+
+@item MUST seperate setting IV from keying
+
+In order to make playback attacks harder, the encryption uses a
+different IV for each packet.  In addition, the IV is formed by
+encrypting the current sequence number, a scheme known as ESSIV
+(E(Sector|Salt)IV).  The encryption library must support setting the
+IV (a simple memory copy operation at worst) without rekeying the
+algorithm (which is a significantly hard operation).
+
+@item SHOULD be popular
+
+Having the target library installed on a large number of systems means
+that this package does not introduce any additional dependancies.
+
+@item SHOULD be portable
+
+The library should be sufficiently portable to a significant number of
+operating systems and processors.
+
+@item SHOULD NOT be large
+
+I don't particularly like the idea of linking in a large library just
+to access one or two functions.  Additionally, it would be good for
+this system to be useable for sending logs out of embeded devices, and
+as such large libraries won't work.
+
+@item MUST have a compatible license
+
+As srlog2 is being released as GPL, it does not make sense to tie it
+to a library with a non-public license.
+
+@end enumerate
+
+The candidate libraries that I found are:
+
+@itemize @bullet
+
+@item @uref{http://mcrypt.sourceforge.net/,libmcrypt}
+
+The calling convention for libmcrypt does not seperate setting the IV
+from rekeying the algorithm.  There appears to be no easy or standard
+way of accessing the internal state of the encryptor to set it
+directly either.  It supports all the other requirements and is
+relatively small and popular among systems that use PHP.
+
+@item @uref{http://www.openssl.org/,libcrypto from OpenSSL}
+
+The documentation on OpenSSL is missing large pieces of required
+details, and does not include details on AES (which is known to be
+included in the software).  The calling convention for Blowfish and
+DES (other block ciphers) indicate that it supports setting a seperate
+IV for each encryption operation.  It is also by far the most popular
+and likely most portable library of all of the choices.  However,
+libcrypto is a huge library, several times larger than any of the
+other candidates.
+
+@item @uref{http://directory.fsf.org/security/libgcrypt.html,libgcrypt}
+
+This library supports all the required features, and should be
+portable everywhere GnuPG is supported (which should be nearly
+everywhere).  It is however a fairly sizeable library.
+
+@item @uref{http://beecrypt.sourceforge.net/,beecrypt}
+
+This is one of the smaller encryption libraries, and supports all the
+required features, although support for much outside the requirements
+is not high (the only other supported encryption algorithm is
+Blowfish).  Portability appears to be quite good (many processors and
+OSs are listed).  It is required by recent versions of
+@uref{http://www.rpm.org/,RPM}, so it will be present on all recent
+RedHat, Fedora, and Mandrake Linux systems.  I had serious problems
+getting beecrypt built on Gentoo, however, as it conflicts with the
+stable versions of rpm.  It also doesn't appear to be very popular.
+
+@item @uref{http://www.matrixssl.org/,MatrixSSL}
+
+This is a very small library, with the standard library coming in at
+around 50kB on most systems.  It supports AES, but the API
+documentation doesn't appear to provide any way to directly access it.
+
+@item @uref{http://www.cs.auckland.ac.nz/~pgut001/cryptlib/,cryptlib}
+
+The cryptlib library is a large library, probably outsizing OpenSSL
+itself, with many language bindings.  This was my first encounter with
+cryptlib, and I am aware of no commonly used packages that actually
+depend on it, and as such its popularity is very low.
+
+@item @uref{http://libtomcrypt.bytemine.net/libtomcrypt.org_80/,libtomcrypt}
+
+While the original web page is currently presenting something
+completely unrelated (``The Musicians of the New Mexico Symphony
+Orchestra''), there are many copies of this excellent library mirrored
+on the web, including the mirror link above.  The included
+documentation is good and the API provides all the requirements (and
+then some).  The library itself is specifically targetted at embeded
+systems, and so is very compact, and is popular in circles that target
+smaller systems.
+
+@end itemize
+
+I have switched to using libtomcrypt based on its good API and
+documentation, compact size, and public domain status.  The encryption
+support in srlog2 is already encapsulated into a single source file,
+so switching to another library should not be a large effort.  Ideally
+the build process could switch between several libraries depending on
+which was present at build time, but that's more work than it's worth
+for now.
+
+@c ****************************************************************************
+@contents
+
+@c ****************************************************************************
+@bye
