@@ -123,20 +123,40 @@ int cli_main(int argc, char* argv[])
 {
   int i;
   uint32 type;
+  char* end;
+  const char* env;
 
   msg_debug_init();
   encr_start();
+
+  if (opt_envuidgid) {
+    if ((env = getenv("GID")) == 0)
+      if ((opt_gid = strtol(env, &end, 10)) < 0 || *end != 0)
+	dief(1, "{Invalid value for $GID: }s", env);
+    if ((env = getenv("UID")) == 0)
+      if ((opt_uid = strtol(env, &end, 10)) < 0 || *end != 0)
+	dief(1, "{Invalid value for $UID: }s", env);
+  }
+  
+  if ((sock = socket_udp()) == -1)
+    die1sys(1, "Could not create UDP socket");
+  port = opt_port;
+  if (!socket_bind4(sock, &ip, port))
+    die1sys(1, "Could not bind UDP socket");
+
+  if (opt_gid >= 0)
+    if (setgid(opt_gid) != 0)
+      die1sys(1, "Could not set GID");
+  if (opt_uid >= 0)
+    if (setuid(opt_uid) != 0)
+      die1sys(1, "Could not set UID");
+  
   if (!keylist_load(&server_secrets, opt_keylist))
     die1(1, "Could not load server keys");
   load_senders(0);
   load_services(0);
   brandom_init();
 
-  if ((sock = socket_udp()) == -1)
-    die1sys(1, "Could not create UDP socket");
-  port = opt_port;
-  if (!socket_bind4(sock, &ip, port))
-    die1sys(1, "Could not bind UDP socket");
   if (!str_ready(&packet, 65536) ||
       !str_ready(&line, 65536) ||
       !str_ready(&tmp, 65536))

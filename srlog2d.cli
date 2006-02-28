@@ -1,5 +1,6 @@
 Min: 0
 Usage: [LOGGER [LOGGER ARGS ...]]
+Description: Receive logs from srlog2 senders.
 
 [options]
 -p --port UINTEGER opt_port = 11014
@@ -15,5 +16,60 @@ The path to the senders list file = "senders"
 The path to the services list file = "services"
 
 --maxpackets UINTEGER opt_maxpackets = 0
-The maximum number of packets to handle (for profiling)
+Exit after handling this many packets (for profiling)
 
+-g --gid INTEGER opt_gid = -1
+Switch to this GID after opening the socket.
+
+-u --uid INTEGER opt_uid = -1
+Switch to this UID after opening the socket.
+
+-U --envuidgid FLAG=1 opt_envuidgid
+Same as -g $GID -u $UID
+
+[description]
+
+@command{srlog2d} is a network server, listening for traffic from a list
+of senders and writing log lines out to a logging program.
+@command{srlog2d} does not directly write files out to disk -- that job
+is accomplished by a seperate logging program.
+
+The format of the lines written by @command{srlog2d} is as follows:
+
+@verbatim
+@40000000XXXXXXXXYYYYYYYY SENDER SERVICE LINE
+@end verbatim
+
+The leading string is a tai64n timestamp, which may be passed through
+@command{tai64nlocal} to produce a local time string.  The @samp{SENDER}
+and @samp{SERVER} words are the names used to identify the sender and
+service respectively, and the @samp{LINE} is the actual text produced on
+the sender verbatim.
+
+[files]
+
+@table @file
+
+@item secrets
+
+The list of secret keys identifying the receiver.  See the
+srlog2-keygen(1) documentation for details on the file format.
+
+@item senders
+
+A list of sending host keys, one entry per line.  Each line consists of
+three fields seperated by colons: the sender name, the key type, and the
+key data (encoded with base64).
+
+@item services
+
+A list of sending host service keys, one entry per line.  Each line
+consists of four fields seperated by colons: the sender name, the
+service name, the key type, and the key data (encoded with base64).
+
+@end table
+
+[see also]
+srlog2(1),
+srlog2-keygen(1),
+srlog2-logger(1)
