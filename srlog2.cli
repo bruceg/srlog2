@@ -8,9 +8,6 @@ If the SERVER command-line parameter is not present, srlog looks for the
 server address in the $SERVER environment variable.
 
 [options]
--p --port UINTEGER opt_port = 11014
-The UDP port to communicate on. = 11014
-
 -s --sender STRING opt_sender
 The sender name to give to the server.
 By default, the sender name is formed from the result of the
@@ -52,6 +49,10 @@ length, the third three times, and so on.  Defaults to 1000ms.
 
 The time to wait (in milliseconds) between sending connection
 initialization requests.  Defaults to 5000ms.
+
+@item PORT
+
+The UDP port number on which to communicate.  Defaults to 11014.
 
 @item RETRANSMITS
 

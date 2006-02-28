@@ -539,6 +539,7 @@ static void prep_sender(void)
 int cli_main(int argc, char* argv[])
 {
   const char* server_name = 0;
+  const char* env;
 
   msg_debug_init();
   encr_start();
@@ -562,7 +563,10 @@ int cli_main(int argc, char* argv[])
 
   load_keys(server_name);
 
-  port = opt_port;
+  if ((env = getenv("PORT")) != 0)
+    port = strtoul(env, 0, 10);
+  if (port == 0)
+    port = 11014;
   if ((sock = socket_udp()) == -1)
     die1sys(1, "Could not create UDP socket");
   if (!socket_connect4(sock, &ip, port))
