@@ -7,12 +7,6 @@ Description: Sends logs to a network receiver.
 If the SERVER command-line parameter is not present, srlog looks for the
 server address in the $SERVER environment variable.
 
-[options]
--s --sender STRING opt_sender
-The sender name to give to the server.
-By default, the sender name is formed from the result of the
-@code{gethostname(2)} system call, truncated at the first ".".
-
 [description]
 
 @command{srlog2} reads lines from standard input, filters them based on
@@ -62,6 +56,12 @@ The number of times to retransmit each message.  Defaults to 4.
 
 The time to wait (in milliseconds) for more input data before forming an
 outgoing packet.  Defaults to 100ms.
+
+@item SENDER
+
+The name of the sender to present to the receiving server.  By default,
+the sender name is formed from the result of the @code{gethostname(2)}
+system call, truncated at the first @samp{.}.
 
 @item SERVER
 

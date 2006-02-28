@@ -32,7 +32,8 @@
   return 0; \
 } while (0)
 
-static str service;
+static const char* sender;
+static const char* service;
 static ipv4addr ip;
 static ipv4port port;
 static int sock;
@@ -241,8 +242,8 @@ static void make_ini(const struct key* key, const struct line* line)
   else
     ts = &line->timestamp;
   pkt_add_ts(&packet, ts);
-  pkt_add_s1c(&packet, opt_sender);
-  pkt_add_s1(&packet, &service);
+  pkt_add_s1c(&packet, sender);
+  pkt_add_s1c(&packet, service);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
   pkt_add_s1c(&packet, keyex->name);
   pkt_add_s1c(&packet, KEYHASH_NAME);
@@ -526,13 +527,13 @@ static void prep_sender(void)
   static char hostname[256];
   char* p;
   
-  if (opt_sender == 0) {
+  if ((sender = getenv("SENDER")) == 0) {
     if (gethostname(hostname, sizeof hostname) != 0)
       die1sys(1, "gethostname failed");
     hostname[sizeof hostname - 1] = 0;
     if ((p = strchr(hostname, '.')) != 0)
       *p = 0;
-    opt_sender = hostname;
+    sender = hostname;
   }
 }
 
@@ -544,7 +545,7 @@ int cli_main(int argc, char* argv[])
   msg_debug_init();
   encr_start();
   prep_sender();
-  if (!str_copys(&service, argv[0])) die_oom(1);
+  service = argv[0];
   if (argc > 1
       && argv[1][0] != '-'
       && argv[1][0] != '+') {
