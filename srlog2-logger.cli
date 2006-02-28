@@ -1,5 +1,6 @@
 Min: 0
 Max: 0
+Description: Write logs from srlog2d to files.
 
 [options]
 -d --daily FLAG=0 opt_rotate
@@ -10,3 +11,16 @@ Rotate log files hourly
 
 -m --mkdirs FLAG=1 opt_mkdirs
 Automatically create missing directories
+
+[description]
+
+@command{srlog2-logger} reads logs written by @command{srlog2d} on
+standard input, and writes them into seperate files named for the time
+of the log entry in subdirectories named @file{SENDER/SERVICE}.  It also
+creates a @file{current} symlink in each directory that points to the
+most recently written log file in that directory.  If the
+@option{--hourly} flag is used, the files are named
+@file{YYYY-MM-DD-HH}, otherwise they are named @file{YYYY-MM-DD}.
+
+[see also]
+srlog2d(1)

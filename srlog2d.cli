@@ -46,6 +46,10 @@ and @samp{SERVER} words are the names used to identify the sender and
 service respectively, and the @samp{LINE} is the actual text produced on
 the sender verbatim.
 
+If the @command{LOGGER} option is present, @command{srlog2d} executes
+the given command and pipes all log messages to it.  Otherwise,
+@command{srlog2d} writes the log messages to standard output.
+
 [files]
 
 @table @file
