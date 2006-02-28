@@ -30,8 +30,6 @@ int cli_main(int argc, char* argv[])
   ipv4addr ip;
   ipv4port port = opt_port;
   int sock;
-  unsigned timeout = 1000;
-  const char* tmp;
   unsigned try;
   unsigned tries = 5;
   iopoll_fd io;
@@ -50,10 +48,6 @@ int cli_main(int argc, char* argv[])
   if (!str_ready(&pktin, 65535))
     die1(1, "Out of memory");
 
-  if ((tmp = getenv("TIMEOUT")) != 0)
-    if ((timeout = atoi(tmp)) <= 0)
-      die3(1, "Invalid timeout value: '", tmp, "'");
-
   brandom_init();
   brandom_fill(nonce, sizeof nonce);
   pkt_start(&pktout, SRQ1);
@@ -64,7 +58,7 @@ int cli_main(int argc, char* argv[])
   for (try = 0; try < tries; ++try) {
     if (!socket_send4(sock, pktout.s, pktout.len, &ip, port))
       die1sys(1, "Could not send packet to server");
-    switch (iopoll_restart(&io, 1, timeout)) {
+    switch (iopoll_restart(&io, 1, opt_timeout)) {
     case -1:
       die1sys(1, "Poll failed");
     case 1:

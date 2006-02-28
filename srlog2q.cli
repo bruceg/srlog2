@@ -1,7 +1,17 @@
 Min: 1
 Max: 1
 Usage: SERVER
+Description: Query a srlog2d receiver's status.
 
 [options]
 -p --port UINTEGER opt_port = 11014
 The UDP port to communicate on. = 11014
+
+-t --timeout UINTEGER opt_timeout = 1000
+How long to wait for responses, in milliseconds = 1000
+
+[description]
+
+@command{srlog2q} sends a query packet to a @command{srlog2d} receiver
+and prints the response it receives verbatim.  The receiver sends
+statistics on how many packets, bytes, and errors it has handled.
