@@ -4,3 +4,11 @@ c:::755::srlog2-logger
 c:::755::srlog2-keygen
 c:::755::srlog2d
 c:::755::srlog2q
+
+>man
+d:::755:man1
+c:::644:man1:srlog2.1
+c:::644:man1:srlog2-logger.1
+c:::644:man1:srlog2-keygen.1
+c:::644:man1:srlog2d.1
+c:::644:man1:srlog2q.1
