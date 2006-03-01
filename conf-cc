@@ -1,0 +1,3 @@
+gcc -W -Wall -Wshadow -O -g -I/usr/local/include
+
+This will be used to compile .c files.
