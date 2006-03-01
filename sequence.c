@@ -49,11 +49,7 @@ void open_read_seq(void)
     close(seq_fd);
   }
   if (seq_send > seq_next) seq_next = seq_send;
-  if ((seq_fd = open("sequence.tmp", O_WRONLY|O_CREAT|O_EXCL, 0444)) == -1)
+  if ((seq_fd = open("sequence", O_WRONLY|O_CREAT, 0666)) == -1)
     die1sys(1, "Could not create new sequence file");
   save_seq();
-  if (rename("sequence.tmp", "sequence") == -1) {
-    unlink("sequence.tmp");
-    die1sys(1, "Could not rename new sequence file");
-  }
 }
