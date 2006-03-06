@@ -3,8 +3,8 @@
 
 #include <tomcrypt.h>
 
-#define KEYHASH_NAME "SHA512"
-#define ENCRYPTOR_NAME "AES256-CBC-ESSIV"
+#define KEYHASH_NAME "SHA256"
+#define ENCRYPTOR_NAME "AES128-CBC-ESSIV"
 
 struct key;
 

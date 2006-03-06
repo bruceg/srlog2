@@ -1,5 +1,5 @@
 /* $Id$ */
-#include <crypto/sha512.h>
+#include <crypto/sha256.h>
 #include <uint64.h>
 #include <string.h>
 
@@ -8,7 +8,7 @@
 #include "encr.h"
 #include "key.h"
 
-#define KEYSIZE 64
+#define KEYSIZE 32
 typedef uint8 keydata[KEYSIZE];
 static int aes = -1;
 
@@ -20,10 +20,10 @@ void encr_start(void)
 
 static void make_key(const char* data, unsigned datalen, keydata key)
 {
-  struct SHA512_ctx ctx;
-  SHA512_init(&ctx);
-  SHA512_update(&ctx, data, datalen);
-  SHA512_final(&ctx, key);
+  SHA256_ctx ctx;
+  SHA256_init(&ctx);
+  SHA256_update(&ctx, data, datalen);
+  SHA256_final(&ctx, key);
 }
 
 void encr_init(ENCR_CTX* context, struct key* key)
@@ -31,9 +31,9 @@ void encr_init(ENCR_CTX* context, struct key* key)
   uint8 IV[ENCR_BLOCK_SIZE];	/* The value is not actually used here. */
   keydata dkey;
   make_key(key->data, key->cb->size, dkey);
-  cbc_start(aes, IV, dkey, 32, 0, &context->encr);
+  cbc_start(aes, IV, dkey, 16, 0, &context->encr);
   make_key(dkey, sizeof dkey, dkey);
-  ecb_start(aes, dkey, 32, 0, &context->ivencr);
+  ecb_start(aes, dkey, 16, 0, &context->ivencr);
 }
 
 static void setiv(ENCR_CTX* context, uint64 sequence)

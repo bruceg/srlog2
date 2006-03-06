@@ -158,9 +158,9 @@ unencoded data.  No trailing NUL byte is used (externally).
 @item ?? @tab 1+N @tab String @tab Key exchange list (@samp{nistp224}
 or @samp{curve25519\000nistp224})
 
-@item ?? @tab 1+N @tab String @tab Key hash list (@samp{SHA512})
+@item ?? @tab 1+N @tab String @tab Key hash list (@samp{SHA256})
 
-@item ?? @tab 1+N @tab String @tab Encryptor list (@samp{AES-CBC-ESSID})
+@item ?? @tab 1+N @tab String @tab Encryptor list (@samp{AES128-CBC-ESSIV})
 
 @item ?? @tab 1+N @tab String @tab Compressor list (@samp{null})
 
@@ -377,10 +377,10 @@ as follows:
 @section Encryption Parameters
 
 The current system is hard coded to use HMAC-MD5 for authentication
-and AES-CBC as the cipher with a 256-bit key for encryption and ESSIV,
-with the first 32 bytes of the SHA512 hash of the nistp224 shared
+and AES-CBC as the cipher with a 128-bit key for encryption and ESSIV,
+with the first 32 bytes of the SHA256 hash of the nistp224 shared
 secret used for the key.  Additionally, the first 32 bytes of the
-SHA512 hash of the previous SHA512 hash is used as the ESSIV
+SHA256 hash of the previous SHA256 hash is used as the ESSIV
 encryptor.  The system may use either nistp224 or curve25519 for key
 exchange, depending on if curve25519 keys and software support is
 present on both ends.
