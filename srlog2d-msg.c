@@ -134,7 +134,7 @@ void handle_msg(void)
       }
       last_ts = ts;
     }
-    if (seq == s->data.last_seq) {
+    if (s->data.last_seq != 0 && seq == s->data.last_seq) {
       warn_connection3(c, "MSG has retransmitted lines: ", seq, count);
       ++msg_retransmits;
     }

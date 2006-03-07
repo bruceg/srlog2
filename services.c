@@ -73,14 +73,6 @@ const char* format_service(const struct services_entry* c)
   return tmp.s;
 }
 
-struct services_entry* new_service(const struct service_key* key)
-{
-  struct service_data data;
-  memset(&data, 0, sizeof data);
-  data.last_seq = ~0ULL;
-  return services_add(&services, key, &data);
-}
-
 /* ------------------------------------------------------------------------- */
 struct services_entry* find_service(const char* sender, const char* service)
 {
@@ -94,9 +86,11 @@ struct services_entry* find_service(const char* sender, const char* service)
     /* If a corresponding sender entry can be found,
      * automatically add a service entry. */
     if ((snd = senders_get(&senders, &key.sender)) != 0) {
-      wrap_alloc(svc = new_service(&key));
+      struct service_data data;
+      memset(&data, 0, sizeof data);
+      data.keys = snd->data.keys;
+      wrap_alloc(svc = services_add(&services, &key, &data));
       msgf("{Automatically added service: }s{/}s", sender, service);
-      svc->data.keys = snd->data.keys;
     }
   }
   return svc;
@@ -107,13 +101,15 @@ static struct services_entry* add_service(const char* sender,
 					  const char* service)
 {
   struct service_key a;
+  struct service_data d;
   struct services_entry* s;
   
   memset(&a, 0, sizeof a);
+  memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
   wrap_str(str_copys(&a.service, service));
   if ((s = services_get(&services, &a)) == 0) {
-    wrap_alloc(s = new_service(&a));
+    wrap_alloc(s = services_add(&services, &a, &d));
     msgf("{Added service: }s{/}s", sender, service);
   }
   return s;
