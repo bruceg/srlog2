@@ -41,8 +41,8 @@ static int service_cmp(struct service_key const* a,
 static int service_keycopy(struct service_key* a,
 			   struct service_key const* b)
 {
-  *a = *b;
-  return 1;
+  return str_copy(&a->sender, &b->sender)
+    && str_copy(&a->service, &b->service);
 }
 
 static int service_datacopy(struct service_data* a,
