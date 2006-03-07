@@ -121,8 +121,14 @@ unsigned pkt_get_u8(const str* s, unsigned o, uint64* u)
 
 unsigned pkt_get_ts(const str* s, unsigned o, struct timestamp* ts)
 {
-  if ((o = pkt_get_u4(s, o, &ts->sec)) == 0) return 0;
-  return pkt_get_u4(s, o, &ts->nsec);
+  /* The long values in struct timestamp may be 64 bits wide on 64-bit
+   * systems, so using a temporary is necessary for portability. */
+  uint32 u;
+  if ((o = pkt_get_u4(s, o, &u)) == 0) return 0;
+  ts->sec = u;
+  if ((o = pkt_get_u4(s, o, &u)) == 0) return 0;
+  ts->nsec = u;
+  return 1;
 }
 
 unsigned pkt_get_b(const str* s, unsigned o, str* l, unsigned len)
