@@ -25,7 +25,7 @@ struct sender_key
 
 struct sender_data
 {
-  time_t rotate_at;
+  unsigned long rotate_at;
   int fd;
 };
 

@@ -31,8 +31,8 @@
 
 struct timestamp
 {
-  long sec;
-  long nsec;
+  unsigned long sec;
+  unsigned long nsec;
 };
 
 struct line
