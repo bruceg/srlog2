@@ -37,14 +37,15 @@ is accomplished by a seperate logging program.
 The format of the lines written by @command{srlog2d} is as follows:
 
 @verbatim
-@40000000XXXXXXXXYYYYYYYY SENDER SERVICE LINE
+:SENDER:SERVICE
+@40000000XXXXXXXXYYYYYYYY LINE
 @end verbatim
 
-The leading string is a tai64n timestamp, which may be passed through
-@command{tai64nlocal} to produce a local time string.  The @samp{SENDER}
-and @samp{SERVER} words are the names used to identify the sender and
-service respectively, and the @samp{LINE} is the actual text produced on
-the sender verbatim.
+Lines starting with @samp{:} identify the sender and service from which
+the following lines originate.  The remainder of the lines start with a
+tai64n timestamp, which may be passed through @command{tai64nlocal} to
+produce a local time string followed by @samp{LINE} which is the actual
+text produced on the sender verbatim.
 
 If the @command{LOGGER} option is present, @command{srlog2d} executes
 the given command and pipes all log messages to it.  Otherwise,

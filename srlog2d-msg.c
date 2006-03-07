@@ -33,16 +33,26 @@ static int str_catuhex(str* s, uint32 u)
   return str_catb(s, hex, 8);
 }
 
-static void write_line(struct services_entry* s,
-		       const struct timestamp* ts, const str* l)
+static void write_header(const struct services_entry* s)
+{
+  static const struct services_entry* prev = 0;
+  if (s != prev) {
+    wrap_str(str_copys(&tmp, ":"));
+    wrap_str(str_cat(&tmp, &s->key.sender));
+    wrap_str(str_catc(&tmp, ':'));
+    wrap_str(str_cat(&tmp, &s->key.service));
+    wrap_str(str_catc(&tmp, '\n'));
+    if (write(logger, tmp.s, tmp.len) != (long)tmp.len)
+      die1sys(1, "Write to logger failed");
+    prev = s;
+  }
+}
+
+static void write_line(const struct timestamp* ts, const str* l)
 {
   wrap_str(str_copys(&tmp, "@40000000"));
   wrap_str(str_catuhex(&tmp, ts->sec));
   wrap_str(str_catuhex(&tmp, ts->nsec));
-  wrap_str(str_catc(&tmp, ' '));
-  wrap_str(str_cat(&tmp, &s->key.sender));
-  wrap_str(str_catc(&tmp, ' '));
-  wrap_str(str_cat(&tmp, &s->key.service));
   wrap_str(str_catc(&tmp, ' '));
   wrap_str(str_cat(&tmp, l));
   wrap_str(str_catc(&tmp, '\n'));
@@ -130,12 +140,13 @@ void handle_msg(void)
     }
     /* Pass 2 -- write out the lines */
     s->data.last_seq = seq;
+    write_header(s);
     for (offset = 8+8+1, i = 0; i < count; ++i, ++seq) {
       offset = pkt_get_ts(&packet, offset, &ts);
       offset = pkt_get_s2(&packet, offset, &line);
       /* Only write out lines we haven't already acknowledged yet. */
       if (seq >= s->data.next_seq)
-	write_line(s, &ts, &line);
+	write_line(&ts, &line);
     }
     
     s->data.next_seq = seq;

@@ -185,29 +185,20 @@ static void test_reopen(struct senders_entry* s,
   }
 }
 
-static struct senders_entry* parse_line(str* line)
+static struct senders_entry* parse_sender(str* line)
 {
   static struct sender_key key;
+  struct senders_entry* s = 0;
   int i;
-  int j;
-  int k;
-  struct timestamp ts;
-  struct senders_entry* s;
-
-  s = 0;
-  if ((i = parse_timestamp(line, &ts)) > 0
-      && line->s[i] == ' '
-      && (j = str_findnext(line, ' ', ++i)) > 0
-      && (k = str_findnext(line, ' ', ++j)) > 0) {
-    ++k;
-    wrap_str(str_copyb(&key.sender, line->s + i, j - i - 1));
-    wrap_str(str_copyb(&key.service, line->s + j, k - j - 1));
+  if (line->s[0] == ':'
+      && (i = str_findnext(line, ':', 1)) > 1) {
+    str_rstrip(line);
+    wrap_str(str_copyb(&key.sender, line->s + 1, i - 1));
+    wrap_str(str_copyb(&key.service, line->s + i + 1, line->len - i - 1));
     if (key.sender.s[0] != '.'
 	&& str_findfirst(&key.sender, '/') < 0
 	&& key.service.s[0] != '.'
 	&& str_findfirst(&key.service, '/') < 0) {
-      str_spliceb(line, i, k - i, 0, 0);
-
       if ((s = senders_get(&senders, &key)) == 0) {
 	struct sender_data data;
 	memset(&data, 0, sizeof data);
@@ -223,7 +214,6 @@ static struct senders_entry* parse_line(str* line)
 	    diefsys(1, "{Could not create directory '}s{'}", path.s);
 	}
       }
-      test_reopen(s, &ts);
     }
   }
   return s;
@@ -233,13 +223,19 @@ int cli_main(int argc, char* argv[])
 {
   str line = {0,0,0};
   struct senders_entry* s;
+  struct senders_entry* sender = 0;
+  struct timestamp ts;
   
   senders_init(&senders);
 
   while (ibuf_getstr(&inbuf, &line, LF)) {
-    if ((s = parse_line(&line)) != 0
-	&& s->data.fd > 0)
-      write(s->data.fd, line.s, line.len);
+    if ((s = parse_sender(&line)) != 0)
+      sender = s;
+    else if (sender != 0
+	     && parse_timestamp(&line, &ts) > 0) {
+      test_reopen(sender, &ts);
+      write(sender->data.fd, line.s, line.len);
+    }
   }
 
   return 0;

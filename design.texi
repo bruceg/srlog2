@@ -116,7 +116,7 @@ packages.
 @chapter Design
 
 @c ----------------------------------------------------------------------------
-@section Protocol
+@section Network Protocol
 
 @subsection Network Transport
 
@@ -384,6 +384,22 @@ SHA256 hash of the previous SHA256 hash is used as the ESSIV
 encryptor.  The system may use either nistp224 or curve25519 for key
 exchange, depending on if curve25519 keys and software support is
 present on both ends.
+
+@c ----------------------------------------------------------------------------
+@section Logging Format
+
+The logging format (the format of the lines written by
+@command{srlog2d} to be read by a log processor) reflects the fact
+that multiple lines will frequently be output for the same
+sender/service combination.  In this way, it encapsulates the manner
+in which log data arrives -- each packet contains one or more log
+lines (usually more).
+
+So, instead of having information about the service on each line of
+output, there is a seperate line type for identifying the service.
+This actually simplifies the sender, as the actual log lines can be
+passed by the logger into the output file or pipe without
+modification.
 
 @c ****************************************************************************
 @node Detailed Changes, Miscellaneous, Design, Top
