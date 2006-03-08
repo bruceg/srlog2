@@ -1,4 +1,5 @@
-* Add man page documentation to CLI files *
+- Add control block logic for both the authenticator, key hash,
+  encryptor, and compressor choices.
 
 - srlog2:
 

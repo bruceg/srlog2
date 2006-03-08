@@ -4,7 +4,7 @@ Bruce Guenter <bruce@untroubled.org>
 Version @VERSION@
 @TODAY@
 
-This is srlog, a secure remote log transmission system.
+This is srlog2, a secure remote log transmission system.
 
 A mailing list has been set up to discuss this and other packages.
 To subscribe, send an email to:
@@ -19,6 +19,7 @@ Requirements:
 
 - bglibs version 1.041 or later
 - libtomcrypt version 1.03 or later
+- nistp224 library version 0.75 or later
 
 Installation:
 
@@ -29,15 +30,53 @@ Installation:
 
 Configuration:
 
--
+On the senders:
+- Create host keys in /etc/srlog2:
+	srlog2-keygen -t nistp224 /etc/srlog2
+	srlog2-keygen -t curve25519 /etc/srlog2
+- Copy all the public keys generated for the receiver into
+  /etc/srlog2/servers/host.name.of.receiver.net
+
+On the receiver:
+- Generate local host keys:
+	srlog2-keygen -t nistp224 .
+	srlog2-keygen -t curve25519 .
+	cat nistp224 curve25519 >secrets
+- Copy one or both of the public keys generated above into "senders" as:
+	short-name:copy-of-/etc/srlog2/nistp224.pub
+	short-name:copy-of-/etc/srlog2/curve25519.pub
+- OR copy one or both of the public keys generated above into
+  "services" as:
+  	short-name:service:copy-of-/etc/srlog2/nistp224.pub
+  	short-name:service:copy-of-/etc/srlog2/curve25519.pub
+
+(Note: curve25519 only works on 32-bit x86 systems at the moment)
 
 Operation:
 
--
+- For each service, instead of running "multilog t" as the log manager,
+  run something like "srlog2 service host.name.of.receiver.net"
+- srlog2 understands multilog's filter syntax (+pattern -pattern etc).
+- On the receiver, add a srlog2d service as follows:
+	#!/bin/bash
+	cd /where/you/put/the/config/files
+	exec srlog2d srlog2-logger
+  Make sure you either use the --mkdirs option to srlog2-logger or
+  create all the directories you want to write logs into in advance.
 
 Security Notes:
 
--
+- The srlog2 program creates two files in the current directory,
+  "buffer" and "sequence".  If you wish to run srlog2 as non-root, you
+  will need to precreate those files and make sure srlog2 has permission
+  to write to them.
+- The srlog2 program needs read access to the secret keys in
+  /etc/srlog2, but nothing else should be allowed to read them.
+- Similarly, the srlog2d program needs read access to the secret keys in
+  its "secrets" file, but nothing else should be allowed to read them.
+- None of the srlog2 receiver components (srlog2d or srlog2-logger) need
+  to run as root.
+- srlog2d neither creates nor writes any files.
 
 This package is Copyright(C) 2006 Bruce Guenter, and may be copied
 according to the GNU GENERAL PUBLIC LICENSE (GPL) Version 2 or a later
