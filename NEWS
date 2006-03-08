@@ -1,7 +1,1 @@
 -------------------------------------------------------------------------------
-Changes in version 0.70
-
-srlog2 is a complete overhaul of the previous package.  Some of the
-internals remained relatively unchanged (like the send buffer handling),
-but the protocol details have all been rewritten.
--------------------------------------------------------------------------------
