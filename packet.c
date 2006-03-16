@@ -128,7 +128,7 @@ unsigned pkt_get_ts(const str* s, unsigned o, struct timestamp* ts)
   ts->sec = u;
   if ((o = pkt_get_u4(s, o, &u)) == 0) return 0;
   ts->nsec = u;
-  return 1;
+  return o;
 }
 
 unsigned pkt_get_b(const str* s, unsigned o, str* l, unsigned len)

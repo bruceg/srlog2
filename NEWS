@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------
 Changes in version 0.71
 
+- Fixed a typo in the packet timestamp handling that completely broke
+  the previous release.
 
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
