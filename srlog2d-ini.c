@@ -97,7 +97,10 @@ void handle_ini(void)
   }
   last_ini = now;
 
-  if ((key = keylist_get(&s->data.keys, cb)) == 0) {
+  if ((key = keylist_get(&s->data.keys, cb)) == 0
+      && s->data.sender != 0)
+    key = keylist_get(&s->data.sender->data.keys, cb);
+  if (key == 0) {
     msgpkt3("Error: Given key type is missing");
     ++ini_missing_key;
     return;

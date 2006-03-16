@@ -93,6 +93,7 @@ struct service_data
   unsigned long last_count;
   struct timestamp last_timestamp;
   struct connections_entry* connection;
+  struct senders_entry* sender;
 };
 
 GHASH_DECL(services,struct service_key,struct service_data);

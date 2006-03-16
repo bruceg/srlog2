@@ -89,7 +89,7 @@ struct services_entry* find_service(const char* sender, const char* service)
     if ((snd = senders_get(&senders, &key.sender)) != 0) {
       struct service_data data;
       memset(&data, 0, sizeof data);
-      data.keys = snd->data.keys;
+      data.sender = snd;
       wrap_alloc(svc = services_add(&services, &key, &data));
       msgf("{Automatically added service: }s{/}s", sender, service);
     }
