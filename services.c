@@ -81,6 +81,7 @@ struct services_entry* find_service(const char* sender, const char* service)
   struct senders_entry* snd;
 
   wrap_str(str_copys(&key.sender, sender));
+  str_lower(&key.sender);
   wrap_str(str_copys(&key.service, service));
   if ((svc = services_get(&services, &key)) == 0) {
     /* If a corresponding sender entry can be found,
@@ -107,6 +108,7 @@ static struct services_entry* add_service(const char* sender,
   memset(&a, 0, sizeof a);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&a.sender, sender));
+  str_lower(&a.sender);
   wrap_str(str_copys(&a.service, service));
   if ((s = services_get(&services, &a)) == 0) {
     wrap_alloc(s = services_add(&services, &a, &d));

@@ -47,6 +47,7 @@ static struct senders_entry* add_sender(const char* sender)
   memset(&k, 0, sizeof k);
   memset(&d, 0, sizeof d);
   wrap_str(str_copys(&k, sender));
+  str_lower(&k);
   if ((s = senders_get(&senders, &k)) == 0) {
     wrap_alloc(s = senders_add(&senders, &k, &d));
     msgf("{Added sender: }s", sender);

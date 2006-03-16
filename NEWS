@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------
 Changes in version 0.71
 
+- Lowercase all sender names before use in srlog2d.
+
 - Fixed a typo in the packet timestamp handling that completely broke
   the previous release.
 
