@@ -127,11 +127,8 @@ void handle_msg(void)
 	error_connection(c, "MSG has invalid format");
 	return;
       }
-      if (tslt(&ts, &last_ts) &&
-	  (i > 0 || seq == s->data.next_seq)) {
-	error_connection(c, "MSG has timestamp going backwards");
-	return;
-      }
+      if (tslt(&ts, &last_ts))
+	warn_connection(c, "MSG has timestamp going backwards");
       last_ts = ts;
     }
     if (s->data.last_seq != 0 && seq == s->data.last_seq) {
