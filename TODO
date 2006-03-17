@@ -1,3 +1,5 @@
+* Add self tests!
+
 - Add control block logic for both the authenticator, key hash,
   encryptor, and compressor choices.
 
@@ -13,21 +15,15 @@
 
   - Add more counters for error packets
 
-  - Don't preload/reload senders:
-
-    - Break pointer from sender to connection.
-
-    - Periodically garbage collect inactive connections.
-
 - srlog2-logger:
 
   - Add an option for formatting the directory name(s)?
 
   - Add options for size/count-based rotation (ala multilog)
 
-- srlog2-logsplit
+- New program: srlog2-logsplit
 
-  - New program, similar to -logger, but pipes logs into one process per
-    incoming stream
+  - Similar to -logger, but pipes logs into one process per incoming
+    stream
 
 - Merge common parts of hash tables in services.c and srlog2-logger.c
