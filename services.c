@@ -91,7 +91,8 @@ struct services_entry* find_service(const char* sender, const char* service)
       memset(&data, 0, sizeof data);
       data.sender = snd;
       wrap_alloc(svc = services_add(&services, &key, &data));
-      msgf("{Automatically added service: }s{/}s", sender, service);
+      msgf("{Automatically added service: }s{/}s",
+	   key.sender.s, key.service.s);
     }
   }
   return svc;
