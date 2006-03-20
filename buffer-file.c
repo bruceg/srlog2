@@ -89,7 +89,7 @@ static const struct line* buffer_next(void)
 static const struct line* last_line = 0;
 
 /** Look at the next line in the buffer without advancing. */
-const struct line* buffer_peek(void)
+const struct line* buffer_file_peek(void)
 {
   ENTER();
   if (last_line == 0)
@@ -98,7 +98,7 @@ const struct line* buffer_peek(void)
 }
 
 /** Read and advance past the next line in the buffer. */
-const struct line* buffer_read(void)
+const struct line* buffer_file_read(void)
 {
   const struct line* line;
   ENTER();
@@ -108,18 +108,25 @@ const struct line* buffer_read(void)
   return line;
 }
 
+static void buffer_file_sync(void)
+{
+  if (writebuf.io.fd != 0)
+    fsync(writebuf.io.fd);
+}
+
 /** Rewind the buffer to the last mark point. */
-void buffer_rewind(void)
+void buffer_file_rewind(void)
 {
   ENTER();
   if (!ibuf_rewind(&readbuf))
     die1sys(111, "Could not rewind buffer");
   seq_read = seq_send;
   last_line = 0;
+  buffer_file_sync();
 }
 
 /** "Remove" all read lines from the buffer and advance the mark point. */
-void buffer_pop(void)
+void buffer_file_pop(void)
 {
   ENTER();
   seq_send = seq_read;
@@ -129,9 +136,10 @@ void buffer_pop(void)
 }
 
 /** Add a line to the end of the buffer. */
-void buffer_push(const struct line* line)
+void buffer_file_push(const struct line* line)
 {
   ENTER();
+  save_seq();
   if (writebuf.io.fd == 0) {
     DEBUG1("Opening file");
     if (!obuf_open(&writebuf, buffer_filename,
@@ -149,18 +157,12 @@ void buffer_push(const struct line* line)
   obuf_flush(&writebuf);
 }
 
-void buffer_init(void)
+void buffer_file_init(void)
 {
   const char* env;
   if ((env = getenv("CLEAN_BYTES")) != 0)
     clean_bytes = strtoul(env, 0, 10);
   open_read_seq();
   seq_read = seq_send;
-}
-
-void buffer_sync(void)
-{
-  ENTER();
-  if (writebuf.io.fd != 0)
-    fsync(writebuf.io.fd);
+  atexit(buffer_file_sync);
 }

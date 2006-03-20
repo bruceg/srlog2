@@ -51,6 +51,12 @@ static int exitasap;
 
 static str packet;
 
+static const struct line* (*buffer_peek)(void);
+static const struct line* (*buffer_read)(void);
+static void (*buffer_pop)(void);
+static void (*buffer_push)(const struct line*);
+static void (*buffer_rewind)(void);
+
 /* Key/Encryption Handling ------------------------------------------------- */
 static struct keylist shared_secrets;
 static struct keylist server_publics;
@@ -91,7 +97,6 @@ static int read_line(void)
   }
   gettimestamp(&last_line.timestamp);
   last_line.seq = seq_next++;
-  save_seq();
   --last_line.line.len;		/* Strip off the trailing LF */
   buffer_push(&last_line);
   return 1;
@@ -392,7 +397,6 @@ static int do_connecting(void)
   struct key tmpkey;
 
   buffer_rewind();
-  buffer_sync();
   brandom_init();
   key_generate(&csession_secret, &csession_public, keyex);
   make_ini(&csession_public, buffer_peek());
@@ -580,8 +584,21 @@ int cli_main(int argc, char* argv[])
   getenvu("RETRANSMITS", &retransmits);
   getenvu("READWAIT", &readwait);
 
-  buffer_init();
-  atexit(buffer_sync);
+  if (getenv("NOFILE") == 0) {
+    buffer_file_init();
+    buffer_peek = buffer_file_peek;
+    buffer_read = buffer_file_read;
+    buffer_pop = buffer_file_pop;
+    buffer_push = buffer_file_push;
+    buffer_rewind = buffer_file_rewind;
+  }
+  else {
+    buffer_peek = buffer_nofile_peek;
+    buffer_read = buffer_nofile_read;
+    buffer_pop = buffer_nofile_pop;
+    buffer_push = buffer_nofile_push;
+    buffer_rewind = buffer_nofile_rewind;
+  }
 
   sig_all_catch(sigfn);
   exitasap = 0;

@@ -1,4 +1,5 @@
-buffer.o
+buffer-file.o
+buffer-nofile.o
 sequence.o
 srlog2.a
 curve25519.a

@@ -44,6 +44,12 @@ length, the third three times, and so on.  Defaults to 1000ms.
 The time to wait (in milliseconds) between sending connection
 initialization requests.  Defaults to 5000ms.
 
+@item NOFILES
+
+Do not create or write logs to files before sending them.  With this
+option set, there is no way for srlog2 to recover logs that are lost in
+transit when it is interrupted.
+
 @item PORT
 
 The UDP port number on which to communicate.  Defaults to 11014.

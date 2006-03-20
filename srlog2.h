@@ -79,15 +79,20 @@ extern uint64 seq_send;		/* Next line to send has this number */
 extern void save_seq(void);
 extern void open_read_seq(void);
 
-/* buffer.c */
-extern int buffer_inuse;
-extern void buffer_init(void);
-extern const struct line* buffer_peek(void);
-extern const struct line* buffer_read(void);
-extern void buffer_pop(void);
-extern void buffer_push(const struct line*);
-extern void buffer_sync(void);
-extern void buffer_rewind(void);
+/* buffer-file.c */
+extern void buffer_file_init(void);
+extern const struct line* buffer_file_peek(void);
+extern const struct line* buffer_file_read(void);
+extern void buffer_file_pop(void);
+extern void buffer_file_push(const struct line*);
+extern void buffer_file_rewind(void);
+
+/* buffer-nofile.c */
+extern const struct line* buffer_nofile_peek(void);
+extern const struct line* buffer_nofile_read(void);
+extern void buffer_nofile_pop(void);
+extern void buffer_nofile_push(const struct line*);
+extern void buffer_nofile_rewind(void);
 
 /* addrname.c */
 GHASH_DECL(addrname,ipv4addr,const char*);
