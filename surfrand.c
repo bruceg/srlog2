@@ -102,6 +102,7 @@ int surfrand_initfile(struct surfrand* s, const char* path)
     if (rd == 0)
       break;
   }
+  close(fd);
   memset(s->counter, 0, sizeof s->counter);
   generate(s);
   return 0;
