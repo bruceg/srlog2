@@ -397,7 +397,6 @@ static int do_connecting(void)
   struct key tmpkey;
 
   buffer_rewind();
-  brandom_init();
   key_generate(&csession_secret, &csession_public, keyex);
   make_ini(&csession_public, buffer_peek());
   keylist_exchange_list_key(&tmpkey, &server_publics, &csession_secret);
@@ -566,6 +565,7 @@ int cli_main(int argc, char* argv[])
   if (!resolve_ipv4name(server_name, &ip))
     die3(1, "Could not resolve '", server_name, "'");
 
+  brandom_init();
   load_keys(server_name);
 
   if ((env = getenv("PORT")) != 0)

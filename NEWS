@@ -5,6 +5,8 @@ Changes in version 0.75
 
 - Fixed a file descriptor leak in the random initialization code.
 
+- Be a little less paranoid about generation of random data in the client.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------
