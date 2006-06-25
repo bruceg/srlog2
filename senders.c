@@ -18,8 +18,6 @@
 
 struct ghash senders = {0,0,0,0,0,0,0,0,0,0,0};
 
-static str tmp;
-
 static uint32 sender_hash(str const* key)
 {
   return crc32_block(key->s, key->len);

@@ -18,8 +18,6 @@
 
 struct ghash services = {0,0,0,0,0,0,0,0,0,0,0};
 
-static str tmp;
-
 static uint32 service_hash(struct service_key const* key)
 {
   uint32 crc = CRC32INIT;
