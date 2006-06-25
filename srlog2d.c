@@ -192,8 +192,10 @@ int cli_main(int argc, char* argv[])
 	handle_srq();
       else if (type == PRQ1)
 	handle_prq();
-      else
+      else {
 	msgpkt2("Warning: Unknown packet type");
+	msgf("{type=}08x{ len=}d", type, packet.len);
+      }
     }
     packets_received++;
     bytes_received += i;
