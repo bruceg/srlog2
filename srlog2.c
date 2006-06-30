@@ -50,6 +50,7 @@ static unsigned char nonce[8];
 static int exitasap;
 
 static str packet;
+static str rpacket;
 
 static const struct line* (*buffer_peek)(void);
 static const struct line* (*buffer_read)(void);
@@ -276,18 +277,18 @@ static int receive_packet(uint32 type, int minlength, int maxlength)
 {
   int i;
   uint32 t;
-  if ((i = socket_recv4(sock, packet.s, packet.size, &ip,&port)) < 0)
+  if ((i = socket_recv4(sock, rpacket.s, rpacket.size, &ip,&port)) < 0)
     REJECT1("Socket receive failed");
   if (i < minlength)
     REJECT1("Received packet is too short");
   if (maxlength > 0
       && i > maxlength)
     REJECT1("Received packet is too long");
-  packet.len = i;
-  pkt_get_u4(&packet, 0, &t);
+  rpacket.len = i;
+  pkt_get_u4(&rpacket, 0, &t);
   if (t != SRL2)
     REJECT1("Received packet format was not SRL2");
-  pkt_get_u4(&packet, 4, &t);
+  pkt_get_u4(&rpacket, 4, &t);
   if (t != type)
     REJECT1("Received incorrect packet type");
   return 1;
@@ -300,19 +301,19 @@ static int receive_prf(void)
 
   if (!receive_packet(PRF1, 8+8+2+2+2+2+2, 8+8+256+256+256+256+256))
     return 0;
-  if ((offset = pkt_get_b(&packet, 8, &tmpstr, sizeof nonce)) == 0
+  if ((offset = pkt_get_b(&rpacket, 8, &tmpstr, sizeof nonce)) == 0
       || memcmp(tmpstr.s, nonce, sizeof nonce) != 0
-      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&rpacket, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, AUTHENTICATOR_NAME) != 0
-      || (offset = pkt_get_s1(&packet, offset, &keyex_name)) == 0
+      || (offset = pkt_get_s1(&rpacket, offset, &keyex_name)) == 0
       || (keyex = key_cb_lookup(keyex_name.s)) == 0
-      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&rpacket, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, KEYHASH_NAME) != 0
-      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&rpacket, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, ENCRYPTOR_NAME) != 0
-      || (offset = pkt_get_s1(&packet, offset, &tmpstr)) == 0
+      || (offset = pkt_get_s1(&rpacket, offset, &tmpstr)) == 0
       || strcasecmp(tmpstr.s, "null") != 0
-      || offset != packet.len)
+      || offset != rpacket.len)
     REJECT1("Received PRF1 had invalid format or parameters");
 
   if ((keyex = key_cb_lookup(keyex_name.s)) == 0)
@@ -330,13 +331,13 @@ static int receive_ack(void)
   uint64 seq;
   if (!receive_packet(ACK1, 8+8+AUTH_LENGTH, 8+8+AUTH_LENGTH))
     return 0;
-  pkt_get_u8(&packet, 8, &seq);
+  pkt_get_u8(&rpacket, 8, &seq);
   if (seq != seq_last) {
     debugf(DEBUG_PACKET, "{Received wrong ACK sequence #}llu{ sent #}llu",
 	   seq, seq_last);
     return 0;
   }
-  if (!pkt_validate(&packet, &msg_authenticator)) {
+  if (!pkt_validate(&rpacket, &msg_authenticator)) {
     debug1(DEBUG_PACKET, "Received ACK failed validation");
     return 0;
   }
@@ -354,11 +355,11 @@ static int receive_cid(struct key* csession_secret)
 		      8 + keyex->size + AUTH_LENGTH,
 		      8 + keyex->size + AUTH_LENGTH))
     return 0;
-  if (!pkt_validate(&packet, &cid_authenticator)) {
+  if (!pkt_validate(&rpacket, &cid_authenticator)) {
     debug1(DEBUG_PACKET, "Received CID failed validation");
     return 0;
   }
-  pkt_get_key(&packet, 8, &ssession_public, keyex);
+  pkt_get_key(&rpacket, 8, &ssession_public, keyex);
   key_exchange(&tmpkey, &ssession_public, csession_secret);
   auth_start(&msg_authenticator, &tmpkey);
   encr_init(&encryptor, &tmpkey);
@@ -577,7 +578,8 @@ int cli_main(int argc, char* argv[])
     die1sys(1, "Could not create UDP socket");
   if (!socket_connect4(sock, &ip, port))
     die1sys(1, "Could not bind socket");
-  if (!str_ready(&packet, 65535))
+  if (!str_ready(&packet, 65535)
+      || !str_ready(&rpacket, 4+4+8+256*5))
     die1(1, "Out of memory");
 
   getenvu("ACK_TIMEOUT", &ack_timeout);
