@@ -196,7 +196,8 @@ static void end_msg(void)
   brandom_fill(pad, sizeof pad);
   pkt_add_b(&packet, pad, sizeof pad);
   pkt_add_u4(&packet, crc32_block(packet.s+17, packet.len-17));
-  encr_blocks(&encryptor, packet.s+17, packet.len-17, seq_first);
+  encr_blocks(&encryptor,
+	      (unsigned char*)packet.s+17, packet.len-17, seq_first);
   pkt_add_cc(&packet, &msg_authenticator);
 }
 

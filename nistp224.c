@@ -6,7 +6,9 @@ static int exchange(struct key* shared,
 		    const struct key* public,
 		    const struct key* secret)
 {
-  if (!nistp224(shared->data, (char*)public->data, (char*)secret->data))
+  if (!nistp224(shared->data,
+		(unsigned char*)public->data,
+		(unsigned char*)secret->data))
     return 0;
   shared->cb = &nistp224_cb;
   return 1;

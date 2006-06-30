@@ -53,7 +53,7 @@ extern int pkt_add_ts(str* s, const struct timestamp*);
 extern int pkt_add_s1(str* s, const str* l);
 extern int pkt_add_s1c(str* s, const char* l);
 extern int pkt_add_s2(str* s, const str* l);
-extern int pkt_add_b(str* s, const char* data, unsigned len);
+extern int pkt_add_b(str* s, const unsigned char* data, unsigned len);
 extern int pkt_add_key(str* s, const struct key* k);
 extern int pkt_add_cc(str* s, const AUTH_CTX* ctx);
 extern unsigned pkt_get_u1(const str* s, unsigned o, unsigned* u);
@@ -70,7 +70,7 @@ extern int pkt_validate(str* s, const AUTH_CTX* ctx);
 
 /* random.c */
 extern void brandom_init(void);
-extern void brandom_fill(char* buf, unsigned len);
+extern void brandom_fill(unsigned char* buf, unsigned len);
 
 /* sequence.c */
 extern uint64 seq_next;		/* Next line is assigned this number */

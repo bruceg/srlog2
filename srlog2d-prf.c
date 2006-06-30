@@ -19,7 +19,7 @@ static int contains(const str* s, const char* key)
   return 0;
 }
 
-static void send_prf(const char nonce[8])
+static void send_prf(const unsigned char nonce[8])
 {
   pkt_start(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
@@ -47,5 +47,5 @@ void handle_prq(void)
       || (offset = pkt_get_s1(&packet, offset, &compr_name)) == 0)
     msgpkt2("Warning: PRQ packet is missing elements");
   else
-    send_prf(line.s);
+    send_prf((unsigned char*)line.s);
 }

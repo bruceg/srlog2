@@ -35,7 +35,7 @@ int cli_main(int argc, char* argv[])
   iopoll_fd io;
   uint32 code;
   long len;
-  char nonce[8];
+  unsigned char nonce[8];
   str noncecopy = {0,0,0};
 
   if (!resolve_ipv4name(argv[0], &ip))

@@ -17,7 +17,7 @@ void brandom_init(void)
     die1sys(1, "Error initializing random generator");
 }
 
-void brandom_fill(char* buf, unsigned len)
+void brandom_fill(unsigned char* buf, unsigned len)
 {
   surfrand_fill(&pool, buf, len);
 }

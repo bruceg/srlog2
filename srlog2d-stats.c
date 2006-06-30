@@ -43,7 +43,7 @@ static int str_catstat(str* s, const char* prefix, uint64 u)
     str_catc(s, '\n');
 }
 
-static void send_srp(const char nonce[8])
+static void send_srp(const unsigned char nonce[8])
 {
   tmp.len = 0;
   str_catstat(&tmp, "Packets-Received", packets_received);
@@ -74,5 +74,5 @@ void handle_srq(void)
   if (pkt_get_b(&packet, 8, &line, 8) == 0)
     msgpkt2("Warning: SRQ packet is missing nonce");
   else
-    send_srp(line.s);
+    send_srp((unsigned char*)line.s);
 }

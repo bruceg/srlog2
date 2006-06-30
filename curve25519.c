@@ -7,7 +7,9 @@ static int exchange(struct key* shared,
 		    const struct key* secret)
 {
   shared->cb = &curve25519_cb;
-  curve25519(shared->data, (char*)secret->data, (char*)public->data);
+  curve25519(shared->data,
+	     (unsigned char*)secret->data,
+	     (unsigned char*)public->data);
   return 1;
 }
 

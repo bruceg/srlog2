@@ -18,7 +18,7 @@ void encr_start(void)
     die1(1, "Could not register AES encryption");
 }
 
-static void make_key(const char* data, unsigned datalen, keydata key)
+static void make_key(const unsigned char* data, unsigned datalen, keydata key)
 {
   SHA256_ctx ctx;
   SHA256_init(&ctx);
@@ -45,13 +45,15 @@ static void setiv(ENCR_CTX* context, uint64 sequence)
   cbc_setiv(IV, sizeof IV, &context->encr);
 }
 
-void decr_blocks(DECR_CTX* context, char* data, unsigned len, uint64 sequence)
+void decr_blocks(DECR_CTX* context, unsigned char* data, unsigned len,
+		 uint64 sequence)
 {
   setiv(context, sequence);
   cbc_encrypt(data, data, len, &context->encr);
 }
 
-void encr_blocks(ENCR_CTX* context, char* data, unsigned len, uint64 sequence)
+void encr_blocks(ENCR_CTX* context, unsigned char* data, unsigned len,
+		 uint64 sequence)
 {
   setiv(context, sequence);
   cbc_decrypt(data, data, len, &context->encr);

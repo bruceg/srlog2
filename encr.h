@@ -23,9 +23,9 @@ typedef struct ENCR_CTX DECR_CTX;
 extern void encr_start(void);
 extern void encr_init(ENCR_CTX* context, struct key* key);
 #define decr_init(C,K) encr_init(C,K)
-extern void decr_blocks(DECR_CTX* context, char* data, unsigned len,
+extern void decr_blocks(DECR_CTX* context, unsigned char* data, unsigned len,
 			uint64 sequence);
-extern void encr_blocks(ENCR_CTX* context, char* data, unsigned len,
+extern void encr_blocks(ENCR_CTX* context, unsigned char* data, unsigned len,
 			uint64 sequence);
 
 #endif

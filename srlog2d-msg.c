@@ -107,7 +107,8 @@ void handle_msg(void)
     return;
   }
 
-  decr_blocks(&c->data.decryptor, packet.s+(8+8+1), packet.len-(8+8+1), seq);
+  decr_blocks(&c->data.decryptor,
+	      (unsigned char*)packet.s+(8+8+1), packet.len-(8+8+1), seq);
 
   if (!check_crc(&packet, 8+8+1)) {
     error_connection(c, "MSG has invalid CRC");

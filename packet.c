@@ -25,24 +25,24 @@ int pkt_add_u1(str* s, unsigned u)
 
 int pkt_add_u2(str* s, unsigned u)
 {
-  char b[2];
+  unsigned char b[2];
   if (u > 0xffff) return 0;
   uint16_pack_lsb(u, b);
-  return str_catb(s, b, 2);
+  return str_catb(s, (char*)b, 2);
 }
 
 int pkt_add_u4(str* s, uint32 u)
 {
-  char b[4];
+  unsigned char b[4];
   uint32_pack_lsb(u, b);
-  return str_catb(s, b, 4);
+  return str_catb(s, (char*)b, 4);
 }
 
 int pkt_add_u8(str* s, uint64 u)
 {
-  char b[8];
+  unsigned char b[8];
   uint64_pack_lsb(u, b);
-  return str_catb(s, b, 8);
+  return str_catb(s, (char*)b, 8);
 }
 
 int pkt_add_ts(str* s, const struct timestamp* ts)
@@ -69,20 +69,20 @@ int pkt_add_s2(str* s, const str* l)
     str_catb(s, l->s, l->len);
 }
 
-int pkt_add_b(str* s, const char* data, unsigned len)
+int pkt_add_b(str* s, const unsigned char* data, unsigned len)
 {
-  return str_catb(s, data, len);
+  return str_catb(s, (const char*)data, len);
 }
 
 int pkt_add_key(str* s, const struct key* k)
 {
-  return str_catb(s, k->data, k->cb->size);
+  return str_catb(s, (const char*)k->data, k->cb->size);
 }
 
 int pkt_add_cc(str* s, const AUTH_CTX* ctx)
 {
   auth_finish(ctx, s->s, s->len, digest);
-  return str_catb(s, digest, AUTH_LENGTH);
+  return str_catb(s, (const char*)digest, AUTH_LENGTH);
 }
 
 unsigned pkt_get_u1(const str* s, unsigned o, unsigned* u)
@@ -94,7 +94,7 @@ unsigned pkt_get_u1(const str* s, unsigned o, unsigned* u)
 
 unsigned pkt_get_u2(const str* s, unsigned o, unsigned* u)
 {
-  const unsigned char* p = s->s + o;
+  const unsigned char* p = (const unsigned char*)s->s + o;
   o += 2;
   if (o > s->len) return 0;
   *u = uint16_get_lsb(p);
@@ -103,7 +103,7 @@ unsigned pkt_get_u2(const str* s, unsigned o, unsigned* u)
 
 unsigned pkt_get_u4(const str* s, unsigned o, uint32* u)
 {
-  const unsigned char* p = s->s + o;
+  const unsigned char* p = (const unsigned char*)s->s + o;
   o += 4;
   if (o > s->len) return 0;
   *u = uint32_get_lsb(p);
@@ -112,7 +112,7 @@ unsigned pkt_get_u4(const str* s, unsigned o, uint32* u)
 
 unsigned pkt_get_u8(const str* s, unsigned o, uint64* u)
 {
-  const unsigned char* p = s->s + o;
+  const unsigned char* p = (const unsigned char*)s->s + o;
   o += 8;
   if (o > s->len) return 0;
   *u = uint64_get_lsb(p);
