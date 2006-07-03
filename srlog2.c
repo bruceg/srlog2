@@ -32,6 +32,7 @@
   return 0; \
 } while (0)
 
+static const char* keydir = conf_etc;
 static const char* sender;
 static const char* service;
 static ipv4addr ip;
@@ -501,13 +502,13 @@ static void load_keys(const char* server)
 {
   str path = {0,0,0};
 
-  wrap_str(str_copy4s(&path, conf_etc, "/servers/", server, "."));
+  wrap_str(str_copy4s(&path, keydir, "/servers/", server, "."));
   if (!keylist_load_multi(&server_publics, path.s, 0) &&
       !keylist_load_multi(&server_publics, "server.", 0))
     die1sys(1, "Could not load server keys");
 
   if (!keylist_load_multi(&client_secrets, "", 0)) {
-    wrap_str(str_copy2s(&path, conf_etc, "/"));
+    wrap_str(str_copy2s(&path, keydir, "/"));
     if (!keylist_load_multi(&client_secrets, path.s, 0))
       die1sys(1, "Could not load sender keys");
   }
@@ -568,6 +569,8 @@ int cli_main(int argc, char* argv[])
     die3(1, "Could not resolve '", server_name, "'");
 
   brandom_init();
+  if ((env = getenv("KEYDIR")) != 0)
+    keydir = env;
   load_keys(server_name);
 
   if ((env = getenv("PORT")) != 0)
