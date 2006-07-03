@@ -1,10 +1,10 @@
-start
+startit
 (
   echo 0
   echo 1
   sleep 1
 ) | ${src}/srlog2 service
-stop
+stopit
 <result>
 :sender:service
 0

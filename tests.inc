@@ -2,7 +2,7 @@ sender=${tmp}/sender
 receiver=${tmp}/receiver
 
 KEYDIR=${tmp}
-PORT=$(($RANDOM+32768))
+PORT=62144
 SENDER=sender
 SERVER=localhost
 export KEYDIR PORT SENDER SERVER
@@ -41,17 +41,15 @@ setup() {
   cd ..
 }
 
-start() {
+startit() {
   setup
-  (
-    cd receiver
-    exec ${src}/srlog2d -p $PORT >log 2>/dev/null
-  ) &
+  cd ${tmp}/receiver
+  ${src}/srlog2d -p $PORT >log 2>/dev/null &
   pid=$!
-  cd sender
+  cd ${tmp}/sender
 }
 
-stop() {
+stopit() {
   kill $pid
   sed -e 's/^@40000000................ //' \
   	${receiver}/log
