@@ -1,4 +1,4 @@
-* Add self tests!
+- Add more self tests.
 
 - Add control block logic for both the authenticator, key hash,
   encryptor, and compressor choices.

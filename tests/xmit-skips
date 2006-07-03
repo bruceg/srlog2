@@ -1,0 +1,11 @@
+start
+cat <<EOF >buffer
+0 1134162292.530385500 0
+2 1134162293.530385500 2
+EOF
+sleep 1 | ${src}/srlog2 service
+stop
+<result>
+:sender:service
+0
+2
