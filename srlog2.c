@@ -100,6 +100,10 @@ static int read_line(void)
   gettimestamp(&last_line.timestamp);
   last_line.seq = seq_next++;
   --last_line.line.len;		/* Strip off the trailing LF */
+  if (last_line.line.len > MAX_LINE) {
+    str_rcut(&last_line.line, last_line.line.len - MAX_LINE);
+    memcpy(last_line.line.s + MAX_LINE - 17, "[...truncated...]", 17);
+  }
   buffer_push(&last_line);
   return 1;
 }
