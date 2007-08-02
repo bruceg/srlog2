@@ -6,6 +6,9 @@ Changes in version 0.76
 - Fixed transmission failures when the sending sequence number was not
   present in the buffer on startup.
 
+- Modified the INI throttling behavior in srlog2d to accept bursts of
+  new connections.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

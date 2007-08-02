@@ -1,4 +1,7 @@
 - Add more self tests.
+  - skipped sequence numbers in buffer (corruption)
+
+- Make the INI throttle mechanism configurable
 
 - Add control block logic for both the authenticator, key hash,
   encryptor, and compressor choices.

@@ -12,7 +12,10 @@
 #include "srlog2d-cli.h"
 
 /* Time in seconds to pause between accepting INIs */
-static double ini_throttle = 1.0 / 64;
+static long ini_throttle_interval = 1;
+static long ini_throttle_count = 64;
+static struct timeval ini_timestamps[64];
+static int ini_timestamp_index;
 
 static str sender;
 
@@ -29,6 +32,7 @@ static struct timeval last_ini;
 void handle_ini(void)
 {
   struct timeval now;
+  struct timeval* it;
   unsigned offset;
   uint64 seq;
   struct timestamp ts;
@@ -50,12 +54,16 @@ void handle_ini(void)
     return;
   }
   gettimeofday(&now, 0);
-  if (((now.tv_sec - last_ini.tv_sec) +
-       (now.tv_usec - last_ini.tv_usec) / 1000000.0) < ini_throttle) {
+  it = &ini_timestamps[ini_timestamp_index];
+  if (it->tv_sec > now.tv_sec - ini_throttle_interval
+      || (it->tv_sec == now.tv_sec - ini_throttle_interval
+	  && it->tv_usec > now.tv_usec)) {
     msgpkt2("Warning: INI throttled: too many");
     ++ini_too_many;
     return;
   }
+  *it = now;
+  ini_timestamp_index = (ini_timestamp_index + 1) % ini_throttle_count;
 
   if ((offset = pkt_get_u8(&packet, 8, &seq)) == 0 ||
       (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
