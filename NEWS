@@ -3,6 +3,9 @@ Changes in version 0.76
 
 - Fixed handling of log lines longer than MAX_PACKET (8192 bytes).
 
+- Fixed transmission failures when the sending sequence number was not
+  present in the buffer on startup.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

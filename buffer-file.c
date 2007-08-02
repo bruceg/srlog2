@@ -164,5 +164,9 @@ void buffer_file_init(void)
     clean_bytes = strtoul(env, 0, 10);
   open_read_seq();
   seq_read = seq_send;
+  /* Fix up seq_send in case it didn't match the first readable line in
+   * the buffer. */
+  if (buffer_file_peek() != 0)
+    seq_send = last_line->seq;
   atexit(buffer_file_sync);
 }
