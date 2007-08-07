@@ -5,7 +5,7 @@ cat <<EOF >buffer
 3 1134162294.530385500 3
 4 1134162295.530385500 4
 EOF
-echo 0:0 >sequence
+echo 0:5 >sequence
 sleep 1 | ${src}/srlog2 service
 stopit
 <result>
