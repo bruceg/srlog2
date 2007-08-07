@@ -6,6 +6,8 @@ Changes in version 0.76
 - Fixed transmission failures when the sending sequence number was not
   present in the buffer on startup.
 
+- Fixed handling of corrupted buffer files with missing lines.
+
 - Modified the INI throttling behavior in srlog2d to accept bursts of
   new connections.
 

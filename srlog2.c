@@ -98,7 +98,7 @@ static int read_line(void)
     if (!matches) return 0;
   }
   gettimestamp(&last_line.timestamp);
-  last_line.seq = seq_next++;
+  SET_SEQ(last_line.seq = seq_next++);
   --last_line.line.len;		/* Strip off the trailing LF */
   if (last_line.line.len > MAX_LINE) {
     str_rcut(&last_line.line, last_line.line.len - MAX_LINE);
@@ -172,13 +172,17 @@ static int poll_both(void)
 /* Packet generation ------------------------------------------------------- */
 static uint64 seq_last;
 static uint64 seq_first;
+static int seq_drop = 0;
 
 static int add_msg(const struct line* l)
 {
   if ((unsigned char)packet.s[8+8] == 0xff
-      || packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET
-      || (seq_last > 0 && l->seq != seq_last + 1))
+      || packet.len + 8 + 2 + l->line.len + 4 + AUTH_LENGTH >= MAX_PACKET)
     return 0;
+  if (seq_last > 0 && l->seq != seq_last + 1) {
+    seq_drop = 1;
+    return 0;
+  }
   debugf(DEBUG_MSG, "{Adding line #}llu", l->seq);
   ++packet.s[8+8];
   pkt_add_ts(&packet, &l->timestamp);
@@ -403,6 +407,7 @@ static int do_connecting(void)
   struct key csession_public;
   struct key tmpkey;
 
+  seq_drop = 0;
   buffer_rewind();
   key_generate(&csession_secret, &csession_public, keyex);
   make_ini(&csession_public, buffer_peek());
@@ -440,7 +445,7 @@ static int do_sending(void)
       if (stdin_ready)
 	read_lines();
       if (sock_ready && receive_ack())
-	return STATE_SENDING;
+	return seq_drop ? STATE_DISCONNECTED : STATE_SENDING;
     }
   }
   return STATE_DISCONNECTED;
