@@ -44,12 +44,13 @@ setup() {
 startit() {
   setup
   cd ${tmp}/receiver
-  ${src}/srlog2d -p $PORT >log 2>/dev/null &
+  ${src}/srlog2d -p $PORT >log 2>errlog &
   pid=$!
   cd ${tmp}/sender
 }
 
 stopit() {
+  cat sequence
   kill $pid
   sed -e 's/^@40000000................ //' \
   	${receiver}/log

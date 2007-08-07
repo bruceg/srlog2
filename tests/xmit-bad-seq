@@ -9,6 +9,7 @@ echo 0:0 >sequence
 sleep 1 | ${src}/srlog2 service
 stopit
 <result>
+5:5
 :sender:service
 1
 2

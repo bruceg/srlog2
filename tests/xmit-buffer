@@ -6,6 +6,7 @@ EOF
 sleep 1 | ${src}/srlog2 service
 stopit
 <result>
+2:2
 :sender:service
 0
 1
