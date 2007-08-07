@@ -131,10 +131,10 @@ int cli_main(int argc, char* argv[])
   encr_start();
 
   if (opt_envuidgid) {
-    if ((env = getenv("GID")) == 0)
+    if ((env = getenv("GID")) != 0)
       if ((opt_gid = strtol(env, &end, 10)) < 0 || *end != 0)
 	dief(1, "{Invalid value for $GID: }s", env);
-    if ((env = getenv("UID")) == 0)
+    if ((env = getenv("UID")) != 0)
       if ((opt_uid = strtol(env, &end, 10)) < 0 || *end != 0)
 	dief(1, "{Invalid value for $UID: }s", env);
   }

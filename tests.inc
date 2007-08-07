@@ -44,7 +44,8 @@ setup() {
 startit() {
   setup
   cd ${tmp}/receiver
-  ${src}/srlog2d -p $PORT >log 2>errlog &
+  env UID=`id -u` GID=`id -g` \
+  ${src}/srlog2d -p $PORT -U >log 2>errlog &
   pid=$!
   cd ${tmp}/sender
 }
