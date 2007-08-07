@@ -12,9 +12,7 @@
 #include "srlog2d-cli.h"
 
 /* Time in seconds to pause between accepting INIs */
-static long ini_throttle_interval = 1;
-static long ini_throttle_count = 64;
-static struct timeval ini_timestamps[64];
+static struct timeval* ini_timestamps;
 static int ini_timestamp_index;
 
 static str sender;
@@ -32,6 +30,7 @@ static struct timeval last_ini;
 void handle_ini(void)
 {
   struct timeval now;
+  time_t then;
   struct timeval* it;
   unsigned offset;
   uint64 seq;
@@ -54,16 +53,17 @@ void handle_ini(void)
     return;
   }
   gettimeofday(&now, 0);
+  then = now.tv_sec - opt_ini_interval;
   it = &ini_timestamps[ini_timestamp_index];
-  if (it->tv_sec > now.tv_sec - ini_throttle_interval
-      || (it->tv_sec == now.tv_sec - ini_throttle_interval
+  if (it->tv_sec > then
+      || (it->tv_sec == then
 	  && it->tv_usec > now.tv_usec)) {
     msgpkt2("Warning: INI throttled: too many");
     ++ini_too_many;
     return;
   }
   *it = now;
-  ini_timestamp_index = (ini_timestamp_index + 1) % ini_throttle_count;
+  ini_timestamp_index = (ini_timestamp_index + 1) % opt_ini_count;
 
   if ((offset = pkt_get_u8(&packet, 8, &seq)) == 0 ||
       (offset = pkt_get_ts(&packet, offset, &ts)) == 0 ||
@@ -166,4 +166,9 @@ void handle_ini(void)
   key_exchange(&tmpkey, &csession_public, &ssession_secret);
   auth_start(&ce->data.authenticator, &tmpkey);
   decr_init(&ce->data.decryptor, &tmpkey);
+}
+
+void init_ini(void)
+{
+  wrap_alloc(ini_timestamps = malloc(opt_ini_count * sizeof *ini_timestamps));
 }

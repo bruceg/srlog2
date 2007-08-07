@@ -9,7 +9,7 @@ Changes in version 0.76
 - Fixed handling of corrupted buffer files with missing lines.
 
 - Modified the INI throttling behavior in srlog2d to accept bursts of
-  new connections.
+  new connections, and made it configurable.
 
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/

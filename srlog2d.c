@@ -126,6 +126,7 @@ int cli_main(int argc, char* argv[])
   char* end;
   const char* env;
 
+  init_ini();
   msg_debug_init();
   encr_start();
 

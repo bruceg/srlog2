@@ -112,6 +112,7 @@ extern void msgpkt3(const char* msg);
 
 /* srlog2d-ini.c */
 extern void handle_ini(void);
+extern void init_ini(void);
 
 /* srlog2d-msg.c */
 extern void handle_msg(void);

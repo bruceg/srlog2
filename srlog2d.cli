@@ -27,6 +27,12 @@ Switch to this UID after opening the socket.
 -U --envuidgid FLAG=1 opt_envuidgid
 Same as -g $GID -u $UID
 
+--ini-count UINTEGER opt_ini_count = 64
+The maximum number of INIs to accept in a burst.
+
+--ini-interval UINTEGER opt_ini_interval = 1
+The interval (in seconds) over which to count INIs.
+
 [description]
 
 @command{srlog2d} is a network server, listening for traffic from a list
