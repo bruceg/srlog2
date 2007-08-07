@@ -40,15 +40,17 @@ void open_read_seq(void)
       die1sys(1, "Could not read sequence file");
     /* Don't die on parse errors */
     if (rd > 0) {
-      seq_send = strtoull(buf, &end, 10);
+      SET_SEQ(seq_send = strtoull(buf, &end, 10));
       if (*end == ':') {
-	seq_next = strtoull(end+1, &end, 10);
-	if (*end != LF) seq_next = 0;
+	SET_SEQ(seq_next = strtoull(end+1, &end, 10));
+	if (*end != LF)
+	  SET_SEQ(seq_next = 0);
       }
     }
     close(seq_fd);
   }
-  if (seq_send > seq_next) seq_next = seq_send;
+  if (seq_send > seq_next)
+    SET_SEQ(seq_next = seq_send);
   if ((seq_fd = open("sequence", O_WRONLY|O_CREAT, 0666)) == -1)
     die1sys(1, "Could not create new sequence file");
   save_seq();

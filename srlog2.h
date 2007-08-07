@@ -4,6 +4,7 @@
 #include <uint32.h>
 #include <uint64.h>
 #include <adt/ghash.h>
+#include <msg/msg.h>
 #include <net/ipv4.h>
 #include <str/str.h>
 
@@ -29,6 +30,11 @@
 #define DEBUG_QUEUE 4
 #define DEBUG_BUFFER 8
 #define DEBUG_MSG 16
+#define DEBUG_SEQ 32
+
+#define SET_SEQ(X) do{ \
+	debugf(DEBUG_SEQ, "{setting }s{ = }llu", #X, X); \
+}while(0)
 
 struct timestamp
 {

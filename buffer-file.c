@@ -37,7 +37,7 @@ static const struct line* parse_buffered_line(const str* s)
   return &line;
 }
 
-static uint64 seq_read;
+static uint64 seq_read;		/* The sequence number to read next */
 
 /** Mark the buffer as empty. */
 static void buffer_empty(void)
@@ -53,7 +53,7 @@ static void buffer_empty(void)
 	ftruncate(writebuf.io.fd, 0) != 0)
       die1sys(1, "Could not truncate buffer");
   }
-  seq_read = seq_next;
+  SET_SEQ(seq_read = seq_next);
 }
 
 static const struct line* buffer_next(void)
@@ -63,7 +63,7 @@ static const struct line* buffer_next(void)
   ENTER();
   if (readbuf.io.fd == 0) {
     if (!ibuf_open(&readbuf, buffer_filename, 0)) {
-      seq_read = seq_send = seq_next;
+      SET_SEQ(seq_read = seq_send = seq_next);
       DEBUG1("No buffer file");
       return 0;
     }
@@ -75,8 +75,8 @@ static const struct line* buffer_next(void)
     if (line->seq < seq_read)
       continue;
     if (line->seq != seq_read)
-      seq_read = line->seq;
-    ++seq_read;
+      SET_SEQ(seq_read = line->seq);
+    SET_SEQ(++seq_read);
     return line;
   }
   if (!ibuf_eof(&readbuf))
@@ -120,7 +120,7 @@ void buffer_file_rewind(void)
   ENTER();
   if (!ibuf_rewind(&readbuf))
     die1sys(111, "Could not rewind buffer");
-  seq_read = seq_send;
+  SET_SEQ(seq_read = seq_send);
   last_line = 0;
   buffer_file_sync();
 }
@@ -129,7 +129,7 @@ void buffer_file_rewind(void)
 void buffer_file_pop(void)
 {
   ENTER();
-  seq_send = seq_read;
+  SET_SEQ(seq_send = seq_read);
   save_seq();
   if (last_line == 0 && seq_send >= seq_next)
     buffer_empty();
@@ -163,10 +163,10 @@ void buffer_file_init(void)
   if ((env = getenv("CLEAN_BYTES")) != 0)
     clean_bytes = strtoul(env, 0, 10);
   open_read_seq();
-  seq_read = seq_send;
+  SET_SEQ(seq_read = seq_send);
   /* Fix up seq_send in case it didn't match the first readable line in
    * the buffer. */
   if (buffer_file_peek() != 0)
-    seq_send = last_line->seq;
+    SET_SEQ(seq_send = last_line->seq);
   atexit(buffer_file_sync);
 }

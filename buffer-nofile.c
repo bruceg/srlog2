@@ -52,14 +52,14 @@ void buffer_nofile_pop(void)
   struct node* next;
   while (head != curr) {
     next = head->next;
-    seq_send = head->line.seq;
+    SET_SEQ(seq_send = head->line.seq);
     str_free(&head->line.line);
     free(head);
     head = next;
   }
   if (head == 0)
     curr = 0;
-  ++seq_send;
+  SET_SEQ(++seq_send);
 }
 
 /** Add a line to the end of the buffer. */
