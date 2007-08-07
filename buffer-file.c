@@ -76,7 +76,6 @@ static const struct line* buffer_next(void)
       continue;
     if (line->seq != seq_read)
       SET_SEQ(seq_read = line->seq);
-    SET_SEQ(++seq_read);
     return line;
   }
   if (!ibuf_eof(&readbuf))
@@ -104,6 +103,8 @@ const struct line* buffer_file_read(void)
   ENTER();
   if ((line = last_line) == 0)
     line = buffer_next();
+  if (line != 0)
+    SET_SEQ(seq_read = line->seq + 1);
   last_line = 0;
   return line;
 }
