@@ -3988,3 +3988,6 @@ movl 172(%ecx),%edi
 movl 176(%ecx),%ebp
 add %eax,%esp
 ret
+#if defined(__linux__) && defined(__ELF__)
+.section .note.GNU-stack,"",%progbits
+#endif

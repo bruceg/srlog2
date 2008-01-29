@@ -112,3 +112,6 @@ curve25519_athlon_out9offset:
 curve25519_athlon_rounding:
 	.byte 0x7f
 	.byte 0x13
+#if defined(__linux__) && defined(__ELF__)
+	.section .note.GNU-stack,"",%progbits
+#endif
