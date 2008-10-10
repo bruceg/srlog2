@@ -3,6 +3,8 @@
 #include <unistd.h>
 
 #include <iobuf/iobuf.h>
+#include <fmt/misc.h>
+#include <fmt/number.h>
 #include <msg/msg.h>
 #include <misc/misc.h>
 #include <str/str.h>
@@ -138,6 +140,9 @@ void buffer_file_pop(void)
 /** Add a line to the end of the buffer. */
 void buffer_file_push(const struct line* line)
 {
+  char buf[FMT_ULONG_LEN*3 + line->line.len + 4];
+  unsigned i;
+
   ENTER();
   save_seq();
   if (writebuf.io.fd == 0) {
@@ -146,14 +151,15 @@ void buffer_file_push(const struct line* line)
 		   OBUF_CREATE/*|OBUF_EXCLUSIVE*/|OBUF_APPEND, 0644, 0))
       die1sys(1, "Could not open buffer file for writing");
   }
-  obuf_putull(&writebuf, line->seq);
-  obuf_putc(&writebuf, ' ');
-  obuf_putull(&writebuf, line->timestamp.sec);
-  obuf_putc(&writebuf, '.');
-  obuf_putuwll(&writebuf, line->timestamp.nsec, 9, '0');
-  obuf_putc(&writebuf, ' ');
-  obuf_putstr(&writebuf, &line->line);
-  obuf_putc(&writebuf, LF);
+  i = fmt_ulldec(buf, line->seq);
+  buf[i++] = ' ';
+  i += fmt_ulldec(buf+i, line->timestamp.sec);
+  buf[i++] = '.';
+  i += fmt_ulldecw(buf+i, line->timestamp.nsec, 9, '0');
+  buf[i++] = ' ';
+  i += fmt_str(buf+i, &line->line, 0, 0);
+  buf[i++] = LF;
+  obuf_write(&writebuf, buf, i);
   obuf_flush(&writebuf);
 }
 
