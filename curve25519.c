@@ -1,4 +1,3 @@
-/* $Id$ */
 #include "srlog2.h"
 #ifdef HASCURVE25519
 

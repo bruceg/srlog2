@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <string.h>
 
 #include <adt/ghash.h>

@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <sys/types.h>
 #include <errno.h>
 #include <string.h>

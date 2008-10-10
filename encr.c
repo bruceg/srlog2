@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <crypto/sha256.h>
 #include <uint64.h>
 #include <string.h>

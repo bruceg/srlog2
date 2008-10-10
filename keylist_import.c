@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <string.h>
 #include <base64/base64.h>
 #include <iobuf/ibuf.h>

@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <msg/msg.h>
 #include <net/socket.h>
 

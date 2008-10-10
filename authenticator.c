@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <string.h>
 #include <crypto/hmac.h>
 #include <crypto/md5.h>

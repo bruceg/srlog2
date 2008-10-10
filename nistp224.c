@@ -1,4 +1,3 @@
-/* $Id$ */
 #include <nistp224.h>
 #include "srlog2.h"
 
