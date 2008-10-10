@@ -1,4 +1,9 @@
 -------------------------------------------------------------------------------
+Changes in version 0.85
+
+Development of this version has been sponsored by FutureQuest, Inc.
+ossi@FutureQuest.net  http://www.FutureQuest.net/
+-------------------------------------------------------------------------------
 Changes in version 0.80
 
 - Fixed handling of log lines longer than MAX_PACKET (8192 bytes).
