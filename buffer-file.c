@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <iobuf/iobuf.h>
+#include <iobuf/ibuf.h>
 #include <fmt/misc.h>
 #include <fmt/number.h>
 #include <msg/msg.h>
@@ -20,7 +20,7 @@ static const char buffer_filename[] = "buffer";
 static unsigned long clean_bytes = 100000;
 
 /* Buffering --------------------------------------------------------------- */
-static obuf writebuf;
+static int writefd = -1;
 static ibuf readbuf;
 
 static const struct line* parse_buffered_line(const str* s)
@@ -46,12 +46,11 @@ static void buffer_empty(void)
   ENTER();
   if (readbuf.io.offset >= clean_bytes) {
     DEBUG1("Truncating file");
-    obuf_flush(&writebuf);
-    obuf_rewind(&writebuf);
+    lseek(writefd, 0, SEEK_SET);
     ibuf_close(&readbuf);
     readbuf.io.fd = 0;
-    if (writebuf.io.fd != 0 &&
-	ftruncate(writebuf.io.fd, 0) != 0)
+    if (writefd >= 0 &&
+	ftruncate(writefd, 0) != 0)
       die1sys(1, "Could not truncate buffer");
   }
   SET_SEQ(seq_read = seq_next);
@@ -112,8 +111,8 @@ const struct line* buffer_file_read(void)
 
 static void buffer_file_sync(void)
 {
-  if (writebuf.io.fd != 0)
-    fsync(writebuf.io.fd);
+  if (writefd >= 0)
+    fsync(writefd);
 }
 
 /** Rewind the buffer to the last mark point. */
@@ -145,10 +144,10 @@ void buffer_file_push(const struct line* line)
 
   ENTER();
   save_seq();
-  if (writebuf.io.fd == 0) {
+  if (writefd < 0) {
     DEBUG1("Opening file");
-    if (!obuf_open(&writebuf, buffer_filename,
-		   OBUF_CREATE/*|OBUF_EXCLUSIVE*/|OBUF_APPEND, 0644, 0))
+    writefd = open(buffer_filename, O_WRONLY|O_CREAT|O_APPEND, 0644);
+    if (writefd < 0)
       die1sys(1, "Could not open buffer file for writing");
   }
   i = fmt_ulldec(buf, line->seq);
@@ -159,8 +158,7 @@ void buffer_file_push(const struct line* line)
   buf[i++] = ' ';
   i += fmt_str(buf+i, &line->line, 0, 0);
   buf[i++] = LF;
-  obuf_write(&writebuf, buf, i);
-  obuf_flush(&writebuf);
+  write(writefd, buf, i);
 }
 
 void buffer_file_init(void)
