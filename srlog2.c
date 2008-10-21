@@ -88,6 +88,7 @@ static int read_line(void)
       error1sys("Could not read line from stdin");
     return 0;
   }
+  --last_line.line.len;		/* Strip off the trailing LF */
   if (patterns != 0) {
     matches = 1;
     for (p = patterns; *p != 0; ++p) {
@@ -98,7 +99,6 @@ static int read_line(void)
   }
   gettimestamp(&last_line.timestamp);
   SET_SEQ(last_line.seq = seq_next++);
-  --last_line.line.len;		/* Strip off the trailing LF */
   if (last_line.line.len > MAX_LINE) {
     str_rcut(&last_line.line, last_line.line.len - MAX_LINE);
     memcpy(last_line.line.s + MAX_LINE - 17, "[...truncated...]", 17);

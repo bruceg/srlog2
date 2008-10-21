@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------
 Changes in version 0.85
 
+- Fixed bug in preventing filtering of exact lines.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------
