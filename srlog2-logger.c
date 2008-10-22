@@ -233,7 +233,7 @@ int cli_main(int argc, char* argv[])
     else if (sender != 0
 	     && parse_timestamp(&line, &ts) > 0) {
       test_reopen(sender, &ts);
-      write(sender->data.fd, line.s, line.len);
+      writeall(sender->data.fd, line.s, line.len);
     }
   }
 

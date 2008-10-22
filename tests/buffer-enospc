@@ -1,0 +1,23 @@
+(
+  cd $src
+  ./compile blockwrite.c -fPIC -DPIC
+  ld -o blockwrite.so -shared blockwrite.o
+)
+
+(
+  echo 1
+  echo 2
+  echo 3
+) | env LD_PRELOAD=${src}/blockwrite.so ${src}/srlog2 service
+
+cut -d' ' -f3- buffer
+
+rm -f blockwrite.o blockwrite.so
+
+<result>
+srlog2: Warning: Could not write to buffer, pausing
+srlog2: Warning: Could not write to buffer, pausing
+srlog2: Warning: Could not write to buffer, pausing
+1
+2
+3

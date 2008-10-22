@@ -23,9 +23,9 @@ void save_seq(void)
   str_catc(&seq_line, ':');
   str_catull(&seq_line, seq_next);
   str_catc(&seq_line, LF);
-  if (lseek(seq_fd, 0, SEEK_SET) != 0 ||
-      write(seq_fd, seq_line.s, seq_line.len) != (long)seq_line.len)
-    die1sys(1, "Could not write to sequence file");
+  if (lseek(seq_fd, 0, SEEK_SET) != 0)
+    die1sys(1, "Could not seek sequence file"); /* Should be impossible */
+  writeall(seq_fd, seq_line.s, seq_line.len);
 }
 
 void open_read_seq(void)

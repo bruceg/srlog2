@@ -10,3 +10,4 @@ nistp224.o
 packet.o
 random.o
 surfrand.o
+writeall.o

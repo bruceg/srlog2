@@ -86,6 +86,9 @@ extern uint64 seq_send;		/* Next line to send has this number */
 extern void save_seq(void);
 extern void open_read_seq(void);
 
+/* writeall.c */
+extern void writeall(int fd, const char* buf, size_t len);
+
 /* buffer-file.c */
 extern void buffer_file_init(void);
 extern const struct line* buffer_file_peek(void);

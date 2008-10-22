@@ -1,4 +1,5 @@
-#include <sys/types.h>
+#include <sysdeps.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -158,7 +159,7 @@ void buffer_file_push(const struct line* line)
   buf[i++] = ' ';
   i += fmt_str(buf+i, &line->line, 0, 0);
   buf[i++] = LF;
-  write(writefd, buf, i);
+  writeall(writefd, buf, i);
 }
 
 void buffer_file_init(void)
