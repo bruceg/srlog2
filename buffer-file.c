@@ -34,8 +34,8 @@ static const struct line* parse_buffered_line(const str* s)
   if (*end++ != '.') die1(1, "Format error in buffer file: bad timestamp");
   line.timestamp.nsec = strtoul(end, &end, 10);
   if (*end++ != ' ') die1(1, "Format error in buffer file: bad utimestamp");
-  if (!str_copyb(&line.line, end, s->len - (end - s->s)))
-    die1(1, "Out of memory");
+  while (!str_copyb(&line.line, end, s->len - (end - s->s)))
+    delay("allocate memory");
   return &line;
 }
 
@@ -52,7 +52,7 @@ static void buffer_empty(void)
     readbuf.io.fd = 0;
     if (writefd >= 0 &&
 	ftruncate(writefd, 0) != 0)
-      die1sys(1, "Could not truncate buffer");
+      die1sys(1, "Could not truncate buffer"); /* Should be impossible */
   }
   SET_SEQ(seq_read = seq_next);
 }
@@ -80,7 +80,7 @@ static const struct line* buffer_next(void)
     return line;
   }
   if (!ibuf_eof(&readbuf))
-    die1sys(1, "Could not read next buffered line");
+    die1sys(1, "Could not read next buffered line"); /* Should not happen */
   readbuf.io.flags &= ~IOBUF_EOF;
   DEBUG1("No lines remain in buffer");
   return 0;
@@ -121,7 +121,7 @@ void buffer_file_rewind(void)
 {
   ENTER();
   if (!ibuf_rewind(&readbuf))
-    die1sys(111, "Could not rewind buffer");
+    die1sys(111, "Could not rewind buffer"); /* Should be impossible */
   SET_SEQ(seq_read = seq_send);
   last_line = 0;
   buffer_file_sync();
