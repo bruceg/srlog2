@@ -4,7 +4,7 @@ Changes in version 0.85
 - Write errors are now handled by pausing instead of discarding or
   corrupting logs.
 
-- Fixed bug in preventing filtering of exact lines.
+- Fixed bug preventing filtering of exact lines.
 
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
