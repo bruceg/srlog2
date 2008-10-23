@@ -65,9 +65,11 @@ void buffer_nofile_pop(void)
 void buffer_nofile_push(const struct line* line)
 {
   struct node* node;
-  wrap_alloc(node = malloc(sizeof *node));
+  while ((node = malloc(sizeof *node)) == 0)
+    delay("allocate memory");
   memset(node, 0, sizeof *node);
-  wrap_str(str_copy(&node->line.line, &line->line));
+  while (!str_copy(&node->line.line, &line->line))
+    delay("allocate memory");
   node->line.timestamp = line->timestamp;
   node->line.seq = line->seq;
   node->next = 0;

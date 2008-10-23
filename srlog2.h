@@ -87,6 +87,7 @@ extern void save_seq(void);
 extern void open_read_seq(void);
 
 /* writeall.c */
+extern void delay(const char* msg);
 extern void writeall(int fd, const char* buf, size_t len);
 
 /* buffer-file.c */
