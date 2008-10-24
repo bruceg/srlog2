@@ -4,7 +4,7 @@
 
 void delay(const char* msg)
 {
-  warn1("Could not ", msg, ", pausing");
+  warn3("Could not ", msg, ", pausing");
   iopoll(0, 0, 1000);
 }
 
