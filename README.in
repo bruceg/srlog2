@@ -17,7 +17,7 @@ Development versions of @PACKAGE@ are available via Subversion at:
 
 Requirements:
 
-- bglibs version 1.041 or later
+- bglibs version 1.104 or later
 - libtomcrypt version 1.03 or later
 - nistp224 library version 0.75 or later
 
@@ -34,21 +34,24 @@ On the senders:
 - Create host keys in /etc/srlog2:
 	srlog2-keygen -t nistp224 /etc/srlog2
 	srlog2-keygen -t curve25519 /etc/srlog2
-- Copy all the public keys generated for the receiver into
-  /etc/srlog2/servers/host.name.of.receiver.net
+- Copy all the public keys generated for the receiver (below) onto
+  the sender system with the following file names:
+  /etc/srlog2/servers/host.name.of.receiver.net.nistp224
+  /etc/srlog2/servers/host.name.of.receiver.net.curve25519
 
 On the receiver:
 - Generate local host keys:
 	srlog2-keygen -t nistp224 .
 	srlog2-keygen -t curve25519 .
 	cat nistp224 curve25519 >secrets
-- Copy one or both of the public keys generated above into "senders" as:
-	short-name:copy-of-/etc/srlog2/nistp224.pub
-	short-name:copy-of-/etc/srlog2/curve25519.pub
-- OR copy one or both of the public keys generated above into
-  "services" as:
-  	short-name:service:copy-of-/etc/srlog2/nistp224.pub
-  	short-name:service:copy-of-/etc/srlog2/curve25519.pub
+- Copy one or both of the public keys generated on the sender(s) into a
+  file called "senders" with the following format:
+	host.name.of.sender:copy-of-sender's-/etc/srlog2/nistp224.pub
+	host.name.of.sender:copy-of-sender's-/etc/srlog2/curve25519.pub
+- OR copy one or both of the public keys generated above into a file
+  called "services" with the following format:
+	host.name.of.sender:service:copy-of-sender's-/etc/srlog2/nistp224.pub
+	host.name.of.sender:service:copy-of-sender's-/etc/srlog2/curve25519.pub
 
 (Note: curve25519 only works on 32-bit x86 systems at the moment)
 
