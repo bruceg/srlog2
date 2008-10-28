@@ -1,12 +1,9 @@
-startit
+rm -f buffer sequence
 (
   echo This should be in the logs.
   echo This should not be.
   echo
-  sleep 2
 ) | ${src}/srlog2 service - -'This should not*' -'This should be'
-stopit
+cut -d' ' -f1,3- buffer
 <result>
-1:1
-:sender:service
-This should be in the logs.
+0 This should be in the logs.

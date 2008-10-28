@@ -4,13 +4,14 @@
   ld -o blockwrite.so -shared blockwrite.o
 )
 
+rm -f buffer sequence
 (
   echo 1
   echo 2
   echo 3
 ) | env LD_PRELOAD=${src}/blockwrite.so ${src}/srlog2 service
 
-cut -d' ' -f3- buffer
+cut -d' ' -f1,3- buffer
 
 rm -f blockwrite.o blockwrite.so
 
@@ -18,6 +19,6 @@ rm -f blockwrite.o blockwrite.so
 srlog2: Warning: Could not write to buffer, pausing
 srlog2: Warning: Could not write to buffer, pausing
 srlog2: Warning: Could not write to buffer, pausing
-1
-2
-3
+0 1
+1 2
+2 3
