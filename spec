@@ -8,7 +8,7 @@ Source: http://untroubled.org/@PACKAGE@/@PACKAGE@-@VERSION@.tar.gz
 BuildRoot: %{_tmppath}/%{name}-buildroot
 URL: http://untroubled.org/@PACKAGE@/
 Packager: Bruce Guenter <bruce@untroubled.org>
-BuildRequires: bglibs >= 1.041
+BuildRequires: bglibs >= 1.104
 BuildRequires: libtomcrypt-devel
 BuildRequires: nistp224
 Requires: libtomcrypt
