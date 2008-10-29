@@ -157,8 +157,9 @@ static int poll_both(void)
   switch (ready = iopoll(io, 2, poll_timeout)) {
   case -1:
     if (errno == EAGAIN || errno == EINTR)
-      exit(0);
-    die1sys(1, "Poll failed!");
+      exitasap = 1;
+    else
+      die1sys(1, "Poll failed!");
     return 0;
   case 0:
     poll_timeout = 0;
