@@ -21,8 +21,6 @@
 #include "srlog2.h"
 #include "srlog2-cli.h"
 
-#define EXITONEOF 1
-
 #define REJECTf(FORMAT, ...) do { \
   debugf(DEBUG_PACKET, FORMAT, __VA_ARGS__); \
   return 0; \
@@ -48,6 +46,7 @@ static str keyex_name;
 static const struct key_cb* keyex;
 static str tmpstr;
 static unsigned char nonce[8];
+static int exitoneof = 1;
 
 static int exitasap;
 
@@ -86,7 +85,7 @@ static int read_line(void)
   const char** p;
   int matches;
   if (!ibuf_getstr(&inbuf, &last_line.line, LF)) {
-    exitasap = EXITONEOF;
+    exitasap = exitoneof;
     if (!ibuf_eof(&inbuf))
       error1sys("Could not read line from stdin");
     else
@@ -438,7 +437,7 @@ static int do_sending(void)
 {
   unsigned i;
   if (!make_msg())
-    return (stdin_eof && !EXITONEOF) ? STATE_EXITING : STATE_CONNECTED;
+    return (stdin_eof && !exitoneof) ? STATE_EXITING : STATE_CONNECTED;
   /* Try to send the message packet multiple times. */
   for (i = 1; !exitasap && i <= retransmits; ++i) {
     debugf(DEBUG_PACKET, "{Sending seq #}llu{ to #}llu", seq_send, seq_last);
@@ -604,6 +603,8 @@ int cli_main(int argc, char* argv[])
   getenvu("CID_TIMEOUT", &cid_timeout);
   getenvu("RETRANSMITS", &retransmits);
   getenvu("READWAIT", &readwait);
+  if ((env = getenv("EXITONEOF")) != 0)
+    exitoneof = strtoul(env, 0, 0);
 
   if (getenv("NOFILE") == 0) {
     buffer_file_init();

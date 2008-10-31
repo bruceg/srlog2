@@ -1,6 +1,9 @@
 -------------------------------------------------------------------------------
 Changes in version 0.90
 
+- Added an $EXITONEOF control to srlog2 to make it flush its buffer
+  before exiting after the end of input has been reached.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

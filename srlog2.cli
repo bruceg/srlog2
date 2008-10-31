@@ -39,6 +39,12 @@ length, the third three times, and so on.  Defaults to 1000ms.
 The minimum size (in bytes) of the @file{buffer} file (described below)
 before it is considered for truncation.  Defaults to 100000 bytes.
 
+@item EXITONEOF
+
+If set to @samp{0}, then @command{srlog2} will wait until its buffer has
+been completely sent to the remote before exiting instead of immediately
+exiting when it reaches the end of its input.
+
 @item ID_TIMEOUT
 
 The time to wait (in milliseconds) between sending connection
