@@ -34,6 +34,11 @@ The base time to wait (in milliseconds) for an acknowledgement from the
 receiver for each sent message.  The second retransmit waits twice this
 length, the third three times, and so on.  Defaults to 1000ms.
 
+@item CID_TIMEOUT
+
+The time to wait (in milliseconds) between sending connection
+initialization requests.  Defaults to 5000ms.
+
 @item CLEAN_BYTES
 
 The minimum size (in bytes) of the @file{buffer} file (described below)
@@ -44,11 +49,6 @@ before it is considered for truncation.  Defaults to 100000 bytes.
 If present then @command{srlog2} will exit immediately when it reaches
 the end of its input instead of waiting until its buffer has been
 completely sent to the remote.
-
-@item ID_TIMEOUT
-
-The time to wait (in milliseconds) between sending connection
-initialization requests.  Defaults to 5000ms.
 
 @item KEYDIR
 
