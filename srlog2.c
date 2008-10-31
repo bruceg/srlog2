@@ -85,7 +85,7 @@ static int read_line(void)
   const char** p;
   int matches;
   if (!ibuf_getstr(&inbuf, &last_line.line, LF)) {
-    exitasap = exitoneof;
+    exitasap = exitoneof || seq_next == seq_send;
     if (!ibuf_eof(&inbuf))
       error1sys("Could not read line from stdin");
     else
@@ -437,7 +437,7 @@ static int do_sending(void)
 {
   unsigned i;
   if (!make_msg())
-    return (stdin_eof && !exitoneof) ? STATE_EXITING : STATE_CONNECTED;
+    return stdin_eof ? STATE_EXITING : STATE_CONNECTED;
   /* Try to send the message packet multiple times. */
   for (i = 1; !exitasap && i <= retransmits; ++i) {
     debugf(DEBUG_PACKET, "{Sending seq #}llu{ to #}llu", seq_send, seq_last);
