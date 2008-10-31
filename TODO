@@ -3,8 +3,6 @@
 
 - srlog2:
 
-  - Add option to set path to host key list
-
 - srlog2d:
 
   - Sanity check the sender and service names?
