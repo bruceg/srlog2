@@ -6,6 +6,8 @@ Changes in version 0.90
   immediately when it reaches the end of its input.  To enable the older
   behavior, set $EXITONEOF.
 
+- Added a backoff to sending INIs to avoid flooding busy receivers.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

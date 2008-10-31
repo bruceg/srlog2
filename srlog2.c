@@ -391,17 +391,23 @@ static int receive_cid(struct key* csession_secret)
 
 static int do_negotiating(void)
 {
+  unsigned backoff = 1;
   make_prq();
   while (!exitasap) {
-    send_packet("PRQ1", cid_timeout);
+    send_packet("PRQ1", cid_timeout * backoff);
     while (!exitasap) {
       if (poll_both() == 0)
 	break;
       if (stdin_ready)
 	read_lines();
-      if (sock_ready && receive_prf())
-	return STATE_NEGOTIATED;
+      if (sock_ready) {
+	if (receive_prf())
+	  return STATE_NEGOTIATED;
+	backoff = 0;
+      }
     }
+    if (backoff < retransmits)
+      ++backoff;
   }
   return STATE_EXITING;
 }
@@ -411,6 +417,7 @@ static int do_connecting(void)
   struct key csession_secret;
   struct key csession_public;
   struct key tmpkey;
+  unsigned backoff = 1;
 
   saw_seq_gap = 0;
   buffer_rewind();
@@ -420,15 +427,20 @@ static int do_connecting(void)
   auth_start(&cid_authenticator, &tmpkey);
 
   while (!exitasap) {
-    send_packet("INI1", cid_timeout);
+    send_packet("INI1", cid_timeout * backoff);
     while (!exitasap) {
       if (poll_both() == 0)
 	return STATE_DISCONNECTED;
       if (stdin_ready)
 	read_lines();
-      if (sock_ready && receive_cid(&csession_secret))
-	return STATE_SENDING;
+      if (sock_ready) {
+	if (receive_cid(&csession_secret))
+	  return STATE_SENDING;
+	backoff = 0;
+      }
     }
+    if (backoff < retransmits)
+      ++backoff;
   }
   return STATE_EXITING;
 }
