@@ -21,6 +21,8 @@
 #include "srlog2.h"
 #include "srlog2-cli.h"
 
+#define EXITONEOF 1
+
 #define REJECTf(FORMAT, ...) do { \
   debugf(DEBUG_PACKET, FORMAT, __VA_ARGS__); \
   return 0; \
@@ -84,7 +86,7 @@ static int read_line(void)
   const char** p;
   int matches;
   if (!ibuf_getstr(&inbuf, &last_line.line, LF)) {
-    exitasap = 1;
+    exitasap = EXITONEOF;
     if (!ibuf_eof(&inbuf))
       error1sys("Could not read line from stdin");
     else
@@ -436,7 +438,7 @@ static int do_sending(void)
 {
   unsigned i;
   if (!make_msg())
-    return STATE_CONNECTED;
+    return (stdin_eof && !EXITONEOF) ? STATE_EXITING : STATE_CONNECTED;
   /* Try to send the message packet multiple times. */
   for (i = 1; !exitasap && i <= retransmits; ++i) {
     debugf(DEBUG_PACKET, "{Sending seq #}llu{ to #}llu", seq_send, seq_last);
