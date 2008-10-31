@@ -1,8 +1,10 @@
 -------------------------------------------------------------------------------
 Changes in version 0.90
 
-- Added an $EXITONEOF control to srlog2 to make it flush its buffer
-  before exiting after the end of input has been reached.
+- The default behavior of srlog2 has been changed to wait until its
+  buffer has been completely sent before exiting instead of exiting
+  immediately when it reaches the end of its input.  To enable the older
+  behavior, set $EXITONEOF.
 
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/

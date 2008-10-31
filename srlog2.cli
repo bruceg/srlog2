@@ -41,9 +41,9 @@ before it is considered for truncation.  Defaults to 100000 bytes.
 
 @item EXITONEOF
 
-If set to @samp{0}, then @command{srlog2} will wait until its buffer has
-been completely sent to the remote before exiting instead of immediately
-exiting when it reaches the end of its input.
+If present then @command{srlog2} will exit immediately when it reaches
+the end of its input instead of waiting until its buffer has been
+completely sent to the remote.
 
 @item ID_TIMEOUT
 

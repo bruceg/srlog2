@@ -9,7 +9,7 @@ rm -f buffer sequence
   echo 1
   echo 2
   echo 3
-) | env LD_PRELOAD=${src}/blockwrite.so ${src}/srlog2 service
+) | env EXITONEOF=1 LD_PRELOAD=${src}/blockwrite.so ${src}/srlog2 service
 
 cut -d' ' -f1,3- buffer
 

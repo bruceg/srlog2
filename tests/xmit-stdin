@@ -2,7 +2,6 @@ startit
 (
   echo 0
   echo 1
-  sleep 1
 ) | ${src}/srlog2 service
 stopit
 <result>

@@ -3,7 +3,7 @@ rm -f buffer sequence
   echo This should be in the logs.
   echo This should not be.
   echo
-) | ${src}/srlog2 service - -'This should not*' -'This should be'
+) | env EXITONEOF=1 ${src}/srlog2 service - -'This should not*' -'This should be'
 cut -d' ' -f1,3- buffer
 <result>
 0 This should be in the logs.

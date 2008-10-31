@@ -46,7 +46,7 @@ static str keyex_name;
 static const struct key_cb* keyex;
 static str tmpstr;
 static unsigned char nonce[8];
-static int exitoneof = 1;
+static int exitoneof = 0;
 
 static int exitasap;
 
@@ -603,8 +603,8 @@ int cli_main(int argc, char* argv[])
   getenvu("CID_TIMEOUT", &cid_timeout);
   getenvu("RETRANSMITS", &retransmits);
   getenvu("READWAIT", &readwait);
-  if ((env = getenv("EXITONEOF")) != 0)
-    exitoneof = strtoul(env, 0, 0);
+  if (getenv("EXITONEOF") != 0)
+    exitoneof = 1;
 
   if (getenv("NOFILE") == 0) {
     buffer_file_init();
