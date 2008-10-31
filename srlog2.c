@@ -68,6 +68,7 @@ static AUTH_CTX cid_authenticator;
 static ENCR_CTX encryptor;
 
 /* ------------------------------------------------------------------------- */
+static int stdin_eof = 0;
 static struct line last_line;
 
 static void gettimestamp(struct timestamp* ts)
@@ -86,6 +87,8 @@ static int read_line(void)
     exitasap = 1;
     if (!ibuf_eof(&inbuf))
       error1sys("Could not read line from stdin");
+    else
+      stdin_eof = 1;
     return 0;
   }
   --last_line.line.len;		/* Strip off the trailing LF */
@@ -127,10 +130,6 @@ static void poll_reset(int timeout)
 {
   poll_timeout = timeout;
   poll_timestamp.tv_sec = 0;
-  io[0].fd = 0;
-  io[0].events = IOPOLL_READ;
-  io[1].fd = sock;
-  io[1].events = IOPOLL_READ;
 }
 
 static int poll_both(void)
@@ -153,6 +152,11 @@ static int poll_both(void)
     if (poll_timeout < 0) poll_timeout = 0;
   }
   poll_timestamp = timestamp;
+
+  io[0].fd = 0;
+  io[0].events = stdin_eof ? 0 : IOPOLL_READ;
+  io[1].fd = sock;
+  io[1].events = IOPOLL_READ;
 
   switch (ready = iopoll(io, 2, poll_timeout)) {
   case -1:
