@@ -1,6 +1,7 @@
 #include <string.h>
 #include <base64/base64.h>
 #include <iobuf/ibuf.h>
+#include <msg/msg.h>
 #include <msg/wrap.h>
 #include <str/str.h>
 #include <str/iter.h>
@@ -20,8 +21,10 @@ int keylist_import_line(struct keylist* list,
   else if (memcmp(line, "curve25519:", 11) == 0)
     i = 1, prefix = 11, cb = &curve25519_cb;
 #endif
-  else
-    return 0;
+  else {
+    warn1("Unknown key type in keylist");
+    return 1;
+  }
   line += prefix;
   len -= prefix;
   if (base64_decode_line(line, &tmp)
