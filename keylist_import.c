@@ -8,8 +8,8 @@
 
 #include "keylist.h"
 
-int keylist_import_line(struct keylist* list,
-			const char* line, unsigned long len)
+static int keylist_import_line(struct keylist* list,
+			       const char* line, unsigned long len)
 {
   int i;
   int prefix;
@@ -38,7 +38,7 @@ int keylist_import_line(struct keylist* list,
   return 0;
 }
 
-int keylist_import(struct keylist* list, const struct str* text)
+static int keylist_import(struct keylist* list, const struct str* text)
 {
   striter i;
   striter_loop(&i, text, '\n') {

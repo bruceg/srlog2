@@ -20,7 +20,6 @@ struct keylist
 
 extern int keylist_set(struct keylist* list, const struct key* key);
 extern struct key* keylist_get(struct keylist* list, const struct key_cb* cb);
-extern int keylist_import(struct keylist* list, const struct str* text);
 extern int keylist_load(struct keylist* list, const char* path);
 extern int keylist_load_multi(struct keylist* list,
 			      const char* prefix,
