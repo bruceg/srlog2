@@ -71,6 +71,8 @@ static const struct line* buffer_next(void)
   }
   while (ibuf_getstr(&readbuf, &tmpstr, LF)) {
     --tmpstr.len;
+    if (tmpstr.len == 0)
+      continue;			/* Skip blank lines */
     line = parse_buffered_line(&tmpstr);
     DEBUG2("Read #", utoa(line->seq));
     if (line->seq < seq_read)
