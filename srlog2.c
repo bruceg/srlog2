@@ -154,7 +154,7 @@ static int poll_both(void)
   }
   poll_timestamp = timestamp;
 
-  io[0].fd = 0;
+  io[0].fd = stdin_eof ? -1 : 0;
   io[0].events = stdin_eof ? 0 : IOPOLL_READ;
   io[1].fd = sock;
   io[1].events = IOPOLL_READ;
