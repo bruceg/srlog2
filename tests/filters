@@ -6,4 +6,5 @@ rm -f buffer sequence
 ) | env EXITONEOF=1 ${src}/srlog2 service - -'This should not*' -'This should be'
 cut -d' ' -f1,3- buffer
 <result>
+
 0 This should be in the logs.

@@ -19,6 +19,8 @@ rm -f blockwrite.o blockwrite.so
 srlog2: Warning: Could not write to buffer, pausing
 srlog2: Warning: Could not write to buffer, pausing
 srlog2: Warning: Could not write to buffer, pausing
+srlog2: Warning: Could not write to buffer, pausing
+
 0 1
 1 2
 2 3

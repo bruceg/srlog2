@@ -8,6 +8,8 @@ Changes in version 0.90
 
 - Added a backoff to sending INIs to avoid flooding busy receivers.
 
+- Improvements to handling corrupted buffers in srlog2.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

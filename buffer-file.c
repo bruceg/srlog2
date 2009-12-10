@@ -152,6 +152,10 @@ void buffer_file_push(const struct line* line)
     writefd = open(buffer_filename, O_WRONLY|O_CREAT|O_APPEND, 0644);
     if (writefd < 0)
       die1sys(1, "Could not open buffer file for writing");
+    /* In case the previous run crashed or otherwise ended the file with
+     * a truncated line, add a newline to ensure the next line to be
+     * written starts at the start of a line. */
+    writeall(writefd, "\n", 1);
   }
   i = fmt_ulldec(buf, line->seq);
   buf[i++] = ' ';
