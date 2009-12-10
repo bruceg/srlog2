@@ -51,7 +51,7 @@ static void buffer_empty(void)
     ibuf_close(&readbuf);
     readbuf.io.fd = 0;
     if (writefd >= 0 &&
-	ftruncate(writefd, 0) != 0)
+	(ftruncate(writefd, 0) != 0 || fdatasync(writefd) != 0))
       die1sys(1, "Could not truncate buffer"); /* Should be impossible */
   }
   SET_SEQ(seq_read = seq_next);
