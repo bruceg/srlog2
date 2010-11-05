@@ -1,4 +1,5 @@
 rm -f buffer sequence
+setup
 (
   echo This should be in the logs.
   echo This should not be.

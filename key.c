@@ -32,9 +32,7 @@ const struct key_cb* key_cb_lookup(const char* name)
 {
   if (strcasecmp(name, nistp224_cb.name) == 0)
     return &nistp224_cb;
-#ifdef HASCURVE25519
   if (strcasecmp(name, curve25519_cb.name) == 0)
     return &curve25519_cb;
-#endif
   return 0;
 }

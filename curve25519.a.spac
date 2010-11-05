@@ -1,4 +1,2 @@
-: curve25519.h
-test -s curve25519/curve25519.a \
-&& cp curve25519/curve25519.a $@ \
-|| touch curve25519.a
+: curve25519.impl
+cp $$( cut -d' ' -f2 curve25519.impl ) $@

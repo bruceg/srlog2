@@ -1,6 +1,9 @@
 -------------------------------------------------------------------------------
 Changes in version 0.90
 
+- Added the curve25519-donna code to provide support for all platforms.
+  See http://code.google.com/p/curve25519-donna/
+
 - The default behavior of srlog2 has been changed to wait until its
   buffer has been completely sent before exiting instead of exiting
   immediately when it reaches the end of its input.  To enable the older

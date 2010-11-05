@@ -17,10 +17,8 @@ static int keylist_import_line(struct keylist* list,
   const struct key_cb* cb;
   if (memcmp(line, "nistp224:", 9) == 0)
     i = 0, prefix = 9, cb = &nistp224_cb;
-#ifdef HASCURVE25519
   else if (memcmp(line, "curve25519:", 11) == 0)
     i = 1, prefix = 11, cb = &curve25519_cb;
-#endif
   else {
     warn1("Unknown key type in keylist");
     return 1;
@@ -73,10 +71,8 @@ int keylist_load_multi(struct keylist* list,
     suffix = "";
   wrap_str(str_copy3s(&path, prefix, nistp224_cb.name, suffix));
   result += keylist_load(list, path.s);
-#ifdef HASCURVE25519
   wrap_str(str_copy3s(&path, prefix, curve25519_cb.name, suffix));
   result += keylist_load(list, path.s);
-#endif
   str_free(&path);
   return result;
 }

@@ -5,13 +5,7 @@
 
 struct str;
 
-#ifdef HASCURVE25519
-#define ADD_CURVE25519 1
-#else
-#define ADD_CURVE25519 0
-#endif
-
-#define KEY_TYPE_COUNT (1+ADD_CURVE25519)
+#define KEY_TYPE_COUNT 2
 
 struct keylist
 {

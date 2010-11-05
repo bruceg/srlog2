@@ -1,5 +1,4 @@
 #include "srlog2.h"
-#ifdef HASCURVE25519
 
 static int exchange(struct key* shared,
 		    const struct key* public,
@@ -31,5 +30,3 @@ const struct key_cb curve25519_cb = {
   .generate = generate,
   .exchange = exchange,
 };
-
-#endif

@@ -9,7 +9,9 @@ TARGETS
 compile
 conf_etc.c
 curve25519.h
+curve25519.impl
 curve25519/curve25519.impl
+curve25519/curve25519.impl.new
 curve25519/curve25519.impl.check
 curve25519/curve25519.impl.check.h
 curve25519/x86cpuid

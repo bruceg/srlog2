@@ -1,0 +1,4 @@
+dependon(glob('curve25519/curve25519*.[chs]'))
+dependon(glob('curve25519-donna/curve*.c'))
+: curve25519.sh
+sh curve25519.sh
