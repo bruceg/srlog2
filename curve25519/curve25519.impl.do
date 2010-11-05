@@ -3,7 +3,7 @@
 # Public domain.
 
 echo '#include "curve25519_athlon.h"' > curve25519.impl.check.h
-if gcc -o x86cpuid x86cpuid.c >/dev/null 2>&1 \
+if gcc -o x86cpuid -fno-pie x86cpuid.c >/dev/null 2>&1 \
 && ./x86cpuid > x86cpuid.out \
 && $* -o curve25519.impl.check curve25519.impl.check.c \
 curve25519_athlon.c \
