@@ -1,5 +1,3 @@
-files(glob('curve25519/[FM]*'))
-files(glob('curve25519/*.[cs]'))
-files(glob('curve25519/*.do'))
-files(['curve25519/cpucycles_athlon.h', 'curve25519/curve25519_athlon.h'])
-files(glob('curve25519-donna/*.[ch]'))
+files(glob('curve25519-*/[FMR]*'))
+files(glob('curve25519-*/*.[chs]'))
+files(glob('curve25519-*/*.do'))
