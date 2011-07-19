@@ -10,6 +10,8 @@ Changes in version 0.90
 
 - Improvements to handling corrupted buffers in srlog2.
 
+- Fixed typo in use of $NOFILES.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

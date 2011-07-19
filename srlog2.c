@@ -618,7 +618,7 @@ int cli_main(int argc, char* argv[])
   if (getenv("EXITONEOF") != 0)
     exitoneof = 1;
 
-  if (getenv("NOFILE") == 0) {
+  if (getenv("NOFILES") == 0 && getenv("NOFILE") == 0) {
     buffer_file_init();
     buffer_peek = buffer_file_peek;
     buffer_read = buffer_file_read;
