@@ -73,8 +73,8 @@ The number of times to retransmit each message.  Defaults to 4.
 
 @item READWAIT
 
-The time to wait (in milliseconds) for more input data before forming an
-outgoing packet.  Defaults to 100ms.
+The time to wait after each line (in milliseconds) for more input data
+before forming an outgoing packet.  Defaults to 100ms.
 
 @item SENDER
 
@@ -87,6 +87,10 @@ system call, truncated at the first @samp{.}.
 The host name or IP address of the system to which to send all traffic.
 This name is also used to look up the server's public key.  If a server
 name is present on the command line, this variable is ignored.
+
+@item STARTLINES
+
+The maximum number of lines to buffer up before starting to send.  Defaults to 250.
 
 @end table
 

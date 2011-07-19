@@ -41,6 +41,7 @@ static unsigned long ack_timeout = 1000;
 static unsigned long cid_timeout = 5*1000;
 static unsigned long retransmits = 4;
 static unsigned long readwait = 100;
+static unsigned long startlines = 250;
 static const char** patterns;
 static str keyex_name;
 static const struct key_cb* keyex;
@@ -473,6 +474,8 @@ static int do_connected(void)
   
   /* Keep capturing lines as long as there are lines ready to read. */
   while (!exitasap) {
+    if (seq_next - seq_send >= startlines)
+      return STATE_SENDING;
     switch (iopoll(io, 1, readwait)) {
     case -1:
       return STATE_EXITING;
@@ -611,6 +614,7 @@ int cli_main(int argc, char* argv[])
   getenvu("CID_TIMEOUT", &cid_timeout);
   getenvu("RETRANSMITS", &retransmits);
   getenvu("READWAIT", &readwait);
+  getenvu("STARTLINES", &startlines);
   if (getenv("EXITONEOF") != 0)
     exitoneof = 1;
 

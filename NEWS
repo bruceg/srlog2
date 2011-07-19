@@ -8,6 +8,10 @@ Changes in version 0.90
 
 - Added a backoff to sending INIs to avoid flooding busy receivers.
 
+- Added a control to start sending buffered lines even if more are being
+  read.  This prevents a starvation issue where srlog2 wouldn't start
+  sending when input lines kept coming just fast enough.
+
 - Improvements to handling corrupted buffers in srlog2.
 
 - Fixed typo in use of $NOFILES.
