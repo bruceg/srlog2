@@ -53,11 +53,7 @@ static int exitasap;
 static str packet;
 static str rpacket;
 
-static const struct line* (*buffer_peek)(void);
-static const struct line* (*buffer_read)(void);
-static void (*buffer_pop)(void);
-static void (*buffer_push)(const struct line*);
-static void (*buffer_rewind)(void);
+static const struct buffer_ops* buffer = 0;
 
 /* Key/Encryption Handling ------------------------------------------------- */
 static struct keylist shared_secrets;
@@ -107,7 +103,7 @@ static int read_line(void)
     str_rcut(&last_line.line, last_line.line.len - MAX_LINE);
     memcpy(last_line.line.s + MAX_LINE - 17, "[...truncated...]", 17);
   }
-  buffer_push(&last_line);
+  buffer->push(&last_line);
   return 1;
 }
 
@@ -219,13 +215,13 @@ static void end_msg(void)
 static int make_msg(void)
 {
   const struct line* line;
-  if ((line = buffer_read()) == 0)
+  if ((line = buffer->read()) == 0)
     return 0;
   start_msg(line);
-  while ((line = buffer_peek()) != 0) {
+  while ((line = buffer->peek()) != 0) {
     if (!add_msg(line))
       break;
-    buffer_read();
+    buffer->read();
   }
   end_msg();
   return 1;
@@ -356,7 +352,7 @@ static int receive_ack(void)
     return 0;
   }
   debugf(DEBUG_PACKET, "{Received ACK packet #}llu", seq);
-  buffer_pop();
+  buffer->pop();
   seq_last = 0;
   return 1;
 }
@@ -420,9 +416,9 @@ static int do_connecting(void)
   unsigned backoff = 1;
 
   saw_seq_gap = 0;
-  buffer_rewind();
+  buffer->rewind();
   key_generate(&csession_secret, &csession_public, keyex);
-  make_ini(&csession_public, buffer_peek());
+  make_ini(&csession_public, buffer->peek());
   keylist_exchange_list_key(&tmpkey, &server_publics, &csession_secret);
   auth_start(&cid_authenticator, &tmpkey);
 
@@ -618,21 +614,10 @@ int cli_main(int argc, char* argv[])
   if (getenv("EXITONEOF") != 0)
     exitoneof = 1;
 
-  if (getenv("NOFILES") == 0 && getenv("NOFILE") == 0) {
-    buffer_file_init();
-    buffer_peek = buffer_file_peek;
-    buffer_read = buffer_file_read;
-    buffer_pop = buffer_file_pop;
-    buffer_push = buffer_file_push;
-    buffer_rewind = buffer_file_rewind;
-  }
-  else {
-    buffer_peek = buffer_nofile_peek;
-    buffer_read = buffer_nofile_read;
-    buffer_pop = buffer_nofile_pop;
-    buffer_push = buffer_nofile_push;
-    buffer_rewind = buffer_nofile_rewind;
-  }
+  if (getenv("NOFILES") == 0 && getenv("NOFILE") == 0)
+    buffer = buffer_file_init();
+  else
+    buffer = buffer_nofile_init();
 
   sig_all_catch(sigfn);
   exitasap = 0;

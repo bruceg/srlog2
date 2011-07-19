@@ -91,7 +91,7 @@ static const struct line* buffer_next(void)
 static const struct line* last_line = 0;
 
 /** Look at the next line in the buffer without advancing. */
-const struct line* buffer_file_peek(void)
+static const struct line* buffer_file_peek(void)
 {
   ENTER();
   if (last_line == 0)
@@ -100,7 +100,7 @@ const struct line* buffer_file_peek(void)
 }
 
 /** Read and advance past the next line in the buffer. */
-const struct line* buffer_file_read(void)
+static const struct line* buffer_file_read(void)
 {
   const struct line* line;
   ENTER();
@@ -119,7 +119,7 @@ static void buffer_file_sync(void)
 }
 
 /** Rewind the buffer to the last mark point. */
-void buffer_file_rewind(void)
+static void buffer_file_rewind(void)
 {
   ENTER();
   if (!ibuf_rewind(&readbuf))
@@ -130,7 +130,7 @@ void buffer_file_rewind(void)
 }
 
 /** "Remove" all read lines from the buffer and advance the mark point. */
-void buffer_file_pop(void)
+static void buffer_file_pop(void)
 {
   ENTER();
   SET_SEQ(seq_send = seq_read);
@@ -140,7 +140,7 @@ void buffer_file_pop(void)
 }
 
 /** Add a line to the end of the buffer. */
-void buffer_file_push(const struct line* line)
+static void buffer_file_push(const struct line* line)
 {
   char buf[FMT_ULONG_LEN*3 + line->line.len + 4];
   unsigned i;
@@ -168,7 +168,15 @@ void buffer_file_push(const struct line* line)
   writeall(writefd, buf, i);
 }
 
-void buffer_file_init(void)
+static const struct buffer_ops ops = {
+  .peek   = buffer_file_peek,
+  .read   = buffer_file_read,
+  .pop    = buffer_file_pop,
+  .push   = buffer_file_push,
+  .rewind = buffer_file_rewind,
+};
+
+const struct buffer_ops* buffer_file_init(void)
 {
   const char* env;
   if ((env = getenv("CLEAN_BYTES")) != 0)
@@ -180,4 +188,5 @@ void buffer_file_init(void)
   if (buffer_file_peek() != 0)
     SET_SEQ(seq_send = last_line->seq);
   atexit(buffer_file_sync);
+  return &ops;
 }

@@ -49,6 +49,15 @@ struct line
   str line;
 };
 
+struct buffer_ops
+{
+  const struct line* (*peek)(void);
+  const struct line* (*read)(void);
+  void (*pop)(void);
+  void (*push)(const struct line*);
+  void (*rewind)(void);
+};
+
 /* packet.c */
 extern void auth_start(AUTH_CTX* ctx, const struct key* key);
 extern int pkt_start(str* s, uint32 type);
@@ -91,19 +100,10 @@ extern void delay(const char* msg);
 extern void writeall(int fd, const char* buf, size_t len);
 
 /* buffer-file.c */
-extern void buffer_file_init(void);
-extern const struct line* buffer_file_peek(void);
-extern const struct line* buffer_file_read(void);
-extern void buffer_file_pop(void);
-extern void buffer_file_push(const struct line*);
-extern void buffer_file_rewind(void);
+extern const struct buffer_ops* buffer_file_init(void);
 
 /* buffer-nofile.c */
-extern const struct line* buffer_nofile_peek(void);
-extern const struct line* buffer_nofile_read(void);
-extern void buffer_nofile_pop(void);
-extern void buffer_nofile_push(const struct line*);
-extern void buffer_nofile_rewind(void);
+extern const struct buffer_ops* buffer_nofile_init(void);
 
 /* addrname.c */
 GHASH_DECL(addrname,ipv4addr,const char*);
