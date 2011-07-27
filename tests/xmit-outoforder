@@ -1,0 +1,15 @@
+startit
+cat <<EOF >buffer
+3 1134162294.530385500 3
+4 1134162295.530385500 4
+1 1134162292.530385500 1
+2 1134162293.530385500 2
+EOF
+echo 0:5 >sequence
+${src}/srlog2 service </dev/null
+stopit
+<result>
+5:5
+:sender:service
+3
+4
