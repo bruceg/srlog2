@@ -16,6 +16,8 @@ Changes in version 0.90
 
 - Fixed typo in use of $NOFILES.
 
+- Fixed handling of corrupt buffers with partial last lines.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------
