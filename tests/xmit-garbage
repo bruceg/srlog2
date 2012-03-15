@@ -1,0 +1,15 @@
+startit
+cat <<EOF >buffer
+4 1134162295.530385500 4
+5 1134162296.530385500 5
+EOF
+printf '6 113416\0\0\0\0\0\0\0530385500 6' >> buffer
+echo 0:7 >sequence
+${src}/srlog2 service </dev/null
+stopit
+<result>
+srlog2: Warning: Format error in buffer file: bad timestamp
+6:7
+:sender:service
+4
+5

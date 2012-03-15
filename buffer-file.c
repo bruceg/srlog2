@@ -29,11 +29,11 @@ static const struct line* parse_buffered_line(const str* s)
   static struct line line;
   char* end;
   line.seq = strtoull(s->s, &end, 10);
-  if (*end++ != ' ') die1(1, "Format error in buffer file: bad sequence");
+  if (*end++ != ' ') { warn1("Format error in buffer file: bad sequence"); return 0; }
   line.timestamp.sec = strtoul(end, &end, 10);
-  if (*end++ != '.') die1(1, "Format error in buffer file: bad timestamp");
+  if (*end++ != '.') { warn1("Format error in buffer file: bad timestamp"); return 0; }
   line.timestamp.nsec = strtoul(end, &end, 10);
-  if (*end++ != ' ') die1(1, "Format error in buffer file: bad utimestamp");
+  if (*end++ != ' ') { warn1("Format error in buffer file: bad utimestamp"); return 0; }
   while (!str_copyb(&line.line, end, s->len - (end - s->s)))
     delay("allocate memory");
   return &line;
@@ -74,7 +74,8 @@ static const struct line* buffer_next(void)
       --tmpstr.len;
     if (tmpstr.len == 0)
       continue;			/* Skip blank lines */
-    line = parse_buffered_line(&tmpstr);
+    if ((line = parse_buffered_line(&tmpstr)) == 0)
+      continue;
     DEBUG2("Read #", utoa(line->seq));
     if (line->seq < seq_read)
       continue;
