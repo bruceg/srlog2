@@ -41,3 +41,4 @@ To generate an agreed key do:
   curve25519_donna(shared_key, mysecret, theirpublic);
 
 And hash the shared_key with a cryptographic hash function before using.
+
