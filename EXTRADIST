@@ -1,3 +1,4 @@
 blockwrite.c
+curve25519-donna/LICENSE
 design.html
 design.info

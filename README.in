@@ -95,3 +95,6 @@ This package is Copyright(C) @YEAR@ Bruce Guenter or FutureQuest, Inc.,
 and may be copied according to the GNU GENERAL PUBLIC LICENSE (GPL)
 Version 2 or a later version.  A copy of this license is included with
 this package.  This package comes with no warranty of any kind.
+
+Some portions Copyright © 2008, Google Inc. All rights reserved.
+See curve25519-donna/LICENSE for details.

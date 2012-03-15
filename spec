@@ -52,6 +52,6 @@ done
 %dir /etc/srlog2
 %dir /etc/srlog2/env
 %dir /etc/srlog2/servers
-%doc ANNOUNCEMENT COPYING NEWS README *.html
+%doc ANNOUNCEMENT COPYING NEWS README *.html curve25519-donna/LICENSE
 %{_bindir}/*
 %{_mandir}/*/*
