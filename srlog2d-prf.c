@@ -23,11 +23,9 @@ static void send_prf(const unsigned char nonce[8])
   pkt_start(&packet, PRF1);
   pkt_add_b(&packet, nonce, 8);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
-#ifdef HASCURVE25519
   if (contains(&keyex_name, curve25519_cb.name))
     pkt_add_s1c(&packet, curve25519_cb.name);
   else
-#endif
     pkt_add_s1c(&packet, nistp224_cb.name);
   pkt_add_s1c(&packet, KEYHASH_NAME);
   pkt_add_s1c(&packet, ENCRYPTOR_NAME);

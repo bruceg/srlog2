@@ -5,6 +5,7 @@
 )
 
 rm -f buffer sequence
+setup
 (
   echo 1
   echo 2

@@ -53,8 +53,6 @@ On the receiver:
 	host.name.of.sender:service:copy-of-sender's-/etc/srlog2/nistp224.pub
 	host.name.of.sender:service:copy-of-sender's-/etc/srlog2/curve25519.pub
 
-(Note: curve25519 only works on 32-bit x86 systems at the moment)
-
 Operation:
 
 - For each service, instead of running "multilog t" as the log manager,

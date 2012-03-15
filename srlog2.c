@@ -235,12 +235,10 @@ static void make_prq(void)
   pkt_add_b(&packet, nonce, sizeof nonce);
   pkt_add_s1c(&packet, AUTHENTICATOR_NAME);
   wrap_str(str_copys(&keyex_name, nistp224_cb.name));
-#ifdef HASCURVE25519
   if (keylist_get(&shared_secrets, &curve25519_cb) != 0) {
     wrap_str(str_catc(&keyex_name, 0));
     wrap_str(str_cats(&keyex_name, curve25519_cb.name));
   }
-#endif
   pkt_add_s1(&packet, &keyex_name);
   pkt_add_s1c(&packet, KEYHASH_NAME);
   pkt_add_s1c(&packet, ENCRYPTOR_NAME);

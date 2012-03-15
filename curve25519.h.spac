@@ -1,5 +1,2 @@
-: conf-cc
-rm -f curve25519/*.[oa]
-( cd curve25519 && env CC="`head -n 1 ../conf-cc`" make curve25519.a; ) \
-&& ( echo '#define HASCURVE25519 1'; cat curve25519/curve25519_`cat curve25519/curve25519.impl`.h; ) >$@ \
-|| echo '#undef HASCURVE25519' >$@
+: curve25519.impl curve25519-donna.h
+cp $$( cut -d' ' -f1 curve25519.impl ) $@

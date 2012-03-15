@@ -1,0 +1,13 @@
+startit curve25519
+cat <<EOF >buffer
+0 1134162292.530385500 0
+1 1134162293.530385500 1
+EOF
+echo 0:2 >sequence
+${src}/srlog2 service < /dev/null
+stopit
+<result>
+2:2
+:sender:service
+0
+1
