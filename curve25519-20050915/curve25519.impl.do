@@ -2,8 +2,13 @@
 # D. J. Bernstein
 # Public domain.
 
+touch nopietest.c \
+&& gcc -fno-pie -c nopietest.c >/dev/null 2>&1 \
+&& fnopie=-fno-pie
+rm -f nopietest.c nopietest.o
+
 echo '#include "curve25519_athlon.h"' > curve25519.impl.check.h
-if gcc -o x86cpuid -fno-pie x86cpuid.c >/dev/null 2>&1 \
+if gcc -o x86cpuid $fnopie x86cpuid.c >/dev/null 2>&1 \
 && ./x86cpuid > x86cpuid.out \
 && $* -o curve25519.impl.check curve25519.impl.check.c \
 curve25519_athlon.c \
