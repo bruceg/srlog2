@@ -384,6 +384,14 @@ static int receive_cid(struct key* csession_secret)
 #define STATE_CONNECTED 3
 #define STATE_EXITING 4
 
+const char* const state_name[] = {
+  "disconnected",
+  "negotiated",
+  "sending",
+  "connected",
+  "exiting",
+};
+
 static int do_negotiating(void)
 {
   unsigned backoff = 1;
@@ -493,7 +501,7 @@ static void mainloop(void)
 {
   int state = STATE_DISCONNECTED;
   while (!exitasap) {
-    debugf(DEBUG_STATE, "{Entering state }u", state);
+    debugf(DEBUG_STATE, "{Entering state }s", state_name[state]);
     switch (state) {
     case STATE_DISCONNECTED: state = do_negotiating(); break;
     case STATE_NEGOTIATED:   state = do_connecting(); break;
