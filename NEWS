@@ -1,6 +1,8 @@
 -------------------------------------------------------------------------------
 Changes in version 0.91
 
+- Fixed some bugs handling HUP on piped input.
+
 Development of this version has been sponsored by FutureQuest, Inc.
 ossi@FutureQuest.net  http://www.FutureQuest.net/
 -------------------------------------------------------------------------------

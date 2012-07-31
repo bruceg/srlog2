@@ -85,8 +85,7 @@ static int read_line(void)
     exitasap = exitoneof || seq_next == seq_send;
     if (!ibuf_eof(&inbuf))
       error1sys("Could not read line from stdin");
-    else
-      stdin_eof = 1;
+    stdin_eof = 1;
     return 0;
   }
   --last_line.line.len;		/* Strip off the trailing LF */
@@ -122,6 +121,7 @@ static int poll_timeout;
 static struct timeval poll_timestamp;
 static iopoll_fd io[2];
 #define stdin_ready (io[0].revents)
+#define stdin_error (stdin_ready && (io[0].revents & IOPOLL_READ) == 0)
 #define sock_ready (io[1].revents)
 
 static void poll_reset(int timeout)
@@ -167,6 +167,12 @@ static int poll_both(void)
     poll_timeout = 0;
     return 0;
   default:
+    if (stdin_error) {
+      stdin_eof = 1;
+      if (exitoneof || seq_next == seq_send)
+	exitasap = 1;
+      io[0].revents = 0;
+    }
     return ready;
   }
 }
@@ -486,12 +492,14 @@ static int do_connected(void)
     case -1:
       return STATE_EXITING;
     case 1:
-      read_lines();
+      if (stdin_error)
+	return exitoneof ? STATE_EXITING : STATE_SENDING;
+      if (read_lines() > 0 || stdin_eof)
+	return STATE_SENDING;
       continue;
     case 0:
-      break;
+      return STATE_SENDING;
     }
-    return STATE_SENDING;
   }
   return STATE_EXITING;
 }

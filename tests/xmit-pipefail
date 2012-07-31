@@ -1,0 +1,7 @@
+startit
+( sleep 1; echo line; ) | ${src}/srlog2 service
+stopit
+<result>
+1:1
+:sender:service
+line
