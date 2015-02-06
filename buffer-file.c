@@ -1,14 +1,14 @@
-#include <sysdeps.h>
+#include <bglibs/sysdeps.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <iobuf/ibuf.h>
-#include <fmt/misc.h>
-#include <fmt/number.h>
-#include <msg/msg.h>
-#include <misc/misc.h>
-#include <str/str.h>
+#include <bglibs/ibuf.h>
+#include <bglibs/fmt.h>
+#include <bglibs/fmt.h>
+#include <bglibs/msg.h>
+#include <bglibs/misc.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
 

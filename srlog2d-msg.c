@@ -1,9 +1,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <crc/crc32.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
+#include <bglibs/crc32.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"

@@ -1,10 +1,10 @@
 #include <string.h>
-#include <base64/base64.h>
-#include <iobuf/ibuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
-#include <str/str.h>
-#include <str/iter.h>
+#include <bglibs/base64.h>
+#include <bglibs/ibuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
+#include <bglibs/str.h>
+#include <bglibs/striter.h>
 
 #include "keylist.h"
 

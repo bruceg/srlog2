@@ -5,16 +5,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <systime.h>
-#include <adt/ghash.h>
-#include <base64/base64.h>
-#include <crc/crc32.h>
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <net/resolve.h>
-#include <net/socket.h>
-#include <str/iter.h>
-#include <unix/sig.h>
+#include <bglibs/systime.h>
+#include <bglibs/ghash.h>
+#include <bglibs/base64.h>
+#include <bglibs/crc32.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/resolve.h>
+#include <bglibs/socket.h>
+#include <bglibs/striter.h>
+#include <bglibs/sig.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"

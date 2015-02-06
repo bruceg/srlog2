@@ -2,10 +2,10 @@
 #include <sys/socket.h>
 #include <string.h>
 
-#include <systime.h>
-#include <adt/ghash.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
+#include <bglibs/systime.h>
+#include <bglibs/ghash.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"

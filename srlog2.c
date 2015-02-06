@@ -6,16 +6,16 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <sysdeps.h>
-#include <systime.h>
-#include <crc/crc32.h>
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
-#include <net/resolve.h>
-#include <net/socket.h>
-#include <str/str.h>
-#include <unix/sig.h>
+#include <bglibs/sysdeps.h>
+#include <bglibs/systime.h>
+#include <bglibs/crc32.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
+#include <bglibs/resolve.h>
+#include <bglibs/socket.h>
+#include <bglibs/str.h>
+#include <bglibs/sig.h>
 
 #include "conf_etc.c"
 #include "srlog2.h"

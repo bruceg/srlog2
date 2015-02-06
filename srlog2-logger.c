@@ -1,16 +1,16 @@
-#include <sysdeps.h>
+#include <bglibs/sysdeps.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <systime.h>
-#include <adt/ghash.h>
-#include <crc/crc32.h>
-#include <iobuf/ibuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
-#include <str/str.h>
+#include <bglibs/systime.h>
+#include <bglibs/ghash.h>
+#include <bglibs/crc32.h>
+#include <bglibs/ibuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
 #include "srlog2-logger-cli.h"

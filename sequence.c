@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <str/str.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
 

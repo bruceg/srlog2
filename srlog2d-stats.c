@@ -1,5 +1,5 @@
-#include <msg/msg.h>
-#include <net/socket.h>
+#include <bglibs/msg.h>
+#include <bglibs/socket.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"

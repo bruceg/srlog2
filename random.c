@@ -2,8 +2,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <systime.h>
-#include <msg/msg.h>
+#include <bglibs/systime.h>
+#include <bglibs/msg.h>
 
 #include "srlog2.h"
 #include "surfrand.h"

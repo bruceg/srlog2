@@ -3,11 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <base64/base64.h>
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
-#include <str/str.h>
+#include <bglibs/base64.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
 

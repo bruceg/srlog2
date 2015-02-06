@@ -3,10 +3,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <base64/base64.h>
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
+#include <bglibs/base64.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
 
 #include "conf_etc.c"
 #include "srlog2.h"

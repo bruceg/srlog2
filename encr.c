@@ -1,8 +1,8 @@
-#include <crypto/sha256.h>
-#include <uint64.h>
+#include <bglibs/sha256.h>
+#include <bglibs/uint64.h>
 #include <string.h>
 
-#include <msg/msg.h>
+#include <bglibs/msg.h>
 
 #include "encr.h"
 #include "key.h"

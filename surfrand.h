@@ -1,8 +1,8 @@
 #ifndef SURFRAND
 #define SURFRAND
 
-#include <sysdeps.h>
-#include <crypto/surf.h>
+#include <bglibs/sysdeps.h>
+#include <bglibs/surf.h>
 
 struct surfrand
 {

@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <iobuf/iobuf.h>
-#include <msg/wrap.h>
-#include <misc/misc.h>
-#include <str/str.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/wrap.h>
+#include <bglibs/misc.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
 

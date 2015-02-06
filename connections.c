@@ -1,12 +1,12 @@
 #include <string.h>
 
-#include <adt/ghash.h>
-#include <base64/base64.h>
-#include <crc/crc32.h>
-#include <iobuf/iobuf.h>
-#include <msg/msg.h>
-#include <msg/wrap.h>
-#include <fmt/number.h>
+#include <bglibs/ghash.h>
+#include <bglibs/base64.h>
+#include <bglibs/crc32.h>
+#include <bglibs/iobuf.h>
+#include <bglibs/msg.h>
+#include <bglibs/wrap.h>
+#include <bglibs/fmt.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"

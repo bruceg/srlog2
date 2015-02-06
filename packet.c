@@ -1,11 +1,11 @@
 #include <string.h>
 
-#include <str/str.h>
+#include <bglibs/str.h>
 
 #include "srlog2.h"
-#include <uint16.h>
-#include <uint32.h>
-#include <uint64.h>
+#include <bglibs/uint16.h>
+#include <bglibs/uint32.h>
+#include <bglibs/uint64.h>
 
 static unsigned char digest[AUTH_LENGTH];
 

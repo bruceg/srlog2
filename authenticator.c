@@ -1,7 +1,7 @@
 #include <string.h>
-#include <crypto/hmac.h>
-#include <crypto/md5.h>
-#include <str/str.h>
+#include <bglibs/hmac.h>
+#include <bglibs/md5.h>
+#include <bglibs/str.h>
 #include "authenticator.h"
 
 void auth_start(AUTH_CTX* ctx, const struct key* key)

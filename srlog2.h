@@ -1,12 +1,12 @@
 #ifndef SRLOG__H__
 #define SRLOG__H__
 
-#include <uint32.h>
-#include <uint64.h>
-#include <adt/ghash.h>
-#include <msg/msg.h>
-#include <net/ipv4.h>
-#include <str/str.h>
+#include <bglibs/uint32.h>
+#include <bglibs/uint64.h>
+#include <bglibs/ghash.h>
+#include <bglibs/msg.h>
+#include <bglibs/ipv4.h>
+#include <bglibs/str.h>
 
 #include "key.h"
 #include "keylist.h"

@@ -1,8 +1,8 @@
 #include <string.h>
 
-#include <msg/msg.h>
-#include <net/resolve.h>
-#include <str/iter.h>
+#include <bglibs/msg.h>
+#include <bglibs/resolve.h>
+#include <bglibs/striter.h>
 
 #include "srlog2.h"
 #include "srlog2d.h"
