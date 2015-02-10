@@ -7,7 +7,7 @@ struct ghash addrname = {0,0,0,0,0,0,0,0,0,0,0};
 
 static uint32 ipv4addr_hash(ipv4addr const* key)
 {
-  return crc32_block((const unsigned char*)key, sizeof *key);
+  return crc32_block((const char*)key, sizeof *key);
 }
 
 static uint32 ipv4addr_cmp(ipv4addr const* a, ipv4addr const* b)

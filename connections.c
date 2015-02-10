@@ -15,7 +15,7 @@ struct ghash connections = {0,0,0,0,0,0,0,0,0,0,0};
 
 static uint32 connection_hash(struct connection_key const* key)
 {
-  return crc32_block((const unsigned char*)key, sizeof *key);
+  return crc32_block((const char*)key, sizeof *key);
 }
 
 static int connection_cmp(struct connection_key const* a,
