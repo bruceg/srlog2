@@ -4,15 +4,37 @@
 
 #include <bglibs/systime.h>
 #include <bglibs/msg.h>
+#include <bglibs/surfrand.h>
 
 #include "srlog2.h"
-#include "surfrand.h"
 
 static struct surfrand pool;
 
+int brandom_initfile(const char* path)
+{
+  int fd;
+  char* p;
+  int left;
+  int rd;
+  uint32 seed[SURF_SEED_U32];
+  if ((fd = open(path, O_RDONLY)) == -1)
+    return -1;
+  for (left = SURF_SEED, p = (char*)seed; left > 0; left -= rd, p += rd) {
+    if ((rd = read(fd, p, left)) == -1) {
+      close(fd);
+      return -1;
+    }
+    if (rd == 0)
+      break;
+  }
+  close(fd);
+  surfrand_init(&pool, seed, SURF_SEED_U32);
+  return 0;
+}
+
 void brandom_init(void)
 {
-  if (surfrand_initfile(&pool, "/dev/urandom") != 0)
+  if (brandom_initfile("/dev/urandom") != 0)
     die1sys(1, "Error initializing random generator");
 }
 

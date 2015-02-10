@@ -9,5 +9,4 @@ keylist_export.o
 nistp224.o
 packet.o
 random.o
-surfrand.o
 writeall.o
